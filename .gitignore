@@ -1,0 +1,6 @@
+deb_dist
+setup.py
+stdeb.cfg
+MANIFEST
+build
+dist
