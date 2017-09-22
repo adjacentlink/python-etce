@@ -66,17 +66,6 @@ class PlatformImpl:
         return stdout
 
 
-    def __system(self, commandstring, verbose=False):
-        args = shlex.split(commandstring)
-        p = subprocess.Popen(args, 
-                         stdout=subprocess.PIPE, 
-                         stderr=subprocess.STDOUT)
-        if verbose:
-            for line in p.stdout:
-                print line
-        return p.wait()
-
-
     def rmfile(self, filename):
         if not os.path.exists(filename):
             return

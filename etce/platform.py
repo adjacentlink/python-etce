@@ -127,9 +127,6 @@ class Platform:
     def hostid(self):
         return self._impl.hostid()
 
-    def firewall(self, command):
-        self._impl.firewall(command)
-
     def runcommand(self, commandstring):
         return self._impl.runcommand(commandstring)
 
@@ -157,8 +154,8 @@ class Platform:
     def rmfile(self, filename):
         self._impl.rmfile(filename)
 
-    def checkandexpandpath(self, path_template):
-        return self._impl.checkandexpandpath(path_template)
+    def readpid(self, pidfile):
+        return self._impl.readpid(pidfile)
 
     def kill(self, pidfile, signal=signal.SIGQUIT):
         return self._impl.kill(pidfile, signal)

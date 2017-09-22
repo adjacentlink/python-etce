@@ -267,25 +267,12 @@ class WrapperContext(ArgRegistrar):
         sp.wait()
 
 
-    def readpid(self, pidfilename):
-        pid = None
-        if os.path.exists(pidfilename):
-            if os.path.isfile(pidfilename):
-                pid = int(open(pidfilename).readline())
-            else:
-                # error - pidfile is not a regular fle
-                error = 'pidfile %s exists but is not a regular file. ' \
-                        'Quitting' % pidfilename
-                raise RuntimeError(error)
-        return pid
-
-
     def stop(self, pidfilename=None):
         # use default pidfilename if None specified
         if pidfilename is None:
             pidfilename = self.default_pidfilename
 
-        pid = self.readpid(pidfilename)
+        pid = self._platform.readpid(pidfilename)
 
         # if found a pid, kill the process and remove the file
         if pid is not None:

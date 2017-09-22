@@ -42,28 +42,6 @@ from etce.apprunner import AppRunner
 
 
 class PlatformImpl(etce.platformimpl.PlatformImpl):
-    def hostsfile_name(self):
-        return '/etc/hosts'
-
-
-    def get_local_ip_addresses(self):
-        ipaddrs = []
-
-        matcher = re.compile(r'inet (\d+.\d+.\d+.\d+)/\d+')
-
-        runner = AppRunner('ip addr show')
-
-        lines = [ line.strip() for line in runner.stdout() ]
-
-        for line in lines:
-            match = matcher.match(line)
-
-            if match:
-                ipaddrs.append(match.group(1))
-
-        return ipaddrs
-
-
     def hostname_has_local_address(self, hostname):
         return self.hostnames_has_local_address([hostname])
 
@@ -71,7 +49,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
     def hostnames_has_local_address(self, hostnames):
         localips = []
         try:
-            localips = self.get_local_ip_addresses()
+            localips = self._get_local_ip_addresses()
         except:
             return False
 
@@ -185,18 +163,6 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         return '%s' % datetime.datetime.now()
 
 
-    def scp(self, src, dst):
-        fullsrc = self.keywordreplace(src)
-
-        fulldst = self.keywordreplace(dst)
-
-        command = 'scp %s %s' % (fullsrc, fulldst)
-
-        print command
-
-        os.system(command)
-
-
     def getallpids(self):
         pids = []
 
@@ -232,24 +198,6 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
                 print line.strip()
 
 
-    def mkdir(self, dirname):
-        fulldirname = self.keywordreplace(dirname)
-
-        os.mkdir(fulldirname)
-
-
-    def mktar(self, rootdir, tgzname, dirname):
-        fullrootdir = self.keywordreplace(rootdir)
-
-        fulltgzname = self.keywordreplace(tgzname)
-
-        fulldirname = self.keywordreplace(dirname)
-
-        command = 'cd %s && tar -cvzf %s %s' % (fullrootdir, fulltgzname, fulldirname)
-
-        os.system(command)
-
-
     def listdir(self, abspath, fileregex='.*'):
         '''
         return the file names in abspath that match the fileregex.
@@ -272,19 +220,16 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         return allmatches
 
 
-    def readpid(self, lockfile):
+    def readpid(self, pidfile):
         pid = None
-
-        if os.path.exists(lockfile):
-            if os.path.isfile(lockfile):
-                pid = int(open(lockfile).readline())
+        if os.path.exists(pidfile):
+            if os.path.isfile(pidfile):
+                pid = int(open(pidfile).readline())
             else:
                 # error - pidfile is not a regular fle
                 error = 'pidfile %s exists but is not a regular file. ' \
-                        'Quitting' % lockfile
-
+                        'Quitting' % pidfile
                 raise RuntimeError(error)
-
         return pid
 
 
@@ -315,3 +260,23 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
 
         except:
             print 'problem in killing %s' % applicationname
+
+
+    def _get_local_ip_addresses(self):
+        ipaddrs = []
+
+        matcher = re.compile(r'inet (\d+.\d+.\d+.\d+)/\d+')
+
+        runner = AppRunner('ip addr show')
+
+        lines = [ line.strip() for line in runner.stdout() ]
+
+        for line in lines:
+            match = matcher.match(line)
+
+            if match:
+                ipaddrs.append(match.group(1))
+
+        return ipaddrs
+
+
