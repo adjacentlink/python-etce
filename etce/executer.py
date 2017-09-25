@@ -46,7 +46,7 @@ from etce.wrapperloader import WrapperLoader
 
 class Executer(object):
     def __init__(self):
-        self._test = TestDirectory(os.getcwd(), None)
+        self._test = TestDirectory(os.getcwd(), None, merged=True)
         self._executer = ExecuterDoc(self._test.executerfile())
         self._config = ConfigDictionary()
 

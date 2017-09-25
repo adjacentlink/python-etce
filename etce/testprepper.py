@@ -85,7 +85,7 @@ class TestPrepper(object):
 
         namevaldict = {'starttime':starttime}
 
-        namevaldict.update(TestDirectory(testdefdir, None).info())
+        namevaldict.update(TestDirectory(testdefdir, None, merged=True).info())
 
         store.update(hostname, namevaldict)
 

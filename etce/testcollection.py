@@ -125,7 +125,7 @@ class TestCollection(object):
     def _parsetestroot(self, testroot, basedir_override):
         for dirpath,dirnames,filenames in os.walk(testroot):
             if self._istestdirectory(filenames):
-                test = TestDirectory(dirpath, basedir_override)
+                test = TestDirectory(dirpath, basedir_override, merged=False)
                 if test.name() in self._tests:
                     err = '''ERROR: tests must have unique names. Test at 
                              %s 

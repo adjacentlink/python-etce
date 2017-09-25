@@ -50,11 +50,13 @@ class TestDirectory(object):
     HOSTFILENAME = 'nodefile.txt'
     DOCSUBDIRNAME = 'doc'
 
-    def __init__(self, rootdir, basedir_override):
+    def __init__(self, rootdir, basedir_override, merged=False):
         
         self._rootdir = rootdir
         
         self._platform = Platform()
+
+        self._merged = merged
 
         self._manifestfile = ManifestFileDoc(
             os.path.join(self._rootdir,
@@ -147,13 +149,16 @@ class TestDirectory(object):
 
         hostnames = set([])
 
-        for entry in os.listdir(os.path.join(self.location(), self._basedir)):
-            abs_entry = os.path.join(self.location(), self._basedir, entry)
-            
-            if os.path.isdir(abs_entry):
-                if entry.split('.')[-1] == template_suffix:
-                    continue
-                hostnames.update([entry])
+        # if this is already a merged test directory, ignore base directory
+        # search 
+        if not self._merged:
+            for entry in os.listdir(os.path.join(self.location(), self._basedir)):
+                abs_entry = os.path.join(self.location(), self._basedir, entry)
+
+                if os.path.isdir(abs_entry):
+                    if entry.split('.')[-1] == template_suffix:
+                        continue
+                    hostnames.update([entry])
 
         for entry in os.listdir(self.location()):
             abs_entry = os.path.join(self.location(), entry)
@@ -243,8 +248,13 @@ class TestDirectory(object):
 
         params = []
 
-        for search_dir in (os.path.join(self.location(), self._basedir), 
-                           self.location()):
+        search_dirs = [self._basedir]
+
+        if not self._merged:
+            # push the basedirectory if this directory is not already merged
+            search_dirs.insert(0, os.path.join(self.location(), self._basedir()))
+
+        for search_dir in search_dirs:
             for dirname,dirnames,filenames in os.walk(search_dir):
                 if TestDirectory.DOCSUBDIRNAME in dirname.split('/'):
                     # ignore doc sub directory

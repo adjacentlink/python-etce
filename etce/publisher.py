@@ -149,9 +149,16 @@ class Publisher(object):
 
         for template_directory_name in template_directory_names:
             empty = True
+
             for srcdir in srcdirs:
-                if os.listdir(os.path.join(srcdir, template_directory_name)):
+                dir_to_test = os.path.join(srcdir, template_directory_name)
+
+                if not os.path.exists(dir_to_test):
+                    continue
+
+                if os.listdir(dir_to_test):
                     empty = False
+
             if empty:
                 empty_template_directories.update([template_directory_name])
 
@@ -253,8 +260,8 @@ class Publisher(object):
                                                   overlaydict))
                     # same template file might be use multiple times so
                     # check if previously removed
-                    if name in allfiles:
-                        subfiles.pop(name)
+                    if name in subfiles:
+                        subfiles.pop(subfiles.index(name))
 
                 elif elem.tag == 'directory':
                     template_directory = TemplateDirectory(mergedir,
@@ -334,7 +341,7 @@ class Publisher(object):
 
 
     def _prunedir(self, subfiles, subdir):
-        # remove any member of allfiles whose key is contained under srcdir
+        # remove any member of subfiles whose key is contained under srcdir
         rmfiles = []
 
         for subfile in subfiles:
