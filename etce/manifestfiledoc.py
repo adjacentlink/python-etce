@@ -35,6 +35,8 @@ import os
 import sets
 from StringIO import StringIO
 
+import lxml.etree
+
 import etce.xmldoc
 import etce.utils
 from etce.config import ConfigDictionary
@@ -184,6 +186,16 @@ class ManifestFileDoc(etce.xmldoc.XMLDoc):
             return self._basedir
 
         return ''
+
+
+    def rewrite_without_basedir(self, outfile):
+        new_root = lxml.etree.Element('manifest')
+
+        for elem in self._rootelem:
+            new_root.append(elem)
+
+        with open(outfile, 'w') as outf:
+            outf.write(lxml.etree.tostring(new_root, pretty_print=True))
 
 
     def _parsefile(self, manifestfile):

@@ -31,6 +31,31 @@
 #
 
 from mako.template import Template
+from mako.runtime import Context
+from StringIO import StringIO
+
+
+class CaptureContext(Context):
+    def __init__(self):
+        self._keys = set([])
+        super(CaptureContext, self).__init__(StringIO())
+
+    def get(self, key, default=None):
+        self._keys.update([key])
+        return 40.0
+
+    def get_all_keys(self):
+        return self._keys
+
+
+def get_file_params(templatefile):
+    t = Template(filename=templatefile)
+
+    ctx = CaptureContext()
+
+    t.render_context(ctx)
+
+    return ctx.get_all_keys()
 
 
 def format_file(srcfile, dstfile, overlays):
@@ -43,3 +68,5 @@ def format_file(srcfile, dstfile, overlays):
             message = '%s for template file "%s". Quitting.' % \
                       (ne.message, srcfile)
             raise NameError(message)
+
+

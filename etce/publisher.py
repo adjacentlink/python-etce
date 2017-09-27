@@ -57,8 +57,7 @@ class Publisher(object):
                  extrafiles=[],
                  absbasedir_override=None,
                  trialdir=None,
-                 runtimeoverlays={},
-                 ignoretags = []):
+                 runtimeoverlays={}):
         self._testdir = testdir
 
         self._mergedir = mergedir
@@ -86,8 +85,7 @@ class Publisher(object):
         self._templates,      \
         self._overlaydict = self._readmanifest(self._manifestdoc,
                                                self._mergedir,
-                                               runtimeoverlays, 
-                                               ignoretags)
+                                               runtimeoverlays)
 
         
     def mergebase(self, mergedir, extrafiles=[], absbasedir_override=None):
@@ -195,8 +193,7 @@ class Publisher(object):
     def _readmanifest(self, 
                       manifestdoc,
                       mergedir,
-                      runtimeoverlays, 
-                      ignoretags):
+                      runtimeoverlays):
         overlaydict = \
             OverlayChainFactory(mergedir).make(
                 manifestdoc.findall("./overlays/overlay"),
@@ -222,11 +219,6 @@ class Publisher(object):
 
         for k,v in runtimeoverlays.items():
             overlaydict.update({ k:etce.utils.configstrtoval(v) })
-
-        for k in ignoretags:
-            if len(k.strip()) > 0:
-                val = '{' + k.strip() + '}'
-                overlaydict.update({ k:val })
 
         subfiles = self._get_subfiles(mergedir)
 
@@ -285,8 +277,7 @@ class Publisher(object):
         # copy non-template files from testdir to dstdir
         os.makedirs(dstdir)
 
-        skipfiles = (TestDirectory.MANIFESTFILENAME,
-                     TestDirectory.CONFIGFILENAME,
+        skipfiles = (TestDirectory.CONFIGFILENAME,
                      TestDirectory.HOSTFILENAME)
 
         omitdirs = (TestDirectory.DOCSUBDIRNAME,)
@@ -315,7 +306,9 @@ class Publisher(object):
             if not os.path.exists(dstfiledir):
                 os.makedirs(dstfiledir)
 
-            if relname in skipfiles:
+            if relname == TestDirectory.MANIFESTFILENAME:
+                self._manifestdoc.rewrite_without_basedir(fulldstfile)
+            elif relname in skipfiles:
                 shutil.copyfile(fullsrcfile, fulldstfile)
             else:
                 format_file(fullsrcfile, fulldstfile, overlays)
@@ -364,12 +357,6 @@ def add_publish_arguments(parser):
                         directory, overridding the (optional) base
                         directory defined in the test manifest.xml file.
                         default: None''')
-    parser.add_argument('--ignorefile',
-                        action='store',
-                        default=None,
-                        help='''File name containing overlay tags to
-                        ignore when creating a publishing test directory, 
-                        one per line. default: None''')
     parser.add_argument('--mergedirectory',
                         action='store',
                         default=default_merge_directory,
@@ -428,20 +415,10 @@ def publish_test(args):
                 n,v = line.split('=')
                 runtimeoverlays[n] = v
 
-    ignoretags = []
-    if args.ignorefile is not None:
-        if not os.path.isfile(args.ignorefile):
-            print >>sys.stderr, 'ignorefile "%s" doesn\'t exist. Quitting' % args.ignorefile
-            exit(1)
-        for line in open(args.ignorefile):
-            if len(line.strip()) > 0:
-                ignoretags.append(line.strip())
-
     try:
         publisher = Publisher(args.testdirectory,
                               args.mergedirectory,
                               runtimeoverlays=runtimeoverlays,
-                              ignoretags=ignoretags,
                               absbasedir_override=args.basedir)
 
         publisher.publish(args.outdirectory)

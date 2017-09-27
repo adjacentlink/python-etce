@@ -39,6 +39,7 @@ from etce.configfiledoc import ConfigFileDoc
 from etce.field import Field
 from etce.manifestfiledoc import ManifestFileDoc
 from etce.platform import Platform
+from etce.templateutils import get_file_params
 from etce.testdirectoryerror import TestDirectoryError
 import etce.utils
 
@@ -244,15 +245,14 @@ class TestDirectory(object):
 
 
     def _findparams(self):
-        paramre = re.compile(r'{([^}]*)}')
-
-        params = []
+        params = set([])
 
         search_dirs = [self._basedir]
 
         if not self._merged:
             # push the basedirectory if this directory is not already merged
-            search_dirs.insert(0, os.path.join(self.location(), self._basedir()))
+            search_dirs.insert(0, 
+                               os.path.join(self.location(), self._basedir))
 
         for search_dir in search_dirs:
             for dirname,dirnames,filenames in os.walk(search_dir):
@@ -260,16 +260,7 @@ class TestDirectory(object):
                     # ignore doc sub directory
                     continue
                 for filename in filenames:
-                    for line in open(os.path.join(dirname,filename), 'r'):
-                        map(params.append, paramre.findall(line))
+                    params.update(
+                        get_file_params(os.path.join(dirname,filename)))
 
-        unique = set([])
-
-        for param in params:
-            index = param.find(':')
-            if index > 0:
-                unique.add(param[0:index])
-            else:
-                unique.add(param)
-
-        return tuple(sorted(unique))
+        return tuple(sorted(params))
