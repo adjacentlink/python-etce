@@ -42,6 +42,7 @@ import tarfile
 import etce.fieldclient 
 import etce.utils
 
+from etce.fieldconnectionerror import FieldConnectionError
 from etce.etceexecuteexception import ETCEExecuteException
 from etce.platform import Platform
 from etce.config import ConfigDictionary
@@ -160,7 +161,10 @@ class SSHClient(etce.fieldclient.FieldClient):
                 self.__connection_dict[h].connect(hostname=h, username=user, port=port)
             except socket.gaierror as ge:
                 message = '%s "%s". Quitting.' % (ge.strerror, h)
-                raise RuntimeError(message)
+                raise FieldConnectionError(message)
+            except paramiko.ssh_exception.NoValidConnectionsError as e:
+                raise FieldConnectionError('Unable to connect to host "%s". Quitting.' % h)
+
 
     def sourceisdestination(self, host, srcfilename, dstfilename):
         if srcfilename == dstfilename:

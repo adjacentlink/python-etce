@@ -1,0 +1,141 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:simpleType name="nodeSet">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="(\d+(-\d+)?)(,(\d+(-\d+)?))*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:element name="initscript">
+    <xs:complexType>
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="filename" type="xs:string" use="required"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="parameter">
+    <xs:complexType>
+      <xs:attribute name="name" type="xs:string"/>
+      <xs:attribute name="value" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="overlay">
+    <xs:complexType>
+      <xs:attribute name="tag" type="xs:string"/>
+      <xs:attribute name="value" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="overlaylist">
+    <xs:complexType>
+      <xs:attribute name="tag" type="xs:string"/>
+      <xs:attribute name="separator" type="xs:string" use="optional"/>
+      <xs:attribute name="values" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="container">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="overlay" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="overlaylist" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="interfaces" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="initscript" minOccurs="0" maxOccurs="1"/>
+      </xs:sequence>
+      <xs:attribute name="lxcname" type="xs:string" use="required"/>
+      <xs:attribute name="lxcindices" type="nodeSet" use="optional"/>
+      <xs:attribute name="template" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="interfaces">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="interface" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+            <xs:attribute name="bridge" type="xs:string" use="required"/>
+            <xs:attribute name="hosts_entry_ipv4" type="xs:string" use="optional"/>
+            <xs:attribute name="hosts_entry_ipv6" type="xs:string" use="optional"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>                        
+
+  <xs:element name="lxcplan">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="containertemplates" minOccurs="0" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="containertemplate" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
+                    <xs:element ref="interfaces" minOccurs="0" maxOccurs="1"/>
+                    <xs:element ref="initscript" minOccurs="0" maxOccurs="1"/>
+                  </xs:sequence>
+                  <xs:attribute name="name" type="xs:string" use="required"/>
+                  <xs:attribute name="parent" type="xs:string" use="optional"/>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+          <xs:element name="host" minOccurs="0" maxOccurs="unbounded">
+	   <xs:complexType>
+	     <xs:sequence>
+              <xs:element name="kernelparameters" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="bridges" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="bridge" minOccurs="0" maxOccurs="unbounded">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="ipaddress" minOccurs="0" maxOccurs="1">
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element name="ipv4" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                                <xs:element name="ipv6" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                          <xs:element name="addif" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                        <xs:attribute name="name" type="xs:string" use="required"/>
+                        <xs:attribute name="persistent" type="xs:boolean" use="required"/>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="containers" minOccurs="1" maxOccurs="1">
+                <xs:complexType>
+                  <xs:sequence minOccurs="0" maxOccurs="unbounded">
+                    <xs:element ref="container" minOccurs="0" maxOccurs="1"/>
+                  </xs:sequence>
+                  <xs:attribute name="rootdirectory" type="xs:string" use="required"/>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+            <xs:attribute name="hostname" type="xs:string" use="required"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

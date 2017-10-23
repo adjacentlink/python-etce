@@ -30,13 +30,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from pkg_resources import resource_filename
 from lxml import etree
 from lxml.etree import DocumentInvalid
 
 class XMLDoc(object):
-    def __init__(self, schemastr):
-        self._schema = etree.XMLSchema(etree.parse(schemastr))
-        self._schemastr = str(schemastr.getvalue())
+    def __init__(self, schemafile):
+        self._schema = etree.XMLSchema(etree.parse(resource_filename('etce',schemafile)))
 
 
     def parse(self, xmlfile):
@@ -48,7 +48,3 @@ class XMLDoc(object):
             raise DocumentInvalid(err)
 
         return xml_doc.getroot()
-
-
-    def printschema(self):
-        print str(self._schemastr)

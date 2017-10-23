@@ -33,7 +33,6 @@
 import copy
 import os
 import sets
-from StringIO import StringIO
 
 import lxml.etree
 
@@ -44,95 +43,8 @@ from etce.config import ConfigDictionary
 
 class ManifestFileDoc(etce.xmldoc.XMLDoc):
     def __init__(self, manifestfile):
-        etce.xmldoc.XMLDoc.__init__(self, 
-                                    StringIO('''
-<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'>
-
-  <xs:element name="overlaylist">
-    <xs:complexType>
-      <xs:attribute name="tag" type="xs:string" use="required"/>
-      <xs:attribute name="separator" type="xs:string" use="optional"/>
-      <xs:attribute name="values" type="xs:string" use="required"/>
-    </xs:complexType>
-  </xs:element>
-
-  <xs:element name="manifest">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element name="name" type="xs:string"/>
-
-        <xs:element name="tags" minOccurs="0" maxOccurs="1">
-          <xs:complexType>
-            <xs:sequence>
-              <xs:element name="tag" minOccurs="0" maxOccurs="unbounded">
-                <xs:complexType>
-                  <xs:attribute name="name" type="xs:string" use="required"/>
-                  <xs:attribute name="value" type="xs:string" use="required"/>
-                </xs:complexType>
-              </xs:element>
-            </xs:sequence>
-          </xs:complexType>
-        </xs:element>
-
-        <xs:element name="description" type="xs:string"/>
-
-        <xs:element name="overlays" minOccurs="0" maxOccurs="1">
-          <xs:complexType>
-            <xs:sequence>
-              <xs:choice minOccurs="0" maxOccurs="unbounded">
-                <xs:element name="overlay" minOccurs="0" maxOccurs="1">
-                  <xs:complexType>
-                    <xs:attribute name="tag" type="xs:string" use="required"/>
-                    <xs:attribute name="value" type="xs:string" use="required"/>
-                  </xs:complexType>
-                </xs:element>
-                <xs:element name="overlaycsv" minOccurs="0" maxOccurs="1">
-                  <xs:complexType>
-                    <xs:attribute name="file" type="xs:string" use="required"/>
-                    <xs:attribute name="column" type="xs:string" use="required"/>
-                  </xs:complexType>
-                </xs:element>
-              </xs:choice>
-            </xs:sequence>
-          </xs:complexType>
-        </xs:element>
-
-        <xs:element name="templates" minOccurs="0" maxOccurs="1">
-          <xs:complexType>
-            <xs:sequence>
-            <xs:element ref="overlaylist" minOccurs="0" maxOccurs="unbounded"/>
-            <xs:choice minOccurs="0" maxOccurs="unbounded">
-              <xs:element name="directory" minOccurs="0" maxOccurs="1">
-                <xs:complexType>
-                  <xs:sequence>
-                    <xs:element ref="overlaylist" minOccurs="0" maxOccurs="unbounded"/>
-                  </xs:sequence>
-                  <xs:attribute name="name" type="xs:string" use="required"/>
-                  <xs:attribute name="indices" type="xs:string"/>
-                  <xs:attribute name="hostname_format" type="xs:string"/>
-                </xs:complexType>
-              </xs:element>
-              <xs:element name="file" minOccurs="0" maxOccurs="1">
-                <xs:complexType>
-                  <xs:sequence>
-                    <xs:element ref="overlaylist" minOccurs="0" maxOccurs="unbounded"/>
-                  </xs:sequence>
-                  <xs:attribute name="name" type="xs:string" use="required"/>
-                  <xs:attribute name="indices" type="xs:string"/>
-                  <xs:attribute name="hostname_format" type="xs:string"/>
-                  <xs:attribute name="output_file_name" type="xs:string"/>
-                </xs:complexType>
-              </xs:element>
-            </xs:choice>
-            </xs:sequence>
-            <xs:attribute name="indices" type="xs:string" use="required"/>
-          </xs:complexType>
-        </xs:element>
-      </xs:sequence>
-      <xs:attribute name="base" type="xs:string" use="optional"/>
-    </xs:complexType>
-  </xs:element>
-</xs:schema>'''))
+        etce.xmldoc.XMLDoc.__init__(self,
+                                    'manifestfile.xsd')
 
         self._manifestfile = manifestfile
         self._parsefile(manifestfile)

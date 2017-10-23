@@ -31,42 +31,14 @@
 #
 
 import os
-from StringIO import StringIO
 
 import etce.xmldoc
 
 
 class ConfigFileDoc(etce.xmldoc.XMLDoc):
     def __init__(self, configfile):
-        etce.xmldoc.XMLDoc.__init__(self, 
-                                    StringIO('''
-<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'>
-
-  <xs:element name="param">
-    <xs:complexType>
-      <xs:attribute name="name" type="xs:string"/>
-      <xs:attribute name="value" type="xs:string"/>
-    </xs:complexType>
-  </xs:element>
-
-  <xs:element name="testconfiguration">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element ref="param" minOccurs="0" maxOccurs="unbounded"/>
-        <xs:element name="wrapper" minOccurs="0" maxOccurs="unbounded">
-          <xs:complexType>
-            <xs:sequence>
-              <xs:element ref="param" minOccurs="0" maxOccurs="unbounded"/>
-            </xs:sequence>
-            <xs:attribute name="name" type="xs:string"/>
-          </xs:complexType>
-        </xs:element>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
-
-</xs:schema>'''))
-
+        etce.xmldoc.XMLDoc.__init__(self,
+                                    'configfile.xsd')
 
         self._config = self._parseconfigfile(configfile)
 

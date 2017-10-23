@@ -1,5 +1,6 @@
+#!/bin/bash -
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2015 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,38 +31,54 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import ConfigParser
+do_clean=0
 
+while getopts ':c' OPTION
+do
+    case $OPTION in
+        c)
+            do_clean=1
+            ;;
+        ?)
+        printf "usage: %s: [-c]\n" $(basename $0) >&2
+        echo
+        echo "Bootstrap or clean autotools project"
+        echo
+        echo "options:"
+        echo "  -c     clean autogen files"
+        exit 1
+        ;;
+    esac
+done
 
-class NetPlanFile(object):
-    def __init__(self, netplanfile):
-        self.parser = ConfigParser.SafeConfigParser()
-        self.parser.read([ netplanfile ])
-        self._utsnamemap = self._parseuts()
+shift $(($OPTIND - 1))
 
+if [ $do_clean -eq 1 ]
+then
+    rm -rf aclocal.m4 \
+       autom4te.cache \
+       compile \
+       config.guess \
+       config.log \
+       config.status \
+       config.sub \
+       configure \
+       depcomp \
+       install-sh \
+       libtool \
+       ltmain.sh \
+       Makefile \
+       Makefile.in \
+       missing 
+    find m4 -type f ! -name 'm4_ax_cxx_compile_stdcxx_11.m4' -delete
+    find . -name 'Makefile.in' -delete
+    
+else
+    libtoolize --force --copy
 
-    def get(self, key, default=None):
-        if self.parser.has_option('netplan', key):
-            return self.parser.get('netplan', key)
-        return default
+    aclocal --force
 
+    automake --add-missing --copy
 
-    def getutsname(self, nodeid, default=None):
-        return self._utsnamemap.get(nodeid, default)
-
-
-    def __str__(self):
-        s = '[netplan]\n'
-        for k,v in self.parser.items('netplan'):
-            s += '%s=%s\n' % (k,v)
-        return s
-
-
-    def _parseuts(self):
-        utsnamemap = {}
-        utsnames = self.get('utsnames')
-        if utsnames:
-            for pair in utsnames.split('|'):
-                nodeidstr,utsname = pair.split(':')
-                utsnamemap[int(nodeidstr)] = utsname.strip()
-        return utsnamemap
+    autoreconf --force
+fi

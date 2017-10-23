@@ -1,0 +1,18 @@
+# File Install
+
+./autogen && ./configure
+make
+sudo make install
+
+
+# RPM Install
+
+./autogen && ./configure
+make rpm
+
+
+# DEB Install
+
+./autogen && ./configure
+make deb
+sudo dpkg -i deb_dist/python-etce*deb

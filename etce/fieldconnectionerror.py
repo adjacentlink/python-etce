@@ -30,21 +30,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
-
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
-      scripts=[ 'scripts/etce-hello',
-                'scripts/etce-exec.ssh',
-                'scripts/etce-listnodes',
-                'scripts/etce-lxc',
-                'scripts/etce-test',
-                'scripts/etce-wrapper' ])
-
+class FieldConnectionError(Exception):
+    def __init__(self, message):
+        Exception.__init__(self, message)

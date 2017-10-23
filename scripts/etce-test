@@ -41,6 +41,7 @@ import traceback
 import etce.timeutils
 from etce.config import ConfigDictionary
 from etce.etceexecuteexception import ETCEExecuteException
+from etce.fieldconnectionerror import FieldConnectionError
 from etce.field import Field
 from etce.clientbuilder import ClientBuilder
 from etce.platform import Platform
@@ -134,13 +135,26 @@ def add_run_arguments(parser):
                         help='''Quit when an error occurs. Default behavior
                         is to continue to the next test, skipping any 
                         remaining trials of the errant test''')
+    parser.add_argument('--runfromstep',
+                        default=None,
+                        help='''Only run from the named step of the executer
+                        file. When set, numtrials parameter is ignored (set 
+                        to 1), and testroot must only contain one
+                        test. Useful for debugging. If used in 
+                        conjunction with runtostep, will only run the 
+                        steps in the interval defined by both 
+                        runfromstep:runtostep. 
+                        default: run all executer steps.''')
     parser.add_argument('--runtostep',
                         default=None,
-                        help='''Only run until the named step of the executer.
-                        When set, numtrials parameter is ignored (set 
+                        help='''Only run until the named step of the executer
+                        file. When set, numtrials parameter is ignored (set 
                         to 1), and testroot must only contain one
-                        test. Useful for debugging. default: run all 
-                        steps.''')
+                        test. Useful for debugging. If used in 
+                        conjunction with runfromstep, will only run the 
+                        steps in the interval defined by both 
+                        runfromstep:runtostep. 
+                        default: run all executer steps.''')
     parser.add_argument('--user',
                         action='store',
                         default=None,
@@ -223,13 +237,20 @@ def run_test(args):
                 'than one test'
             exit(1)
 
+    if not args.runfromstep is None:
+        if args.numtrials > 1 or len(tests) > 1:
+            print >>sys.stderr,'Cannot mix --runfromstep option with ' \
+                '--itererations > 1 or with testroot containing more ' \
+                'than one test'
+            exit(1)
+
     try:
         worknodes = tests.participant_nodes(field.leaves())
     except TestCollectionError as tce:
         print >>sys.stderr,tce.message
         print >>sys.stderr
         exit(1)
-        
+
     # root nodes host the filesystem for all of the virtual nodes attached
     filesystemnodes = list(field.roots())
 
@@ -269,7 +290,7 @@ def run_test(args):
                 exit(1)
             hookfiles.append(entryhookfile)
             entryhooksteps = \
-                ExecuterDoc(entryhookfile).getsteps(None, 
+                ExecuterDoc(entryhookfile).getsteps(args.runfromstep, 
                                                     args.runtostep, 
                                                     filtersteps)
 
@@ -284,7 +305,7 @@ def run_test(args):
                 exit(1)
             hookfiles.append(exithookfile)
             exithooksteps = \
-                ExecuterDoc(exithookfile).getsteps(None, 
+                ExecuterDoc(exithookfile).getsteps(args.runfromstep, 
                                                    args.runtostep, 
                                                    filtersteps)
                 
@@ -325,7 +346,7 @@ def run_test(args):
                                                  test.executerfile()))
 
                     executersteps = \
-                        executer.getsteps(None, 
+                        executer.getsteps(args.runfromstep, 
                                           args.runtostep, 
                                           filtersteps)
                     
@@ -419,6 +440,10 @@ def run_test(args):
                 else:
                     print 'Continuing to next test.'
 
+    except FieldConnectionError as fce:
+        print >>sys.stderr
+        print >>sys.stderr,fce.message
+        print >>sys.stderr
     except Exception as e:
         print >>sys.stderr
         print >>sys.stderr,e.message

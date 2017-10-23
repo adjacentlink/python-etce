@@ -31,7 +31,6 @@
 #
 
 import copy
-from StringIO import StringIO
 from collections import defaultdict
 
 import etce.utils
@@ -42,62 +41,8 @@ from lxml import etree
 
 class ExecuterDoc(etce.xmldoc.XMLDoc):
     def __init__(self, executerfile):
-        etce.xmldoc.XMLDoc.__init__(self, 
-                                    StringIO('''
-<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'>
-
-  <xs:element name="param">
-    <xs:complexType>
-      <xs:attribute name="name" type="xs:string"/>
-      <xs:attribute name="value" type="xs:string"/>
-    </xs:complexType>
-  </xs:element>
-
-  <xs:element name="executer">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element name="using" 
-                    minOccurs="0" 
-                    maxOccurs="unbounded">
-          <xs:complexType>
-            <xs:attribute name="package" type="xs:string"/>
-          </xs:complexType>
-        </xs:element>
-
-        <xs:element name="step" 
-                    minOccurs="0" 
-                    maxOccurs="unbounded">
-          <xs:complexType>
-            <xs:choice minOccurs="0" maxOccurs="unbounded">
-              <xs:element name="run">
-                <xs:complexType>
-                  <xs:sequence>
-                    <xs:element ref="param" 
-                                minOccurs="0" 
-                                maxOccurs="unbounded"/>
-                  </xs:sequence>
-                  <xs:attribute name="wrapper" type="xs:string"/>
-                </xs:complexType>
-              </xs:element>
-              <xs:element name="stop">
-                <xs:complexType>
-                  <xs:sequence>
-                    <xs:element ref="param" 
-                                minOccurs="0" 
-                                maxOccurs="unbounded"/>
-                  </xs:sequence>
-                  <xs:attribute name="wrapper" type="xs:string"/>
-                </xs:complexType>
-              </xs:element>
-
-            </xs:choice>
-            <xs:attribute name="name" type="xs:string"/>
-          </xs:complexType>
-        </xs:element>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
-</xs:schema>'''))
+        etce.xmldoc.XMLDoc.__init__(self,
+                                    'executerfile.xsd')
 
         if executerfile is None:
             raise ValueError('No executerfile found')
