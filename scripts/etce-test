@@ -49,6 +49,7 @@ from etce.publisher import add_publish_arguments,publish_test,Publisher
 from etce.testcollection import add_list_arguments,list_tests,TestCollection,TestCollectionError
 from etce.testdirectory import TestDirectory
 from etce.executerdoc import ExecuterDoc
+from etce.wrapperstore import WrapperStore
 
 
 def tstamp():
@@ -415,7 +416,17 @@ def run_test(args):
                                    filesystemnodes)
                 
                     resultsubdirs.append(localtestresultsdir)
-                
+
+                    backingfilename = os.path.join(localtestresultsdir, 'data', 'etce.store')
+
+                    store = WrapperStore(backingfilename)
+
+                    namevaldict = {'starttime':starttime}
+
+                    namevaldict.update(test.info())
+
+                    store.update(namevaldict)
+
                     if args.deletecompleted:
                         print 'removing %s from testnodes' % remoteresultssubdir
                         client.execute('platform rmdir %s' %

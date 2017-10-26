@@ -63,7 +63,7 @@ class TestPrepper(object):
 
         self._checkdir(trialdir)
 
-        self._savemeta(starttime, testdefdir, trialdir)
+        self._savemeta(trialdir)
 
 
     def _checkdir(self, logdirectory):
@@ -71,7 +71,7 @@ class TestPrepper(object):
             os.makedirs(logdirectory)
     
 
-    def _savemeta(self, starttime, testdefdir, logdirectory):
+    def _savemeta(self, logdirectory):
         hostname = Platform().hostname()
 
         nodedirectory = os.path.join(logdirectory, hostname)
@@ -83,11 +83,4 @@ class TestPrepper(object):
 
         store = WrapperStore(backingfilename)
 
-        namevaldict = {'starttime':starttime}
-
-        namevaldict.update(TestDirectory(testdefdir, None, merged=True).info())
-
-        store.update(hostname, namevaldict)
-
-        store.update(hostname,
-                     {'overlays':ConfigDictionary().asdict()['overlays']})
+        store.update(ConfigDictionary().asdict()['overlays'], section='overlays')

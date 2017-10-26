@@ -39,18 +39,34 @@ def getconfig():
 
 
 class ConfigDictionary(object):
-    def __init__(self):
+    def __init__(self,
+                 configfilename='etce',
+                 defaults = {
+                     'etce': {
+                         'VERBOSE':'off',
+                         'SSH_USER':os.path.basename(os.path.expanduser('~')),
+                         'SSH_PORT':'22',
+                         'DEFAULT_ETCE_HOSTNAME_FORMAT':'node-%03d',
+                         'TEMPLATE_SUFFIX':'tpl',
+                         'WORK_DIRECTORY':'/tmp/etce',
+                         'WRAPPER_PATH':'/opt/etcewrappers',
+                         'LOCK_FILE_DIRECTORY':'/run/lock',
+                         'ENV_OVERLAYS_ALLOW':''
+                     },
+                     'overlays': {
+                     },
+                 }):
         self.parser = ConfigParser.ConfigParser()
         self.parser.optionxform = str # leave case
 
-        currentuserhome = os.path.expanduser('~')
-        currentuser = os.path.basename(currentuserhome)
-        userconfig = os.path.join(currentuserhome, '.etce.conf')
+        configfiles = ['/etc/etce/%s.conf' % configfilename,
+                       os.path.join(os.path.expanduser('~'), '.%s.conf' % configfilename) ]
 
+        
         # read function should not cause error if any of the named files
         # don't exist. Duplicate values are overlayed by values found
         # later in the list.
-        self.parser.read([ '/etc/etce/etce.conf', userconfig ])
+        self.parser.read(configfiles)
 
         if self.parser.has_option('etce', 'WORK_DIRECTORY'):
             user_specified_workdir = self.parser.get('etce', 'WORK_DIRECTORY')
@@ -74,21 +90,6 @@ class ConfigDictionary(object):
                         (user_specified_workdir, ', '.join(allowed_roots))
                 raise ValueError(error)
 
-        defaults = {
-            'etce': {
-                'VERBOSE':'off',
-                'SSH_USER':currentuser,
-                'SSH_PORT':'22',
-                'DEFAULT_ETCE_HOSTNAME_FORMAT':'node-%03d',
-                'TEMPLATE_SUFFIX':'tpl',
-                'WORK_DIRECTORY':'/tmp/etce',
-                'WRAPPER_PATH':'/opt/etcewrappers',
-                'LOCK_FILE_DIRECTORY':'/run/lock',
-                'ENV_OVERLAYS_ALLOW':''
-            },
-            'overlays': {
-            },
-        }
 
         for section, namevals in defaults.items():
             if not self.parser.has_section(section):

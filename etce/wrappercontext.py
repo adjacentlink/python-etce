@@ -141,8 +141,7 @@ class WrapperContext(ArgRegistrar):
 
 
     def store(self, namevaldict):
-        self._wrapperstore.update(self._testdir.nodename(),
-                                  {self._args['wrappername']:namevaldict})
+        self._wrapperstore.update({self._args['wrappername']:namevaldict})
 
 
     @property

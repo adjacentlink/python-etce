@@ -35,8 +35,8 @@ from lxml import etree
 from lxml.etree import DocumentInvalid
 
 class XMLDoc(object):
-    def __init__(self, schemafile):
-        self._schema = etree.XMLSchema(etree.parse(resource_filename('etce',schemafile)))
+    def __init__(self, schemafile, schemamodule='etce'):
+        self._schema = etree.XMLSchema(etree.parse(resource_filename(schemamodule, schemafile)))
 
 
     def parse(self, xmlfile):

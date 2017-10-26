@@ -30,7 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from etce.jsonlockedstore import JSONLockedStore
+import json
+import os
 
 
 class WrapperStore(object):
@@ -38,12 +39,45 @@ class WrapperStore(object):
         if len(backingfilename) == 0:
             raise ValueError('ETCEStore backingfilename cannot be length 0.')
 
-        self._backingfile = JSONLockedStore(backingfilename)
-
-
-    def update(self, wrappername, namevaldict):
-        self._backingfile.update(wrappername, namevaldict, True)
+        self._backingfile = backingfilename
 
 
     def read(self):
-        return self._backingfile.read()
+        store = {}
+
+        with open(self._backingfile, 'r') as fd:
+            # read out
+            try:
+                store = json.load(fd)
+            except:
+                pass
+
+        return store
+
+
+    def update(self, namevaldict, section=None):
+        store = {}
+
+        mode = 'r+'
+        if not os.path.exists(self._backingfile):
+            mode = 'w+'
+
+        with open(self._backingfile, mode) as fd:    
+            # read out
+            try:
+                store = json.load(fd)
+            except:
+                pass
+
+            if section:
+                # add to subsection
+                if not section in store:
+                    store[section] = {}
+                store[section].update(namevaldict)
+            else:
+                # add to root
+                store.update(namevaldict)
+
+            # write back out
+            fd.seek(0, 0)
+            json.dump(store, fd)

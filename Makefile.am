@@ -1,7 +1,8 @@
-all-local:	setup.py
+all-local: setup.py
 	python setup.py build
 
-clean:	setup.py
+
+clean-local: setup.py
 	python setup.py clean
 	-rm -rf python_etce.egg-info
 	-rm -rf build
@@ -14,14 +15,18 @@ clean:	setup.py
 	-rm -rf `find . -name "*\.pyc"`
 	-rm -rf `find . -name "*~"`
 
-install:	setup.py
+
+install: setup.py
 	python setup.py install --prefix=@prefix@
+
 
 spec: setup.py
 	python setup.py bdist_rpm --spec-only
 
+
 sdist:
 	python setup.py sdist
+
 
 if HAVE_RPMBUILD
 REQUIRES=python-paramiko python-lxml python-mako lxc
@@ -29,6 +34,7 @@ REQUIRES=python-paramiko python-lxml python-mako lxc
 rpm: setup.py
 	python setup.py bdist_rpm --release $(RELEASE) --requires "$(REQUIRES)"
 endif
+
 
 if HAVE_DEB
 deb:    setup.py stdeb.cfg
