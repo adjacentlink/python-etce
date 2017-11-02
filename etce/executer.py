@@ -56,6 +56,11 @@ class Executer(object):
         
         hostname = Platform().hostname()
 
+        hostdir = os.path.join(self._test.location(), hostname)
+
+        if not os.path.exists(hostdir):
+            return
+
         logdirectory = os.path.join(
             self._config.get('etce','WORK_DIRECTORY'),
             logsubdirectory,
@@ -81,7 +86,8 @@ class Executer(object):
                 # ensure each wrapper is called with the testdirectory as
                 # the current working directory, and with it's own
                 # instance of the wrapper context
-                os.chdir(os.path.join(self._test.location(), hostname))
+                os.chdir(hostdir)
+
                 ctx = WrapperContext(wrappername,
                                      wrapperinstance,
                                      trialargs,

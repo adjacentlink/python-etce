@@ -58,7 +58,7 @@ class ExecuterDoc(etce.xmldoc.XMLDoc):
         if runfromstep:
             if not runfromstep in steplist:
                 errorstr = 'Specified runfromstep "%s" not a ' \
-                           'stepname in executer file. steps are %s' \
+                           'stepname in executer file. steps are\n%s' \
                            % (runfromstep,
                               '\n'.join(steplist))
             
@@ -70,7 +70,7 @@ class ExecuterDoc(etce.xmldoc.XMLDoc):
         if runtostep:
             if not runtostep in steplist:
                 errorstr = 'Specified runtostep "%s" not a ' \
-                           'stepname in executer file. steps are %s' \
+                           'stepname in executer file. steps are\n%s' \
                            % (runtostep,
                               '\n'.join(steplist))
                 
