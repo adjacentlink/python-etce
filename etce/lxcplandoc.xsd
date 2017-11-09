@@ -90,49 +90,55 @@
             </xs:sequence>
           </xs:complexType>
         </xs:element>
-          <xs:element name="host" minOccurs="0" maxOccurs="unbounded">
-	   <xs:complexType>
-	     <xs:sequence>
-              <xs:element name="kernelparameters" minOccurs="0" maxOccurs="1">
+        <xs:element name="hosts" minOccurs="1" maxOccurs="1">
+          <xs:complexType>
+	          <xs:sequence>
+              <xs:element name="host" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                   <xs:sequence>
-                    <xs:element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
-                  </xs:sequence>
-                </xs:complexType>
-              </xs:element>
-              <xs:element name="bridges" minOccurs="0" maxOccurs="1">
-                <xs:complexType>
-                  <xs:sequence>
-                    <xs:element name="bridge" minOccurs="0" maxOccurs="unbounded">
+                    <xs:element name="kernelparameters" minOccurs="0" maxOccurs="1">
+                       <xs:complexType>
+                        <xs:sequence>
+                          <xs:element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name="bridges" minOccurs="0" maxOccurs="1">
                       <xs:complexType>
                         <xs:sequence>
-                          <xs:element name="ipaddress" minOccurs="0" maxOccurs="1">
+                          <xs:element name="bridge" minOccurs="0" maxOccurs="unbounded">
                             <xs:complexType>
                               <xs:sequence>
-                                <xs:element name="ipv4" type="xs:string" minOccurs="0" maxOccurs="1"/>
-                                <xs:element name="ipv6" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                                <xs:element name="ipaddress" minOccurs="0" maxOccurs="1">
+                                  <xs:complexType>
+                                    <xs:sequence>
+                                      <xs:element name="ipv4" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                                      <xs:element name="ipv6" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                                    </xs:sequence>
+                                  </xs:complexType>
+                                </xs:element>
+                                <xs:element name="addif" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
                               </xs:sequence>
+                              <xs:attribute name="name" type="xs:string" use="required"/>
+                              <xs:attribute name="persistent" type="xs:boolean" use="required"/>
                             </xs:complexType>
                           </xs:element>
-                          <xs:element name="addif" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
                         </xs:sequence>
-                        <xs:attribute name="name" type="xs:string" use="required"/>
-                        <xs:attribute name="persistent" type="xs:boolean" use="required"/>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name="containers" minOccurs="1" maxOccurs="1">
+                      <xs:complexType>
+                        <xs:sequence minOccurs="0" maxOccurs="unbounded">
+                          <xs:element ref="container" minOccurs="0" maxOccurs="1"/>
+                        </xs:sequence>
+                        <xs:attribute name="rootdirectory" type="xs:string" use="required"/>
                       </xs:complexType>
                     </xs:element>
                   </xs:sequence>
-                </xs:complexType>
-              </xs:element>
-              <xs:element name="containers" minOccurs="1" maxOccurs="1">
-                <xs:complexType>
-                  <xs:sequence minOccurs="0" maxOccurs="unbounded">
-                    <xs:element ref="container" minOccurs="0" maxOccurs="1"/>
-                  </xs:sequence>
-                  <xs:attribute name="rootdirectory" type="xs:string" use="required"/>
+                  <xs:attribute name="hostname" type="xs:string" use="required"/>
                 </xs:complexType>
               </xs:element>
             </xs:sequence>
-            <xs:attribute name="hostname" type="xs:string" use="required"/>
           </xs:complexType>
         </xs:element>
       </xs:sequence>

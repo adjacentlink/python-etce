@@ -575,15 +575,15 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
                 ContainerTemplate(containertemplateelem, 
                                   containertemplate_parent)
                                             
-        hostelems = lxcplanelem.findall('./host')
+        hostelems = lxcplanelem.findall('./hosts/host')
+
+        bridges = {}
+
+        containers = {}
 
         for hostelem in hostelems:
-            bridges = {}
-
-            containers = {}
-
             hostname = hostelem.attrib.get('hostname')
-
+            print 'hostname=',hostname
             # 'localhost' is permitted as a catchall hostname to mean the
             # local machine only when one host is specified in the file
             if hostname == 'localhost':
@@ -697,7 +697,7 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
                                                           template,
                                                           bridges[hostname],
                                                           hostname))
-
+            print 'containers=',containers
             # Roll over containers to get names of implicit bridges added
             # from the container interface bridge names and augment
             # the bridges list
