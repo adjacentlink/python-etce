@@ -36,27 +36,60 @@ import shutil
 import stat
 import sys
 import time
+import etce.utils
 
-from platform import Platform
-from config import ConfigDictionary
-from lxcplandoc import LXCPlanDoc
+from etce.platform import Platform
+from etce.config import ConfigDictionary
+from etce.lxcplandoc import LXCPlanDoc
+from etce.lxcerror import LXCError
 
 
-class LXC:
+def startlxcs(lxcplan, writehosts=False, forcelxcroot=False):
+    lxcplandoc = lxcplan
+
+    if not type(lxcplan) == LXCPlanDoc:
+        # assume file name
+        lxcplandoc = LXCPlanDoc(lxcplan)
+
+    try:
+        LXCManagerImpl().start(lxcplandoc,
+                               writehosts=writehosts,
+                               forcelxcroot=forcelxcroot)
+    except Exception as e:
+        raise LXCError(e.message)
+
+
+def stoplxcs(lxcplan):
+    lxcplandoc = lxcplan
+
+    if not type(lxcplan) == LXCPlanDoc:
+        # assume file name
+        lxcplandoc = LXCPlanDoc(lxcplan)
+
+    try:
+        LXCManagerImpl().stop(lxcplandoc)
+    except Exception as e:
+        raise LXCError(e.message)
+
+
+
+class LXCManagerImpl(object):
     def __init__(self):
         # check root
-        if not os.geteuid() == 0:
-            raise RuntimeError('You need to be root to perform this command.')
+        #if not os.geteuid() == 0:
+        #    raise RuntimeError('You need to be root to perform this command.')
         self._platform = Platform()
 
 
-    def start(self, lxcplanfile, writehosts, forcelxcroot=False):
-        plandoc = LXCPlanDoc(lxcplanfile)
-
+    def start(self, plandoc, writehosts, forcelxcroot=False):
         hostname = socket.gethostname().split('.')[0]
         lxcrootdir = plandoc.lxcrootdirectory(hostname)
         containers = plandoc.containers(hostname)
 
+        if not containers:
+            print 'No containers assigned to "%s". Skipping.' % hostname
+            return
+        
         if not lxcrootdir[0] == '/':
             print 'rootdirectory "%s" for hostname "%s" is not an absolute path. Quitting.' % \
                 (lxcrootdir, hostname)
@@ -89,11 +122,8 @@ class LXC:
                 print '%s lxc root directory already exists, Quitting.' \
                     % lxcrootdir
                 return
-                
-        os.makedirs(lxcrootdir)
 
-        # lockfile
-        self._setlockfile(self._getlockfilename(), plandoc, hostname)
+        os.makedirs(lxcrootdir)
 
         # set kernelparameters
         kernelparameters = plandoc.kernelparameters(hostname)
@@ -154,16 +184,9 @@ class LXC:
         self._startnodes(containers)
 
 
-    def stop(self, forcedelete=False):
-        # check for lockfile
-        lockfilename = self._getlockfilename()
+    def stop(self, plandoc):
+        hostname = self._platform.hostname()
 
-        if not os.path.exists(lockfilename) or not os.path.isfile(lockfilename):
-            raise RuntimeError(
-                'Lockfile does not exist, no shutdown')
-
-        plandoc = LXCPlanDoc(lockfilename)
-        hostname = socket.gethostname().split('.')[0]
         noderoot = plandoc.lxcrootdirectory(hostname)
 
         for container in plandoc.containers(hostname):
@@ -176,7 +199,7 @@ class LXC:
                 print 'Bringing down bridge: %s' % bridge.devicename
                 self._platform.bridgedown(bridge.devicename)
 
-        os.remove(lockfilename)
+        os.remove(plandoc.planfile())
 
 
     def _makedirs(self, noderoot):
@@ -192,27 +215,6 @@ class LXC:
         os.makedirs(mntdir)
 
 
-    def _getlockfilename(self):
-        lockfiledir = ConfigDictionary().get('etce', 'LOCK_FILE_DIRECTORY')
-
-        if not os.path.exists(lockfiledir) or not os.path.isdir(lockfiledir):
-            raise RuntimeError('Lockfile directory "%s" does not exist or is not a directory. ' \
-                               'Please create it or configure LOCK_FILE_DIRECTORY in your etce.conf file.' \
-                               % lockfiledir)
-
-        return os.path.join(lockfiledir, 'etce.lxc.lock')
-
-
-    def _setlockfile(self, lockfile, plandoc, hostname):
-        if os.path.isfile(lockfile):
-            err = 'Detected an active lxc field with root at: %s. ' \
-                  'Run "etcelxc stop" first.' % plandoc.lxcrootdirectory(hostname)
-            raise RuntimeError(err)
-        else:
-            with open(lockfile, 'w') as lf:
-                lf.write(str(plandoc))
-
-
     def _startnodes(self, containers):
         for container in containers:
             noderoot = container.nodedirectory
@@ -223,9 +225,8 @@ class LXC:
                       '-- %s/init.sh '             \
                       '2> /dev/null &' %             \
                       (noderoot, lxcname, noderoot, noderoot)
-            
-            print command
-            os.system(command)
+
+            etce.utils.daemonize_command(command)
 
 
     def _waitstart(self, nodecount, lxcroot):
@@ -280,8 +281,7 @@ class LXC:
             # ipv4
             ipv4_entries = []
             for container in containers:
-                for _,entrytpl in container.hosts_entries_ipv4.items():
-                    hostentry,hostaddr = entrytpl
+                for hostentry,hostaddr in container.hosts_entries_ipv4:
                     ipv4_entries.append((hostentry,hostaddr))
             for hostentry,hostaddr in sorted(ipv4_entries):
                 ofd.write('%s %s\n' % (hostaddr,hostentry))
@@ -289,8 +289,7 @@ class LXC:
             #ipv6 = []
             ipv6_entries = []
             for container in containers:
-                for _,entrytpl in container.hosts_entries_ipv6.items():
-                    hostentry,hostaddr = entrytpl
+                for hostentry,hostaddr in container.hosts_entries_ipv6:
                     ipv6_entries.append((hostaddr,hostentry))
             for hostentry,hostaddr in sorted(ipv6_entries):
                 ofd.write('%s %s\n' % (hostaddr,hostentry))

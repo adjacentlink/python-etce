@@ -175,53 +175,36 @@ class WrapperContext(ArgRegistrar):
         
         # 1. call self.stop(pidfilename)
         self.stop(pidfilename)
-        
-        # 2. print the command name
-        print commandstr
-        
-        # 3. shlex the command string
-        command = shlex.split(commandstr)
 
-        # 4. if daemonize - do it
-        if etce.utils.daemonize() > 0:
+        # run the command
+        pid,subprocess = \
+            etce.utils.daemonize_command(commandstr,
+                                         stdout,
+                                         stderr,
+                                         starttime)
+        # return on parent
+        if pid > 0:
             return
 
-        stdoutfd = None
-        stderrfd = None
-        if not stdout is None:
-            stdoutfd = open(stdout, 'w')
-        if not stderr is None:
-            if stdout == stderr:
-                stderrfd = stdoutfd
-            else:
-                stderrfd = open(stderr, 'w')
-
-        # 6. if genpidfile is True, and pidfilename is None,
+        # 2. if genpidfile is True, and pidfilename is None,
         #    generate the pidfilename
         if genpidfile and pidfilename is None:
             pidfilename = self.default_pidfilename
 
-        # wait until specified time to start
-        if not starttime is None:
-            etce.timeutils.sleep_until(starttime)
-            
-        # 7. create the Popen subprocess
-        sp = subprocess.Popen(command, stdout=stdoutfd, stderr=stderrfd)
-
-        # 8. write the pid to pidfilename
+        # 3. write the pid to pidfilename
         if genpidfile:
             with open(pidfilename, 'w') as pidfile:
                 pidfile.write(str(sp.pid+pidincrement))
 
-        # 9. wait on subprocess
-        sp.wait()
+        # 4. wait on subprocess
+        subprocess.wait()
 
-        # 10. exit, do not return, because returning
-        #     will cause any subsequent wrappers in this
-        #     step to be rerun
+        # 5. exit, do not return, because returning
+        #    will cause any subsequent wrappers in this
+        #    step to be rerun
         sys.exit(0)
 
-    
+
     def run(self,
             commandstr,
             stdout=None,
@@ -229,13 +212,13 @@ class WrapperContext(ArgRegistrar):
             pidfilename=None,
             genpidfile=True,
             pidincrement=0):
-        
+
         # 1. call self.stop(pidfilename)
         self.stop(pidfilename)
-        
+
         # 2. print the command name
         print commandstr
-        
+
         # 3. shlex the command string
         command = shlex.split(commandstr)
 
@@ -243,6 +226,7 @@ class WrapperContext(ArgRegistrar):
         stderrfd = None
         if not stdout is None:
             stdoutfd = open(stdout, 'w')
+
         if not stderr is None:
             if stdout == stderr:
                 stderrfd = stdoutfd

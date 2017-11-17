@@ -1,6 +1,5 @@
-#!/bin/bash -
 #
-# Copyright (c) 2013-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2017 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,4 +30,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-python -m etce.lxcfieldmanager $@
+class LXCError(Exception):
+    def __init__(self, message):
+        Exception.__init__(self, message)

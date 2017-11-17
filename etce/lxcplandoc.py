@@ -38,7 +38,8 @@ from collections import defaultdict
 
 import etce.utils
 import etce.xmldoc
-        
+from etce.lxcerror import LXCError
+
 
 class Bridge(object):
     def __init__(self, bridgeelem):
@@ -357,7 +358,6 @@ class Container(object):
 
             containerparams[i] = (k,v.format(**overlays))
 
-        #return self._prune(containerparams)
         return containerparams
 
 
@@ -416,7 +416,7 @@ class Container(object):
                 bridge_entry_ipv6[bridgename] = \
                     entry_name_ipv6.format(**overlays)
 
-        hosts_entries_ipv4 = {}
+        hosts_entries_ipv4 = []
 
         for bridgename,entry_name_ipv4 in bridge_entry_ipv4.items():
             if not 'lxc.network.ipv4' in interfaces[bridgename]:
@@ -429,10 +429,9 @@ class Container(object):
                     
             addr = interfaces[bridgename]['lxc.network.ipv4']
 
-            hosts_entries_ipv4[bridgename] = \
-                (entry_name_ipv4,  addr.split('/')[0])
+            hosts_entries_ipv4.append((entry_name_ipv4,  addr.split('/')[0]))
 
-        hosts_entries_ipv6 = {}
+        hosts_entries_ipv6 = []
 
         for bridgename,entry_name_ipv6 in bridge_entry_ipv6.items():
             if not 'lxc.network.ipv6' in interfaces[bridgename]:
@@ -445,7 +444,7 @@ class Container(object):
                 
             addr = interfaces[bridgename]['lxc.network.ipv6']
 
-            hosts_entries_ipv6[bridgename] = (entry_name_ipv6,  addr)
+            hosts_entries_ipv6.append((entry_name_ipv6,  addr))
 
         return interfaces,hosts_entries_ipv4,hosts_entries_ipv6
 
@@ -497,19 +496,27 @@ class Container(object):
 
 class LXCPlanDoc(etce.xmldoc.XMLDoc):
     def __init__(self, lxcplanfile):
-        etce.xmldoc.XMLDoc.__init__(self, 
-                                    'lxcplandoc.xsd')
+        etce.xmldoc.XMLDoc.__init__(self, 'lxcplandoc.xsd')
 
-        if lxcplanfile is None:
-            raise ValueError('No lxcplanfile found')
-
+        if not os.path.isfile(lxcplanfile):
+            raise LXCError('Cannot find lxcplanfile "%s". Quitting.' % lxcplanfile)
+        
         self._lxcplanfile = lxcplanfile
 
         # just xml parse first
+        self._hostnames, \
         self._kernelparameters, \
         self._bridges, \
         self._containers, \
         self._rootdirectories = self._parseexecuter(lxcplanfile)
+
+
+    def planfile(self):
+        return self._lxcplanfile
+
+
+    def hostnames(self):
+        return copy.copy(self._hostnames)
 
 
     def kernelparameters(self, hostname):
@@ -581,9 +588,13 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
 
         containers = {}
 
+        hostnames = []
+
         for hostelem in hostelems:
             hostname = hostelem.attrib.get('hostname')
-            print 'hostname=',hostname
+
+            hostnames.append(hostname)
+            
             # 'localhost' is permitted as a catchall hostname to mean the
             # local machine only when one host is specified in the file
             if hostname == 'localhost':
@@ -613,7 +624,6 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
 
             rootdirectory = str(
                 hostelem.findall('./containers')[0].attrib['rootdirectory'])
-
             rootdirectories[hostname] = rootdirectory
 
             # ensure no repeated lxcindices
@@ -697,7 +707,7 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
                                                           template,
                                                           bridges[hostname],
                                                           hostname))
-            print 'containers=',containers
+
             # Roll over containers to get names of implicit bridges added
             # from the container interface bridge names and augment
             # the bridges list
@@ -706,13 +716,7 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
                     if not iname in bridges[hostname]:
                         bridges[hostname][iname] = BridgeImplicit(iname)
             
-        return kernelparameters,bridges,containers,rootdirectories
-
-    def __str__(self):
-        s = ''
-        for line in open(self._lxcplanfile):
-            s += line
-        return s
+        return hostnames,kernelparameters,bridges,containers,rootdirectories
 
 
 def main():

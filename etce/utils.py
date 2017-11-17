@@ -34,13 +34,18 @@ import datetime
 import os
 import os.path
 import resource
+import shlex
 import shutil
+import subprocess
 import sys
 import syslog
 import tarfile
 import tempfile
 
+import etce.timeutils
+
 from etce.config import ConfigDictionary
+
 
 # tar and zip src to dstarchive.
 def tarzip(srclist, dstarchive=None):
@@ -142,6 +147,43 @@ def untarzip(tarname, dstpath, clobber, minclobberdepth, deletetar):
         os.remove(tarname)
 
     return extractdir
+
+
+def daemonize_command(commandstr,
+                      stdout=None,
+                      stderr=None,
+                      starttime=None):
+
+    # 1. print the command name
+    print commandstr
+
+    # 2. shlex the command string
+    command = shlex.split(commandstr)
+
+    # 3. if daemonize - do it
+    pid = daemonize()
+    if  pid > 0:
+        return pid,None
+
+    stdoutfd = None
+    stderrfd = None
+    if not stdout is None:
+        stdoutfd = open(stdout, 'w')
+    if not stderr is None:
+        if stdout == stderr:
+            stderrfd = stdoutfd
+        else:
+            stderrfd = open(stderr, 'w')
+
+
+    # 4. wait until specified time to start
+    if starttime:
+        etce.timeutils.sleep_until(starttime)
+
+    # 5. create the Popen subprocess
+    sp = subprocess.Popen(command, stdout=stdoutfd, stderr=stderrfd)
+
+    return 0,sp
 
 
 def daemonize():

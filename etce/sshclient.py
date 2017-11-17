@@ -30,10 +30,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+import getpass
 import os
-import re
-import paramiko
 import json
+import paramiko
+import re
 import socket
 import StringIO
 from threading import Thread, Lock
@@ -55,84 +56,84 @@ def create(hosts, **kwargs):
 class PutThread(Thread):
     def __init__(self, connection, src_absname, dst_absname, host):
         Thread.__init__(self, name=host)
-        self.__sftpclient = connection.open_sftp()
-        self.__src = src_absname
-        self.__dst = dst_absname
+        self._sftpclient = connection.open_sftp()
+        self._src = src_absname
+        self._dst = dst_absname
 
     def run(self):
-        self.__sftpclient.put(self.__src, self.__dst)
+        self._sftpclient.put(self._src, self._dst)
 
 
 class GetThread(Thread):
     def __init__(self, connection, src_absname, dst_absname, host):
         Thread.__init__(self, name=host)
-        self.__sftpclient = connection.open_sftp()
-        self.__src = src_absname
-        self.__dst = dst_absname
+        self._sftpclient = connection.open_sftp()
+        self._src = src_absname
+        self._dst = dst_absname
 
     def run(self):
-        self.__sftpclient.get(self.__src, self.__dst)
+        self._sftpclient.get(self._src, self._dst)
 
 
 class ReadThread(Thread):
     def __init__(self, stream, lock, name, banner):
         Thread.__init__(self, name=name)
-        self.__stream = stream
-        self.__lock = lock
-        self.__banner = banner
+        self._stream = stream
+        self._lock = lock
+        self._banner = banner
         # Initialize return as a an exception message - No Value Returned
-        self.__returnobject = { 'isexception':True,
-                                'result': None,
-                                'traceback':None }
+        self._returnobject = { 'isexception':True,
+                               'result': None,
+                               'traceback':None }
 
     def run(self):
         retstrio = StringIO.StringIO()
         haveretstr = False
-        for line in self.__stream:
+        for line in self._stream:
             if SSHClient.RETURNVALUE_OPEN_DEMARCATOR in line:
                 haveretstr = True
             elif SSHClient.RETURNVALUE_CLOSE_DEMARCATOR in line:
                 haveretstr = False
                 endidx = line.find(SSHClient.RETURNVALUE_CLOSE_DEMARCATOR)
                 retstrio.write(line[0:endidx])
-                self.__returnobject = json.loads(retstrio.getvalue())
+                self._returnobject = json.loads(retstrio.getvalue())
                 retstrio.close()
             elif haveretstr:
                 retstrio.write(line)
             else:
-                self.__lock.acquire()
-                print self.__banner + line.strip()
-                self.__lock.release()
+                self._lock.acquire()
+                print self._banner + line.strip()
+                self._lock.release()
            
     def returnobject(self):
-        return self.__returnobject
+        return self._returnobject
 
 
 class ExecuteThread(Thread):
     lock = Lock()
     def __init__(self, connection, command, host):
         Thread.__init__(self, name=host)
-        self.__connection = connection
-        self.__command = command
-        self.__banner = '[' + host + '] '
+        self._connection = connection
+        self._command = command
+        self._banner = '[' + host + '] '
 
     def run(self):
-        stdi, stdo, stde = self.__connection.exec_command(self.__command)
-        self.__stdoreader = ReadThread(stdo, 
-                                ExecuteThread.lock, 
-                                self.name + '-stdo', 
-                                self.__banner)
-        self.__stdereader = ReadThread(stde, 
-                                ExecuteThread.lock, 
-                                self.name + '-stde', 
-                                self.__banner)
-        self.__stdoreader.start()
-        self.__stdereader.start()
-        self.__stdoreader.join()
-        self.__stdereader.join()
+        stdi, stdo, stde = self._connection.exec_command(self._command)
+        self._stdoreader = ReadThread(stdo, 
+                                      ExecuteThread.lock, 
+                                      self.name + '-stdo',
+                                      self._banner)
+        self._stdereader = ReadThread(stde, 
+                                      ExecuteThread.lock, 
+                                      self.name + '-stde',
+                                      self._banner)
+        self._stdoreader.start()
+        self._stdereader.start()
+        self._stdoreader.join()
+        self._stdereader.join()
 
     def returnobject(self):
-        return self.__stdoreader.returnobject()
+        return self._stdoreader.returnobject()
 
 
 class SSHClient(etce.fieldclient.FieldClient):
@@ -142,26 +143,53 @@ class SSHClient(etce.fieldclient.FieldClient):
     def __init__(self, hosts, **kwargs):
         etce.fieldclient.FieldClient.__init__(self, hosts)
 
-        self.__connection_dict = {}
+        self._connection_dict = {}
+
         user = kwargs.get('user', None)
+
         port = kwargs.get('port', None)
+
+        key_filenames = kwargs.get('key_filename', [])
+
         self._envfile = kwargs.get('envfile', None)
+
         self._config = ConfigDictionary()
+
         if user is None:
             user = self._config.get('etce', 'SSH_USER')
+
         if port is None:
             port = int(self._config.get('etce', 'SSH_PORT'))
 
-        for h in hosts:
+        for host in hosts:
             try:
                 client = paramiko.SSHClient()
+
                 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                self.__connection_dict[h] = client
-                self.__connection_dict[h].load_system_host_keys()
-                self.__connection_dict[h].connect(hostname=h, username=user, port=port)
+
+                self._connection_dict[host] = client
+
+                try:
+                    self._connection_dict[host].connect(hostname=host,
+                                                        username=user,
+                                                        port=int(port),
+                                                        key_filename=key_filenames,
+                                                        allow_agent=False)
+                except paramiko.ssh_exception.AuthenticationException as e:
+                    if key_filenames:
+                        client.connect(hostname=host,
+                                       username=user,
+                                       port=int(port),
+                                       key_filename=key_filenames,
+                                       allow_agent=False,
+                                       password=getpass.getpass('Passphrase for %s: ' % key_filenames[0]))
+                    else:
+                        raise e
+
             except socket.gaierror as ge:
-                message = '%s "%s". Quitting.' % (ge.strerror, h)
+                message = '%s "%s". Quitting.' % (ge.strerror, host)
                 raise FieldConnectionError(message)
+
             except paramiko.ssh_exception.NoValidConnectionsError as e:
                 raise FieldConnectionError('Unable to connect to host "%s". Quitting.' % h)
 
@@ -236,8 +264,8 @@ class SSHClient(etce.fieldclient.FieldClient):
             threads = []
             for host in dsthosts:
                 # create name of tar file on destination
-                if host in self.__connection_dict:
-                    threads.append(PutThread(self.__connection_dict[host],
+                if host in self._connection_dict:
+                    threads.append(PutThread(self._connection_dict[host],
                                              abssrctar,
                                              absdsttar,
                                              host))
@@ -272,8 +300,8 @@ class SSHClient(etce.fieldclient.FieldClient):
             fullcommandstr += '--cwd %s ' % workingdir
         fullcommandstr += commandstr
         for host in hosts:
-            if host in self.__connection_dict:
-                threads.append(ExecuteThread(self.__connection_dict[host],
+            if host in self._connection_dict:
+                threads.append(ExecuteThread(self._connection_dict[host],
                                              fullcommandstr,
                                              host))
         # start the threads
@@ -348,7 +376,7 @@ class SSHClient(etce.fieldclient.FieldClient):
             return
 
         # Create GetThread for the hosts that have a tarfile to transfer
-        threads = [ GetThread(self.__connection_dict[host],
+        threads = [ GetThread(self._connection_dict[host],
                               tfile,
                               os.path.join('/tmp',os.path.basename(tfile)),
                               host) for host,tfile in tarfiles.items() ]
@@ -372,7 +400,7 @@ class SSHClient(etce.fieldclient.FieldClient):
                 if self._envfile is not None:
                     command = '. %s; %s' % (self._envfile, command)
                 # also set up a thread to remove the tarfile on remotes
-                threads.append(ExecuteThread(self.__connection_dict[host],
+                threads.append(ExecuteThread(self._connection_dict[host],
                                              command,
                                              host))
             finally:
@@ -447,6 +475,6 @@ class SSHClient(etce.fieldclient.FieldClient):
 
 
     def close(self):
-        for host in self.__connection_dict:
-            self.__connection_dict[host].close()
+        for host in self._connection_dict:
+            self._connection_dict[host].close()
         

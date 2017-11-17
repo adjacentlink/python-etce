@@ -66,17 +66,11 @@ description: Dynamically loads and runs the Python method:
              modulename.methodname(methodarg1, methodarg2, ...).
              
              where modulename specifies a Python module found in the
-             "etce" package. The full subpath to the module is 
-             searched in decreasing steps of specifity to allow
-             for specialization:
+             "etce" package. 
 
-             etce/osname/osversion/architecture
-             etce/osname/osversion
-             etce/osname
-             etce
-
-             etceexec.ssh is not inteneded to be called directly.
-             See "etceexec" for exec'ing on an ETCE field.
+             etce-exec.ssh is not intended to be called directly. It
+             is invoked by other etce applications over an SSH connection on
+             field nodes to perform work.
 '''
 parser = argparse.ArgumentParser(description=usagestr,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
