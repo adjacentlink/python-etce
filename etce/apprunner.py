@@ -37,26 +37,28 @@ from threading import Thread, Event
 
 
 class AppRunner(Thread):
-    def __init__(self, commandstr):
-        # Note - below replaced shlex split with string split.
-        # Saw on python 2.6.6
-        self.__args = shlex.split(commandstr)
-        #self.__args = commandstr.split()
+    def __init__(self, commandstr, stdout=subprocess.PIPE, stderr=subprocess.STDOUT):
+        self._stdout_arg = stdout
+        self._stderr_arg = stderr
+        self._args = shlex.split(commandstr)
 
-        Thread.__init__(self, name=self.__args[0])
-        self.__event = Event()
+        Thread.__init__(self, name=self._args[0])
+        self._event = Event()
         self.start()
-        self.__event.wait()
+        self._event.wait()
+
 
     def run(self):
-        self.__process = subprocess.Popen(self.__args,
-                                          stdout=subprocess.PIPE,
-                                          stderr=subprocess.STDOUT)
-        self.__stdout = self.__process.stdout
-        self.__event.set()
+        self._process = subprocess.Popen(self._args,
+                                         stdout=self._stdout_arg,
+                                         stderr=self._stderr_arg)
+        self._stdout = self._process.stdout
+        self._event.set()
+
 
     def stdout(self):
-        return self.__stdout
+        return self._stdout
+
 
     def retvalue(self):
-        return self.__process.wait()
+        return self._process.wait()

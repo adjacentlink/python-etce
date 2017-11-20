@@ -35,6 +35,7 @@ import os
 import re
 import signal
 import socket
+import sys
 
 import etce.platformimpl
 import etce.utils
@@ -224,11 +225,18 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         pid = None
         if os.path.exists(pidfile):
             if os.path.isfile(pidfile):
-                pid = int(open(pidfile).readline())
+                try:
+                    pid = int(open(pidfile).readline())
+                except ValueError as e:
+                    print >>sys.stderr,type(e)
+                    print >>sys.stderr,'Pidfile "%s" does not contain a valid PID. Skipping.' % \
+                        pidfile
+                    os.remove(pidfile)
+                    pid = None
             else:
                 # error - pidfile is not a regular fle
-                error = 'pidfile %s exists but is not a regular file. ' \
-                        'Quitting' % pidfile
+                error = 'Pidfile "%s" exists but is not a regular file. ' \
+                        'Quitting.' % pidfile
                 raise RuntimeError(error)
         return pid
 

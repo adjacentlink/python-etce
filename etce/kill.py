@@ -46,7 +46,7 @@ class Kill(object):
         for pidfile in os.listdir(lockfiledir):
             if pidfile.startswith(my_pidfile_prefix):
                 fullpidfile = os.path.join(lockfiledir, pidfile)
-
+                
                 pid = p.kill(fullpidfile)
 
                 if pid:

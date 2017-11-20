@@ -182,6 +182,7 @@ class WrapperContext(ArgRegistrar):
                                          stdout,
                                          stderr,
                                          starttime)
+
         # return on parent
         if pid > 0:
             return
@@ -194,7 +195,7 @@ class WrapperContext(ArgRegistrar):
         # 3. write the pid to pidfilename
         if genpidfile:
             with open(pidfilename, 'w') as pidfile:
-                pidfile.write(str(sp.pid+pidincrement))
+                pidfile.write(str(subprocess.pid+pidincrement))
 
         # 4. wait on subprocess
         subprocess.wait()
@@ -258,7 +259,7 @@ class WrapperContext(ArgRegistrar):
         pid = self._platform.readpid(pidfilename)
 
         # if found a pid, kill the process and remove the file
-        if pid is not None:
+        if pid:
             try:
                 print 'killing pid %d found in %s' % (pid, pidfilename)
                 os.kill(pid, signal.SIGQUIT)

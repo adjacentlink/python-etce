@@ -39,6 +39,7 @@ import sys
 import traceback
 
 import etce.timeutils
+from etce.apprunner import AppRunner
 from etce.config import ConfigDictionary
 from etce.etceexecuteexception import ETCEExecuteException
 from etce.fieldconnectionerror import FieldConnectionError
@@ -118,6 +119,18 @@ def add_run_arguments(parser):
                         Executer step names that match any of the
                         specified strings are skipped in test execution.
                         Strings match if they match by prefix.
+                        default: None.''')
+    parser.add_argument('--hookscript',
+                        action='store',
+                        default=None,
+                        help='''Use the hookscript argument to specify a script 
+                        that will be called before an after each trial. The
+                        value of this argument is: script[:userarg]*. The named
+                        script is called before and after at each test iteration
+                        as:
+
+                        script setup|teardown testdirectory logdirectory [userarg]*
+
                         default: None.''')
     parser.add_argument('--numtrials', 
                         action='store', 
@@ -262,18 +275,12 @@ def run_test(args):
     resultsubdirs = []
 
     try:
-        # create connection to all nodes
-        client = ClientBuilder().build(allnodes,
-                                       user=args.user,
-                                       port=args.port,
-                                       envfile=args.envfile)
-
         config = ConfigDictionary()
 
         testdivider = '='*15
 
         stepdivider = '-'*10
-
+        
         filtersteps = []
         if args.filtersteps:
             filtersteps = args.filtersteps.split(':')
@@ -309,7 +316,14 @@ def run_test(args):
                 ExecuterDoc(exithookfile).getsteps(args.runfromstep, 
                                                    args.runtostep, 
                                                    filtersteps)
-                
+
+        hookscript_format = None
+
+        if args.hookscript:
+            tokens = args.hookscript.split(':')
+            script = tokens[0]
+            hookscript_format = tokens[0] + ' %s %s %s ' + ' '.join(tokens[1:])
+
         for test in tests:
             try:
                 # run test trials
@@ -342,6 +356,33 @@ def run_test(args):
                                           extrafiles=extrafiles,
                                           absbasedir_override=args.basedir)
 
+                    if hookscript_format:
+                        print stepdivider
+
+                        hookscript_command = hookscript_format % \
+                                             ('setup',
+                                              localtesttemplatedir,
+                                              localtestresultsdir)
+                        
+                        print 'setup hookscript:',hookscript_command
+                        
+                        print 'returns: %d' % \
+                            AppRunner(hookscript_command, stdout=sys.stdout, stderr=sys.stderr).retvalue()
+
+                        print
+                        
+                        client = ClientBuilder().build(allnodes,
+                                                       user=args.user,
+                                                       port=args.port,
+                                                       envfile=args.envfile)
+
+                    # create connection to all nodes
+                    elif client is None:
+                        client = ClientBuilder().build(allnodes,
+                                           user=args.user,
+                                           port=args.port,
+                                           envfile=args.envfile)
+                        
                     executer = \
                         ExecuterDoc(os.path.join(localtesttemplatedir,
                                                  test.executerfile()))
@@ -350,7 +391,7 @@ def run_test(args):
                         executer.getsteps(args.runfromstep, 
                                           args.runtostep, 
                                           filtersteps)
-                    
+
                     # put the template directory to the rootnodes
                     client.put(localtesttemplatedir, 
                                '.', 
@@ -374,7 +415,7 @@ def run_test(args):
                         args.delaysecs,
                         quantizesecs=10)
 
-                    print 'Emulation Start Time: %s' % starttime
+                    print 'Trial Start Time: %s' % starttime
 
                     print stepdivider
 
@@ -386,7 +427,7 @@ def run_test(args):
                     # call testprepper to publish test definition and
                     # create logdir on the root nodes
                     command = 'testprepper run %s %s %s' % \
-                              (starttime, 'template', trialdir) 
+                              (starttime, 'template', trialdir)
 
                     client.execute(command, filesystemnodes)
 
@@ -433,6 +474,22 @@ def run_test(args):
                                        remoteresultssubdir, filesystemnodes)
 
                     print stepdivider
+
+                    if hookscript_format:
+                        client = None and client.close()
+
+                        hookscript_command = hookscript_format % \
+                                             ('teardown',
+                                              localtesttemplatedir,
+                                              localtestresultsdir)
+                        
+                        print 'teardown hookscript:',hookscript_command
+
+                        print 'returns: %d' % \
+                            AppRunner(hookscript_command, stdout=sys.stdout, stderr=sys.stderr).retvalue()
+
+                        print
+                        print stepdivider
 
                     print 'END "%s" trial %d' % (test.name(),i+1)
 

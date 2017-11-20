@@ -191,9 +191,14 @@ class SSHClient(etce.fieldclient.FieldClient):
                 raise FieldConnectionError(message)
 
             except paramiko.ssh_exception.NoValidConnectionsError as e:
-                raise FieldConnectionError('Unable to connect to host "%s". Quitting.' % h)
+                raise FieldConnectionError('Unable to connect to host "%s". Quitting.' % host)
 
+            except Exception as e:
+                print 'here exception'
+                message = 'Unable to connect to host "%s" (%s). Quitting.' % (host, str(e))
+                raise FieldConnectionError(message)
 
+            
     def sourceisdestination(self, host, srcfilename, dstfilename):
         if srcfilename == dstfilename:
             p = Platform()        
