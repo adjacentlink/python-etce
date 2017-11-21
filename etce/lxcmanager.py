@@ -44,7 +44,7 @@ from etce.lxcplandoc import LXCPlanDoc
 from etce.lxcerror import LXCError
 
 
-def startlxcs(lxcplan, writehosts=False, forcelxcroot=False):
+def startlxcs(lxcplan, writehosts=False, forcelxcroot=False, dryrun=False):
     lxcplandoc = lxcplan
 
     if not type(lxcplan) == LXCPlanDoc:
@@ -54,7 +54,8 @@ def startlxcs(lxcplan, writehosts=False, forcelxcroot=False):
     try:
         LXCManagerImpl().start(lxcplandoc,
                                writehosts=writehosts,
-                               forcelxcroot=forcelxcroot)
+                               forcelxcroot=forcelxcroot,
+                               dryrun=dryrun)
     except Exception as e:
         raise LXCError(e.message)
 
@@ -81,7 +82,7 @@ class LXCManagerImpl(object):
         self._platform = Platform()
 
 
-    def start(self, plandoc, writehosts, forcelxcroot=False):
+    def start(self, plandoc, writehosts, forcelxcroot=False, dryrun=False):
         hostname = socket.gethostname().split('.')[0]
         lxcrootdir = plandoc.lxcrootdirectory(hostname)
         containers = plandoc.containers(hostname)
@@ -119,9 +120,7 @@ class LXCManagerImpl(object):
                     % lxcrootdir
                 shutil.rmtree(lxcrootdir)
             else:
-                print '%s lxc root directory already exists, Quitting.' \
-                    % lxcrootdir
-                return
+                raise LXCError('%s lxc root directory already exists, Quitting.' % lxcrootdir)
 
         os.makedirs(lxcrootdir)
 
@@ -134,27 +133,33 @@ class LXCManagerImpl(object):
                 os.system('sysctl %s=%s' % (kernelparamname,kernelparamval))
 
         # bring up bridge
-        for _,bridge in plandoc.bridges(hostname).items():
-            if not bridge.persistent:
-                print 'Bringing up bridge: %s' % bridge.devicename
+        if not dryrun:
+            for _,bridge in plandoc.bridges(hostname).items():
+                if not bridge.persistent:
+                    print 'Bringing up bridge: %s' % bridge.devicename
 
-                self._platform.bridgeup(bridge.devicename,
-                                        bridge.addifs,
-                                        enablemulticastsnooping=True)
+                    self._platform.bridgeup(bridge.devicename,
+                                            bridge.addifs,
+                                            enablemulticastsnooping=True)
 
-                if not bridge.ipv4 is None:
-                    self._platform.adddeviceaddress(bridge.devicename,
-                                                    bridge.ipv4)
+                    if not bridge.ipv4 is None:
+                        self._platform.adddeviceaddress(bridge.devicename,
+                                                        bridge.ipv4)
 
-                if not bridge.ipv6 is None:
-                    self._platform.adddeviceaddress(bridge.devicename,
-                                                    bridge.ipv6)
+                    if not bridge.ipv6 is None:
+                        self._platform.adddeviceaddress(bridge.devicename,
+                                                        bridge.ipv6)
 
-            elif not self._platform.isdeviceup(bridge.devicename):
-                raise RuntimeError('Bridge %s marked persistent is not up. Quitting.')
 
-        if writehosts:
-            self._writehosts(containers)
+                    time.sleep(0.1)
+                        
+                elif not self._platform.isdeviceup(bridge.devicename):
+                    raise RuntimeError('Bridge %s marked persistent is not up. Quitting.')
+
+        # write hosts file
+        if not dryrun:
+            if writehosts:
+                self._writehosts(containers)
 
         # create container files
         for container in containers:
@@ -180,8 +185,10 @@ class LXCManagerImpl(object):
                              stat.S_IXGRP | stat.S_IROTH | \
                              stat.S_IXOTH)
 
-            
-        self._startnodes(containers)
+        if dryrun:
+            print 'dryrun'
+        else:
+            self._startnodes(containers)
 
 
     def stop(self, plandoc):
@@ -226,8 +233,15 @@ class LXCManagerImpl(object):
                       '2> /dev/null &' %             \
                       (noderoot, lxcname, noderoot, noderoot)
 
-            etce.utils.daemonize_command(command)
+            pid,sp = etce.utils.daemonize_command(command)
 
+            if pid == 0:
+                # child
+                sp.wait()
+                sys.exit(0)
+
+            time.sleep(0.1)
+            
 
     def _waitstart(self, nodecount, lxcroot):
         numstarted = 0

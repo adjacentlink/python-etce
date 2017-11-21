@@ -59,12 +59,14 @@ def startfield(args):
               'Run "etcelxc stop" first.' % \
               plandoc.lxcrootdirectory(this_hostname)
         raise LXCError(err)
-    else:
-        shutil.copy(args.lxcplanfile, lockfilename)
             
     startlxcs(plandoc,
               args.writehosts,
-              args.forcelxcroot)
+              args.forcelxcroot,
+              args.dryrun)
+
+    if not args.dryrun:
+        shutil.copy(args.lxcplanfile, lockfilename)
 
     other_hosts = set(plandoc.hostnames()).difference(
         ['localhost', this_hostname])
@@ -178,6 +180,11 @@ def main():
                               help='Start a network of LXC container and Linux bridges' \
                               'based on the description in the LXC plan file.')
 
+    parser_start.add_argument('--dryrun',
+                              action='store_true',
+                              default=False,
+                              help='''Create the container configurations but do not start
+                              the container.''')
     parser_start.add_argument('--forcelxcroot',
                               action='store_true',
                               default=False,

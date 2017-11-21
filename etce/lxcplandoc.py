@@ -420,9 +420,9 @@ class Container(object):
 
         for bridgename,entry_name_ipv4 in bridge_entry_ipv4.items():
             if not 'lxc.network.ipv4' in interfaces[bridgename]:
-                error = 'Found hosts_entry_ipv6 attribute for ' \
+                error = 'Found hosts_entry_ipv4 attribute for ' \
                         'bridge "%s" for container "%s" but ' \
-                        'no corresponding "lxc.network.ipv6" ' \
+                        'no corresponding "lxc.network.ipv4" ' \
                         'value for the interface. Quitting.' \
                         % (bridgename, self.lxcname)
                 raise ValueError(error)
