@@ -601,7 +601,7 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
                 if len(hostelems) > 1:
                     error = '"localhost" hostname only permitted when one ' \
                             'host is specified. Quitting'
-                    raise ValueError(errir)
+                    raise ValueError(error)
 
             # kernel params
             kernelparameters[hostname] = {}
