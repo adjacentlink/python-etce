@@ -46,7 +46,7 @@ import etce.utils
 
 class TestDirectory(object):
     MANIFESTFILENAME = 'manifest.xml'
-    EXECUTERFILENAME = 'executer.xml'
+    STEPSFILENAME = 'steps.xml'
     CONFIGFILENAME = 'config.xml'
     HOSTFILENAME = 'nodefile.txt'
     DOCSUBDIRNAME = 'doc'
@@ -115,8 +115,8 @@ class TestDirectory(object):
         return self._findparams()
 
 
-    def executerfile(self):
-        return TestDirectory.EXECUTERFILENAME
+    def stepsfile(self):
+        return TestDirectory.STEPSFILENAME
 
 
     def __str__(self):

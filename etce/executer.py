@@ -37,7 +37,7 @@ import os.path
 import etce.loader
 import etce.timeutils
 from etce.testdirectory import TestDirectory
-from etce.executerdoc import ExecuterDoc
+from etce.stepsdoc import StepsDoc
 from etce.config import ConfigDictionary
 from etce.platform import Platform
 from etce.wrappercontext import WrapperContext
@@ -47,12 +47,12 @@ from etce.wrapperloader import WrapperLoader
 class Executer(object):
     def __init__(self):
         self._test = TestDirectory(os.getcwd(), None, merged=True)
-        self._executer = ExecuterDoc(self._test.executerfile())
+        self._stepsdoc = StepsDoc(self._test.stepsfile())
         self._config = ConfigDictionary()
 
 
     def step(self, stepname, starttime, logsubdirectory):
-        wrappers = self._executer.getwrappers(stepname)
+        wrappers = self._stepsdoc.getwrappers(stepname)
         
         hostname = Platform().hostname()
 
@@ -81,7 +81,7 @@ class Executer(object):
             for wrappername,methodname,testargs in wrappers:
                 wrapperinstance = \
                     wldr.loadwrapper(wrappername,
-                                     self._executer.getpackageprefixes())
+                                     self._stepsdoc.getpackageprefixes())
                 
                 # ensure each wrapper is called with the testdirectory as
                 # the current working directory, and with it's own

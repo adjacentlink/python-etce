@@ -52,7 +52,7 @@ class WrapperContext(ArgRegistrar):
         and "overlays".
 
         args are parameter values passed to wrappers on a test
-        by test basis. They are set in the test executer.xml file,
+        by test basis. They are set in the test steps.xml file,
         the (optional) test config.xml file and from internal 
         values calculated on each test run:
 

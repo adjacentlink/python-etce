@@ -180,7 +180,7 @@ class ContainerTemplate(object):
 
         hosts_entries_ipv6 = parent.hosts_entries_ipv6 if parent else {}
 
-        for paramelem in containertemplateelem.findall('./parameter'):
+        for paramelem in containertemplateelem.findall('./parameters/parameter'):
             # lxc.utsname set by container element attribute
             if(str(paramelem.attrib['name']) == 'lxc.utsname'):
                 print >>sys.stderr, \
@@ -343,7 +343,7 @@ class Container(object):
         for k,v in commonparams:
             containerparams.append((k,v))
 
-        for paramelem in containerelem.findall('./parameter'):
+        for paramelem in containerelem.findall('./parameters/parameter'):
             if(str(paramelem.attrib['name']) == 'lxc.utsname'):
                 # the lxcname is set by the container element atribute
                 print >>sys.stderr, \
@@ -508,7 +508,7 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
         self._kernelparameters, \
         self._bridges, \
         self._containers, \
-        self._rootdirectories = self._parseexecuter(lxcplanfile)
+        self._rootdirectories = self._parseplan(lxcplanfile)
 
 
     def planfile(self):
@@ -547,7 +547,7 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
         return self._containers.get('localhost', [])
 
 
-    def _parseexecuter(self, lxcplanfile): 
+    def _parseplan(self, lxcplanfile): 
         lxcplanelem = self.parse(lxcplanfile)
 
         kernelparameters = {}
@@ -653,7 +653,7 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
                 # fetch the overlays
                 overlays = {}
 
-                for overlayelem in containerelem.findall('./overlay'):
+                for overlayelem in containerelem.findall('./overlays/overlay'):
                     oname = overlayelem.attrib['tag']
 
                     ovalue = overlayelem.attrib['value']
@@ -663,7 +663,7 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
                 # fetch the overlaylists
                 overlaylists = {}
 
-                for overlaylistelem in containerelem.findall('./overlaylist'):
+                for overlaylistelem in containerelem.findall('./overlays/overlaylist'):
                     oname = overlaylistelem.attrib['tag']
 
                     separator = overlaylistelem.attrib.get('separator',',')

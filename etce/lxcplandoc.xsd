@@ -23,6 +23,14 @@
     </xs:complexType>
   </xs:element>
 
+  <xs:element name="parameters">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
   <xs:element name="overlay">
     <xs:complexType>
       <xs:attribute name="tag" type="xs:string"/>
@@ -41,9 +49,15 @@
   <xs:element name="container">
     <xs:complexType>
       <xs:sequence>
-        <xs:element ref="overlay" minOccurs="0" maxOccurs="unbounded"/>
-        <xs:element ref="overlaylist" minOccurs="0" maxOccurs="unbounded"/>
-        <xs:element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="overlays" minOccurs="0" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element ref="overlay" minOccurs="0" maxOccurs="unbounded"/>
+              <xs:element ref="overlaylist" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element ref="parameters" minOccurs="0" maxOccurs="1"/>
         <xs:element ref="interfaces" minOccurs="0" maxOccurs="1"/>
         <xs:element ref="initscript" minOccurs="0" maxOccurs="1"/>
       </xs:sequence>
@@ -79,7 +93,7 @@
               <xs:element name="containertemplate" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                   <xs:sequence>
-                    <xs:element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
+                    <xs:element ref="parameters" minOccurs="0" maxOccurs="1"/>
                     <xs:element ref="interfaces" minOccurs="0" maxOccurs="1"/>
                     <xs:element ref="initscript" minOccurs="0" maxOccurs="1"/>
                   </xs:sequence>

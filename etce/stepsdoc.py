@@ -39,17 +39,17 @@ import etce.xmldoc
 from lxml import etree
 
 
-class ExecuterDoc(etce.xmldoc.XMLDoc):
-    def __init__(self, executerfile):
+class StepsDoc(etce.xmldoc.XMLDoc):
+    def __init__(self, stepsfile):
         etce.xmldoc.XMLDoc.__init__(self,
-                                    'executerfile.xsd')
+                                    'stepsfile.xsd')
 
-        if executerfile is None:
-            raise ValueError('No executerfile found')
+        if stepsfile is None:
+            raise ValueError('No stepsfile found')
         self._packageprefixes, \
         self._steplist, \
         self._filterdict, \
-        self._wrapperlist = self._parseexecuter(executerfile)
+        self._wrapperlist = self._parsesteps(stepsfile)
 
 
     def getsteps(self, runfromstep=None, runtostep=None, filtersteps=[]):
@@ -58,7 +58,7 @@ class ExecuterDoc(etce.xmldoc.XMLDoc):
         if runfromstep:
             if not runfromstep in steplist:
                 errorstr = 'Specified runfromstep "%s" not a ' \
-                           'stepname in executer file. steps are\n%s' \
+                           'stepname in steps file. steps are\n%s' \
                            % (runfromstep,
                               '\n'.join(steplist))
             
@@ -70,7 +70,7 @@ class ExecuterDoc(etce.xmldoc.XMLDoc):
         if runtostep:
             if not runtostep in steplist:
                 errorstr = 'Specified runtostep "%s" not a ' \
-                           'stepname in executer file. steps are\n%s' \
+                           'stepname in steps file. steps are\n%s' \
                            % (runtostep,
                               '\n'.join(steplist))
                 
@@ -99,11 +99,11 @@ class ExecuterDoc(etce.xmldoc.XMLDoc):
         return tuple(self._packageprefixes)
 
 
-    def _parseexecuter(self, executerfile): 
-        executerelem = self.parse(executerfile)
+    def _parsesteps(self, stepsfile): 
+        stepselem = self.parse(stepsfile)
 
         packageprefixes = [ None ]
-        for usingelem in executerelem.findall('./using'):
+        for usingelem in stepselem.findall('./using'):
             packageprefixes.append(usingelem.attrib['package'])
 
         steplist = []
@@ -112,7 +112,7 @@ class ExecuterDoc(etce.xmldoc.XMLDoc):
 
         wrapperlist = []
 
-        for stepelem in executerelem.findall('./step'):
+        for stepelem in stepselem.findall('./step'):
             stepname = stepelem.attrib['name']
 
             filtername = stepelem.attrib.get('filter', None)
@@ -136,8 +136,8 @@ class ExecuterDoc(etce.xmldoc.XMLDoc):
 
             if stepname in steplist:
                 errstr = \
-                    'Stepname "%s" appears more thane once in executer file "%s". Quitting.' % \
-                    (stepname, executerfile)
+                    'Stepname "%s" appears more thane once in steps file "%s". Quitting.' % \
+                    (stepname, stepsfile)
                 raise RuntimeError(errstr)
             
             steplist.append(stepname)

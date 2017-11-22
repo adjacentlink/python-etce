@@ -49,7 +49,7 @@ from etce.platform import Platform
 from etce.publisher import add_publish_arguments,publish_test,Publisher
 from etce.testcollection import add_list_arguments,list_tests,TestCollection,TestCollectionError
 from etce.testdirectory import TestDirectory
-from etce.executerdoc import ExecuterDoc
+from etce.stepsdoc import StepsDoc
 from etce.wrapperstore import WrapperStore
 
 
@@ -95,7 +95,7 @@ def add_run_arguments(parser):
     #parser.add_argument('--entryhookfile',
     #                    action='store',
     #                    default=None,
-    #                    help='''An ETCE Executer file defining steps to run
+    #                    help='''An ETCE Steps file defining steps to run
     #                    at the beginnig of every test. Overrides
     #                    etcetest ENTRYHOOKFILE parameter value.
     #                    default: None.''')
@@ -108,7 +108,7 @@ def add_run_arguments(parser):
     #parser.add_argument('--exithookfile',
     #                    action='store',
     #                    default=None,
-    #                    help='''An ETCE Executer file defining steps to run
+    #                    help='''An ETCE Steps file defining steps to run
     #                    at the end of every test. Overrides
     #                    etcetest EXITHOOKFILE parameter value.
     #                    default: None.''')
@@ -116,10 +116,9 @@ def add_run_arguments(parser):
                         action='store',
                         default=None,
                         help='''Specify a set of strings delimited by ":".
-                        Executer step names that match any of the
-                        specified strings are skipped in test execution.
-                        Strings match if they match by prefix.
-                        default: None.''')
+                        Step names that match any of the specified
+                        strings are skipped. Strings match if they match by
+                        prefix. default: None.''')
     parser.add_argument('--hookscript',
                         action='store',
                         default=None,
@@ -151,24 +150,24 @@ def add_run_arguments(parser):
                         remaining trials of the errant test''')
     parser.add_argument('--runfromstep',
                         default=None,
-                        help='''Only run from the named step of the executer
+                        help='''Only run from the named step of the steps
                         file. When set, numtrials parameter is ignored (set 
                         to 1), and testroot must only contain one
                         test. Useful for debugging. If used in 
                         conjunction with runtostep, will only run the 
                         steps in the interval defined by both 
                         runfromstep:runtostep. 
-                        default: run all executer steps.''')
+                        default: run all steps.''')
     parser.add_argument('--runtostep',
                         default=None,
-                        help='''Only run until the named step of the executer
+                        help='''Only run until the named step of the steps
                         file. When set, numtrials parameter is ignored (set 
                         to 1), and testroot must only contain one
                         test. Useful for debugging. If used in 
                         conjunction with runfromstep, will only run the 
                         steps in the interval defined by both 
                         runfromstep:runtostep. 
-                        default: run all executer steps.''')
+                        default: run all steps.''')
     parser.add_argument('--user',
                         action='store',
                         default=None,
@@ -298,9 +297,9 @@ def run_test(args):
                 exit(1)
             hookfiles.append(entryhookfile)
             entryhooksteps = \
-                ExecuterDoc(entryhookfile).getsteps(args.runfromstep, 
-                                                    args.runtostep, 
-                                                    filtersteps)
+                StepsDoc(entryhookfile).getsteps(args.runfromstep, 
+                                                 args.runtostep, 
+                                                 filtersteps)
 
         exithookfile = None
         #exithookfile = config.get('etcetest', 'ENTRYHOOKFILE', args.exithookfile)
@@ -313,9 +312,9 @@ def run_test(args):
                 exit(1)
             hookfiles.append(exithookfile)
             exithooksteps = \
-                ExecuterDoc(exithookfile).getsteps(args.runfromstep, 
-                                                   args.runtostep, 
-                                                   filtersteps)
+                StepsDoc(exithookfile).getsteps(args.runfromstep, 
+                                                args.runtostep, 
+                                                filtersteps)
 
         hookscript_format = None
 
@@ -382,13 +381,13 @@ def run_test(args):
                                            user=args.user,
                                            port=args.port,
                                            envfile=args.envfile)
-                        
-                    executer = \
-                        ExecuterDoc(os.path.join(localtesttemplatedir,
-                                                 test.executerfile()))
 
-                    executersteps = \
-                        executer.getsteps(args.runfromstep, 
+                    stepsdoc = \
+                        StepsDoc(os.path.join(localtesttemplatedir,
+                                              test.stepsfile()))
+
+                    steps = \
+                        stepsdoc.getsteps(args.runfromstep, 
                                           args.runtostep, 
                                           filtersteps)
 
@@ -431,7 +430,7 @@ def run_test(args):
 
                     client.execute(command, filesystemnodes)
 
-                    for stepname in executersteps:
+                    for stepname in steps:
                         command = 'executer step %s %s %s' % \
                             (stepname, starttime, trialdir)
 

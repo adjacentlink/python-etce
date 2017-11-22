@@ -48,7 +48,7 @@ from etce.overlaylistchainfactory import OverlayListChainFactory
 from etce.config import ConfigDictionary
 
 from lxml.etree import _Comment
-
+from lxml.etree import DocumentInvalid
 
 class Publisher(object):
     def __init__(self,
@@ -422,6 +422,8 @@ def publish_test(args):
                               absbasedir_override=args.basedir)
 
         publisher.publish(args.outdirectory)
+    except DocumentInvalid as ie:
+        print >>sys.stderr, ie
     except KeyError as ke:
         print >>sys.stderr, 'No value specified for key %s. Quitting. ' % ke
     except ValueError as ve:
