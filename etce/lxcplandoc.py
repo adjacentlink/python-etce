@@ -367,7 +367,7 @@ class Container(object):
         bridge_entry_ipv4 = {}
 
         bridge_entry_ipv6 = {}
-
+        print 'overlays=',overlays
         if containertemplate:
             for bridgename,paramdict in containertemplate.interfaces.items():
                 bridgename = bridgename.format(**overlays)
@@ -658,7 +658,7 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
 
                     ovalue = overlayelem.attrib['value']
 
-                    overlays[oname] = ovalue
+                    overlays[oname] = etce.utils.configstrtoval(ovalue)
 
                 # fetch the overlaylists
                 overlaylists = {}
@@ -675,11 +675,12 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
                 # treat all values for each tag as an int if possible,
                 # else all strings
                 for oname,ovals in overlaylists.items():
-                    intovals = []
+                    converted_vals = []
                     try:
-                        intovals = [ int(oval) for oval in ovals ]
+                        converted_vals = [ etce.utils.configstrtoval(oval)
+                                           for oval in ovals ]
 
-                        overlaylists[oname] = intovals
+                        overlaylists[oname] = converted_vals
                     except ValueError:
                         # leave as strings
                         pass
