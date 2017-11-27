@@ -163,19 +163,19 @@ class LXCManagerImpl(object):
 
         # create container files
         for container in containers:
-            nodedirectory = container.nodedirectory
+            lxcdirectory = container.lxcdirectory
 
-            self._makedirs(nodedirectory)
+            self._makedirs(lxcdirectory)
 
             # make the config
-            with open(os.path.join(nodedirectory, 'config'), 'w') as configf:
+            with open(os.path.join(lxcdirectory, 'config'), 'w') as configf:
                 configf.write(str(container))
 
             # make init script
             filename,initscripttext = container.initscript
 
             if initscripttext:
-                scriptfile = os.path.join(nodedirectory, filename)
+                scriptfile = os.path.join(lxcdirectory, filename)
 
                 with open(scriptfile, 'w') as sf:
                     sf.write(initscripttext)
@@ -224,14 +224,15 @@ class LXCManagerImpl(object):
 
     def _startnodes(self, containers):
         for container in containers:
-            noderoot = container.nodedirectory
-            lxcname = container.lxcname
             command = 'lxc-execute -f %s/config  ' \
                       '-n %s '                     \
                       '-o %s/log '                 \
                       '-- %s/init.sh '             \
                       '2> /dev/null &' %             \
-                      (noderoot, lxcname, noderoot, noderoot)
+                      (container.lxcdirectory,
+                       container.lxcname,
+                       container.lxcdirectory,
+                       container.lxcdirectory)
 
             pid,sp = etce.utils.daemonize_command(command)
 

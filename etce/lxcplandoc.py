@@ -38,6 +38,7 @@ from collections import defaultdict
 
 import etce.utils
 import etce.xmldoc
+from etce.config import ConfigDictionary
 from etce.lxcerror import LXCError
 
 
@@ -232,9 +233,9 @@ class Container(object):
                  containertemplate, 
                  bridges,
                  hostname):
-        self._lxcname = containerelem.attrib['lxcname'].format(**overlays)
+        self._lxcname = overlays['lxcname']
 
-        self._nodedirectory = overlays['nodedirectory'].format(**overlays)
+        self._lxcdirectory = overlays['lxcdirectory']
 
         self._bridges = bridges
 
@@ -259,8 +260,8 @@ class Container(object):
         return self._params
 
     @property
-    def nodedirectory(self):
-        return self._nodedirectory
+    def lxcdirectory(self):
+        return self._lxcdirectory
 
     @property
     def initscript(self):
@@ -367,7 +368,7 @@ class Container(object):
         bridge_entry_ipv4 = {}
 
         bridge_entry_ipv6 = {}
-        print 'overlays=',overlays
+
         if containertemplate:
             for bridgename,paramdict in containertemplate.interfaces.items():
                 bridgename = bridgename.format(**overlays)
@@ -650,8 +651,8 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
                 lxcids = etce.utils.nodestrtonodes(
                     str(containerelem.attrib['lxcindices']))
 
-                # fetch the overlays
-                overlays = {}
+                # fetch the overlays, use etce file values as default
+                overlays = ConfigDictionary().asdict()['overlays']
 
                 for overlayelem in containerelem.findall('./overlays/overlay'):
                     oname = overlayelem.attrib['tag']
@@ -695,12 +696,15 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
                     for oname,ovals in overlaylists.items():
                         lxcoverlays[oname] = ovals[i]
 
-                    # then lxcindex or nodedirectory (cannot be overwritten)
-                    lxcoverlays.update({
-                        'lxcindex':lxcid, 
-                        'nodedirectory':os.path.join(rootdirectory,
-                                                     '%03d' % lxcid)
-                    })
+                    # then lxcindex, lxcname and lxcdirectory (cannot be overwritten)
+                    lxcoverlays.update(
+                        {'lxcindex':lxcid})
+
+                    lxcoverlays.update(
+                        {'lxcname':containerelem.attrib['lxcname'].format(**lxcoverlays)})
+
+                    lxcoverlays.update(
+                        {'lxcdirectory':os.path.join(rootdirectory, lxcoverlays['lxcname'])})
 
                     containers[hostname].append(Container(containerelem,
                                                           lxcoverlays,
