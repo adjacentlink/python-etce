@@ -535,7 +535,7 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
         return self._bridges.get('localhost', {})
 
 
-    def lxcrootdirectory(self, hostname):
+    def lxc_root_directory(self, hostname):
         if hostname in self._rootdirectories:
             return self._rootdirectories[hostname]
 
@@ -624,16 +624,16 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
 
             params = []
 
-            rootdirectory = str(
-                hostelem.findall('./containers')[0].attrib['rootdirectory'])
-            rootdirectories[hostname] = rootdirectory
+            root_directory = str(
+                hostelem.findall('./containers')[0].attrib['root_directory'])
+            rootdirectories[hostname] = root_directory
 
-            # ensure no repeated lxcindices
+            # ensure no repeated lxc_indices
             alllxcids = set([])
 
             for containerelem in hostelem.findall('./containers/container'):
                 containerlxcids = etce.utils.nodestrtonodes(
-                    str(containerelem.attrib['lxcindices']))
+                    str(containerelem.attrib['lxc_indices']))
 
                 repeatedids = alllxcids.intersection(containerlxcids)
 
@@ -650,7 +650,7 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
                 template = containertemplates.get(templatename, None)
 
                 lxcids = etce.utils.nodestrtonodes(
-                    str(containerelem.attrib['lxcindices']))
+                    str(containerelem.attrib['lxc_indices']))
 
                 # fetch the overlays, use etce file values as default
                 overlays = ConfigDictionary().asdict()['overlays']
@@ -705,7 +705,7 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
                         {'lxc_name':format_string(containerelem.attrib['lxc_name'], lxcoverlays)})
 
                     lxcoverlays.update(
-                        {'lxc_directory':os.path.join(rootdirectory, lxcoverlays['lxc_name'])})
+                        {'lxc_directory':os.path.join(root_directory, lxcoverlays['lxc_name'])})
 
                     containers[hostname].append(Container(containerelem,
                                                           lxcoverlays,

@@ -84,7 +84,7 @@ class LXCManagerImpl(object):
 
     def start(self, plandoc, writehosts, forcelxcroot=False, dryrun=False):
         hostname = socket.gethostname().split('.')[0]
-        lxcrootdir = plandoc.lxcrootdirectory(hostname)
+        lxcrootdir = plandoc.lxc_root_directory(hostname)
         containers = plandoc.containers(hostname)
 
         if not containers:
@@ -92,19 +92,19 @@ class LXCManagerImpl(object):
             return
         
         if not lxcrootdir[0] == '/':
-            print 'rootdirectory "%s" for hostname "%s" is not an absolute path. Quitting.' % \
+            print 'root_directory "%s" for hostname "%s" is not an absolute path. Quitting.' % \
                 (lxcrootdir, hostname)
             return
 
         directory_level = len(lxcrootdir.split('/')) - 1
         if not directory_level >= 3:
-            print 'rootdirectory "%s" for hostname "%s" is less than 3 levels deep. Quitting.' % \
+            print 'root_directory "%s" for hostname "%s" is less than 3 levels deep. Quitting.' % \
                 (lxcrootdir, hostname)
             return
 
         allowed_roots = ('tmp', 'opt', 'home', 'var', 'mnt')
         if not lxcrootdir.split('/')[1] in allowed_roots:
-            print 'rootdirectory "%s" for hostname "%s" is not located in one of {%s} ' \
+            print 'root_directory "%s" for hostname "%s" is not located in one of {%s} ' \
                 'directory trees. Quitting.' % \
                 (lxcrootdir, hostname, ', '.join(allowed_roots))
             return
@@ -194,7 +194,7 @@ class LXCManagerImpl(object):
     def stop(self, plandoc):
         hostname = self._platform.hostname()
 
-        noderoot = plandoc.lxcrootdirectory(hostname)
+        noderoot = plandoc.lxc_root_directory(hostname)
 
         for container in plandoc.containers(hostname):
             command = 'lxc-stop -n %s -k &> /dev/null' % container.lxc_name

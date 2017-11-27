@@ -57,7 +57,7 @@ def startfield(args):
     if os.path.isfile(lockfilename):
         err = 'Detected an active lxc field with root at: %s. ' \
               'Run "etcelxc stop" first.' % \
-              plandoc.lxcrootdirectory(this_hostname)
+              plandoc.lxc_root_directory(this_hostname)
         raise LXCError(err)
             
     startlxcs(plandoc,
