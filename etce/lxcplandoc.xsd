@@ -61,7 +61,7 @@
         <xs:element ref="interfaces" minOccurs="0" maxOccurs="1"/>
         <xs:element ref="initscript" minOccurs="0" maxOccurs="1"/>
       </xs:sequence>
-      <xs:attribute name="lxcname" type="xs:string" use="required"/>
+      <xs:attribute name="lxc_name" type="xs:string" use="required"/>
       <xs:attribute name="lxcindices" type="nodeSet" use="optional"/>
       <xs:attribute name="template" type="xs:string" use="optional"/>
     </xs:complexType>

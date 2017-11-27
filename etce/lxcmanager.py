@@ -163,19 +163,19 @@ class LXCManagerImpl(object):
 
         # create container files
         for container in containers:
-            lxcdirectory = container.lxcdirectory
+            lxc_directory = container.lxc_directory
 
-            self._makedirs(lxcdirectory)
+            self._makedirs(lxc_directory)
 
             # make the config
-            with open(os.path.join(lxcdirectory, 'config'), 'w') as configf:
+            with open(os.path.join(lxc_directory, 'config'), 'w') as configf:
                 configf.write(str(container))
 
             # make init script
             filename,initscripttext = container.initscript
 
             if initscripttext:
-                scriptfile = os.path.join(lxcdirectory, filename)
+                scriptfile = os.path.join(lxc_directory, filename)
 
                 with open(scriptfile, 'w') as sf:
                     sf.write(initscripttext)
@@ -197,7 +197,7 @@ class LXCManagerImpl(object):
         noderoot = plandoc.lxcrootdirectory(hostname)
 
         for container in plandoc.containers(hostname):
-            command = 'lxc-stop -n %s -k &> /dev/null' % container.lxcname
+            command = 'lxc-stop -n %s -k &> /dev/null' % container.lxc_name
             print command
             os.system(command)
 
@@ -229,10 +229,10 @@ class LXCManagerImpl(object):
                       '-o %s/log '                 \
                       '-- %s/init.sh '             \
                       '2> /dev/null &' %             \
-                      (container.lxcdirectory,
-                       container.lxcname,
-                       container.lxcdirectory,
-                       container.lxcdirectory)
+                      (container.lxc_directory,
+                       container.lxc_name,
+                       container.lxc_directory,
+                       container.lxc_directory)
 
             pid,sp = etce.utils.daemonize_command(command)
 

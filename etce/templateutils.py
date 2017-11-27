@@ -70,3 +70,13 @@ def format_file(srcfile, dstfile, overlays):
             raise NameError(message)
 
 
+def format_string(template_string, overlays):
+    template = Template(template_string, strict_undefined=True)
+
+    try:
+        return template.render(**overlays)
+    except NameError as ne:
+        message = \
+            '%s for template string "%s". Available tags are {%s}. Quitting.' % \
+            (ne.message, template_string, ','.join(overlays.keys()))
+        raise NameError(message)

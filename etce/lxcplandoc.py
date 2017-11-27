@@ -40,6 +40,7 @@ import etce.utils
 import etce.xmldoc
 from etce.config import ConfigDictionary
 from etce.lxcerror import LXCError
+from etce.templateutils import format_string
 
 
 class Bridge(object):
@@ -233,9 +234,9 @@ class Container(object):
                  containertemplate, 
                  bridges,
                  hostname):
-        self._lxcname = overlays['lxcname']
+        self._lxc_name = overlays['lxc_name']
 
-        self._lxcdirectory = overlays['lxcdirectory']
+        self._lxc_directory = overlays['lxc_directory']
 
         self._bridges = bridges
 
@@ -252,16 +253,16 @@ class Container(object):
 
 
     @property
-    def lxcname(self):
-        return self._lxcname
+    def lxc_name(self):
+        return self._lxc_name
 
     @property
     def params(self):
         return self._params
 
     @property
-    def lxcdirectory(self):
-        return self._lxcdirectory
+    def lxc_directory(self):
+        return self._lxc_directory
 
     @property
     def initscript(self):
@@ -336,7 +337,7 @@ class Container(object):
                                   containerelem, 
                                   overlays):
 
-        containerparams = [ ('lxc.utsname', self.lxcname) ]
+        containerparams = [ ('lxc.utsname', self.lxc_name) ]
 
         if containertemplate:
             containerparams.extend(containertemplate.params)
@@ -346,7 +347,7 @@ class Container(object):
 
         for paramelem in containerelem.findall('./parameters/parameter'):
             if(str(paramelem.attrib['name']) == 'lxc.utsname'):
-                # the lxcname is set by the container element atribute
+                # the lxc_name is set by the container element atribute
                 print >>sys.stderr, \
                     'Found lxc.utsname in containertemplate. Ignoring'
                 continue
@@ -357,7 +358,7 @@ class Container(object):
         for i,parampair in enumerate(containerparams):
             k,v = parampair
 
-            containerparams[i] = (k,v.format(**overlays))
+            containerparams[i] = (k,format_string(v, overlays))
 
         return containerparams
 
@@ -371,31 +372,31 @@ class Container(object):
 
         if containertemplate:
             for bridgename,paramdict in containertemplate.interfaces.items():
-                bridgename = bridgename.format(**overlays)
+                bridgename = format_string(bridgename, overlays)
                 for iname,ival in paramdict.items():
-                    interfaces[bridgename][iname.format(**overlays)] = \
-                        ival.format(**overlays)
+                    interfaces[bridgename][format_string(iname, overlays)] = \
+                        format_string(ival, overlays)
 
             for bridgename, entryname in \
                 containertemplate.hosts_entries_ipv4.items():
-                bridgename = bridgename.format(**overlays)
-                bridge_entry_ipv4[bridgename] = entryname.format(**overlays)
+                bridgename = format_string(bridgename, overlays)
+                bridge_entry_ipv4[bridgename] = format_string(entryname, overlays)
 
             for bridgename, entryname in \
                 containertemplate.hosts_entries_ipv6.items():
-                bridgename = bridgename.format(**overlays)
-                bridge_entry_ipv6[bridgename] = entryname.format(**overlays)
+                bridgename = format_string(bridgename, overlays)
+                bridge_entry_ipv6[bridgename] = format_string(entryname, overlays)
 
         # overwrite with local values from container
         for interfaceelem in containerelem.findall('./interfaces/interface'):
-            bridgename = str(interfaceelem.attrib['bridge']).format(**overlays)
+            bridgename = format_string(str(interfaceelem.attrib['bridge']), overlays)
 
             interfaceparams = interfaces[bridgename]
 
             for iparamelem in interfaceelem.findall('./parameter'):
-                iname = str(iparamelem.attrib['name']).format(**overlays)
+                iname = format_string(str(iparamelem.attrib['name']), overlays)
 
-                ival = str(iparamelem.attrib['value']).format(**overlays)
+                ival = format_string(str(iparamelem.attrib['value']), overlays)
 
                 interfaceparams[iname] =  ival
 
@@ -406,7 +407,7 @@ class Container(object):
 
             if entry_name_ipv4:
                 bridge_entry_ipv4[bridgename] = \
-                    entry_name_ipv4.format(**overlays)
+                    format_string(entry_name_ipv4, overlays)
 
             entry_name_ipv6 = \
                 interfaceelem.attrib.get(
@@ -415,7 +416,7 @@ class Container(object):
 
             if entry_name_ipv6:
                 bridge_entry_ipv6[bridgename] = \
-                    entry_name_ipv6.format(**overlays)
+                    format_string(entry_name_ipv6, overlays)
 
         hosts_entries_ipv4 = []
 
@@ -425,7 +426,7 @@ class Container(object):
                         'bridge "%s" for container "%s" but ' \
                         'no corresponding "lxc.network.ipv4" ' \
                         'value for the interface. Quitting.' \
-                        % (bridgename, self.lxcname)
+                        % (bridgename, self.lxc_name)
                 raise ValueError(error)
                     
             addr = interfaces[bridgename]['lxc.network.ipv4']
@@ -440,7 +441,7 @@ class Container(object):
                         'bridge "%s" for container "%s" but ' \
                         'no corresponding "lxc.network.ipv6" ' \
                         'value for the interface. Quitting.' \
-                        % (bridgename, self.lxcname)
+                        % (bridgename, self.lxc_name)
                 raise ValueError(error)
                 
             addr = interfaces[bridgename]['lxc.network.ipv6']
@@ -468,7 +469,7 @@ class Container(object):
                 line = line.strip()
 
                 if len(line) > 0:
-                    lines.append(line.strip().format(**overlays))
+                    lines.append(format_string(line.strip(), overlays))
 
             initscript = (initscript[0], '\n'.join(lines))
 
@@ -696,15 +697,15 @@ class LXCPlanDoc(etce.xmldoc.XMLDoc):
                     for oname,ovals in overlaylists.items():
                         lxcoverlays[oname] = ovals[i]
 
-                    # then lxcindex, lxcname and lxcdirectory (cannot be overwritten)
+                    # then lxcindex, lxc_name and lxc_directory (cannot be overwritten)
                     lxcoverlays.update(
-                        {'lxcindex':lxcid})
+                        {'lxc_index':lxcid})
 
                     lxcoverlays.update(
-                        {'lxcname':containerelem.attrib['lxcname'].format(**lxcoverlays)})
+                        {'lxc_name':format_string(containerelem.attrib['lxc_name'], lxcoverlays)})
 
                     lxcoverlays.update(
-                        {'lxcdirectory':os.path.join(rootdirectory, lxcoverlays['lxcname'])})
+                        {'lxc_directory':os.path.join(rootdirectory, lxcoverlays['lxc_name'])})
 
                     containers[hostname].append(Container(containerelem,
                                                           lxcoverlays,
