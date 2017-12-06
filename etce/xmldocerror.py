@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2017 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,23 +30,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from pkg_resources import resource_filename
-from lxml import etree
-from lxml.etree import DocumentInvalid
-
-from etce.xmldocerror import XMLDocError
-
-class XMLDoc(object):
-    def __init__(self, schemafile, schemamodule='etce'):
-        self._schema = etree.XMLSchema(etree.parse(resource_filename(schemamodule, schemafile)))
-
-
-    def parse(self, xmlfile):
-        xml_doc = etree.parse(xmlfile)
-        try:
-            self._schema.assertValid(xml_doc)
-        except DocumentInvalid as e:
-            err = '%s failed to validate with error:\n\t%s' %(xmlfile, str(e))
-            raise XMLDocError(err)
-
-        return xml_doc.getroot()
+class XMLDocError(Exception):
+    def __init__(self, message):
+        Exception.__init__(self, message)

@@ -51,6 +51,7 @@ from etce.testcollection import add_list_arguments,list_tests,TestCollection,Tes
 from etce.testdirectory import TestDirectory
 from etce.stepsdoc import StepsDoc
 from etce.wrapperstore import WrapperStore
+from etce.xmldocerror import XMLDocError
 
 
 def tstamp():
@@ -231,9 +232,13 @@ def run_test(args):
             exit(1)
     
     # compose the test collection from test roots
-    tests = TestCollection()
-    for testroot in args.testroot:
-        tests.adddirectory(testroot, args.basedir)
+    try:
+        tests = TestCollection()
+        for testroot in args.testroot:
+            tests.adddirectory(testroot, args.basedir)
+    except XMLDocError as xmle:
+        print >>sys.stderr,xmle.message
+        exit(1)
 
     if not tests:
         print >>sys.stderr,'No tests found in any of the specied ' \

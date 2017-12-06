@@ -92,7 +92,7 @@ class TestCollection(object):
             message = 'Error: test participant node(s) "%s" not allocated '\
                       'in nodefile. Quitting.' \
                       % (', '.join(sorted(list(missing))))
-            
+
             raise TestCollectionError(message)
 
         return sorted(list(found))
@@ -165,13 +165,13 @@ def add_list_arguments(parser):
 
 def list_tests(args):
     import sys
-    from lxml.etree import DocumentInvalid
+    from etce.xmldocerror import XMLDocError
 
     collection = TestCollection()
 
     try:
         collection.adddirectory(args.testrootdir, None)
-    except DocumentInvalid as xmle:
+    except XMLDocError as xmle:
         print >>sys.stderr,xmle.message
         exit(1)
 
