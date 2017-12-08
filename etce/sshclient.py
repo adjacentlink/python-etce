@@ -77,11 +77,12 @@ class GetThread(Thread):
 
 
 class ReadThread(Thread):
-    def __init__(self, stream, lock, name, banner):
+    def __init__(self, stream, lock, name, banner, read_stderr):
         Thread.__init__(self, name=name)
         self._stream = stream
         self._lock = lock
         self._banner = banner
+        self._read_stderr = read_stderr
         # Initialize return as a an exception message - No Value Returned
         self._returnobject = { 'isexception':True,
                                'result': None,
@@ -89,23 +90,62 @@ class ReadThread(Thread):
 
     def run(self):
         retstrio = StringIO.StringIO()
+
         haveretstr = False
-        for line in self._stream:
-            if SSHClient.RETURNVALUE_OPEN_DEMARCATOR in line:
-                haveretstr = True
-            elif SSHClient.RETURNVALUE_CLOSE_DEMARCATOR in line:
-                haveretstr = False
-                endidx = line.find(SSHClient.RETURNVALUE_CLOSE_DEMARCATOR)
-                retstrio.write(line[0:endidx])
-                self._returnobject = json.loads(retstrio.getvalue())
-                retstrio.close()
-            elif haveretstr:
-                retstrio.write(line)
-            else:
-                self._lock.acquire()
-                print self._banner + line.strip()
-                self._lock.release()
-           
+
+        ep = select.epoll()
+
+        ep.register(self._stream.channel, select.EPOLLIN | select.EPOLLONESHOT)
+
+        read = ''
+        partial_line = ''
+        line = ''
+
+        while True:
+            results = ep.poll()
+
+            for fd,evt in results:
+                if fd == self._stream.channel.fileno():
+                    if evt & select.EPOLLIN:
+                        if self._read_stderr:
+                            read = self._stream.channel.recv_stderr(1000)
+                        else:
+                            read = self._stream.channel.recv(1000)
+
+                        if not read:
+                            return
+
+                        eol_index = read.find('\n')
+                        next_line = eol_index + 1
+
+                        while eol_index >= 0:
+                            line = partial_line + read[:eol_index]
+                            read = read[next_line:]
+                            partial_line = ''
+
+                            if SSHClient.RETURNVALUE_OPEN_DEMARCATOR in line:
+                                haveretstr = True
+                            elif SSHClient.RETURNVALUE_CLOSE_DEMARCATOR in line:
+                                haveretstr = False
+                                endidx = line.find(SSHClient.RETURNVALUE_CLOSE_DEMARCATOR)
+                                retstrio.write(line[0:endidx])
+                                self._returnobject = json.loads(retstrio.getvalue())
+                                retstrio.close()
+                            elif haveretstr:
+                                retstrio.write(line)
+                            else:
+                                self._lock.acquire()
+                                print self._banner + line.strip()
+                                self._lock.release()
+
+                            eol_index = read.find('\n')
+                            next_line = eol_index + 1
+
+                        partial_line += read
+
+                    ep.modify(self._stream.channel, select.EPOLLIN | select.EPOLLONESHOT)
+
+
     def returnobject(self):
         return self._returnobject
 
@@ -120,19 +160,26 @@ class ExecuteThread(Thread):
 
     def run(self):
         stdi, stdo, stde = self._connection.exec_command(self._command)
+        
         self._stdoreader = ReadThread(stdo, 
                                       ExecuteThread.lock, 
                                       self.name + '-stdo',
-                                      self._banner)
+                                      self._banner,
+                                      False)
+
         self._stdereader = ReadThread(stde, 
                                       ExecuteThread.lock, 
                                       self.name + '-stde',
-                                      self._banner)
+                                      self._banner,
+                                      True)
+
         self._stdoreader.start()
         self._stdereader.start()
+            
         self._stdoreader.join()
         self._stdereader.join()
 
+        
     def returnobject(self):
         return self._stdoreader.returnobject()
 
