@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+
+from collections import namedtuple
 import getpass
 import os
 import json
@@ -76,74 +78,67 @@ class GetThread(Thread):
         self._sftpclient.get(self._src, self._dst)
 
 
-class ReadThread(Thread):
+
+class Reader(Thread):
+    State = namedtuple('State', ['haveretstr', 'read', 'partial_line', 'line','retstrio'])
+
     def __init__(self, stream, lock, name, banner, read_stderr):
         Thread.__init__(self, name=name)
         self._stream = stream
         self._lock = lock
         self._banner = banner
         self._read_stderr = read_stderr
+        self._state = Reader.State(False, '', '', '', StringIO.StringIO())
         # Initialize return as a an exception message - No Value Returned
         self._returnobject = { 'isexception':True,
                                'result': None,
                                'traceback':None }
 
-    def run(self):
-        retstrio = StringIO.StringIO()
+    def read(self, ep, evt):
+        haveretstr, read, partial_line, line, retstrio = self._state
 
-        haveretstr = False
+        if evt & select.EPOLLIN:
+            if self._read_stderr:
+                read = self._stream.channel.recv_stderr(1000)
+            else:
+                read = self._stream.channel.recv(1000)
 
-        ep = select.epoll()
+            if not read:
+                return True
 
-        ep.register(self._stream.channel, select.EPOLLIN | select.EPOLLONESHOT)
+            eol_index = read.find('\n')
+            next_line = eol_index + 1
 
-        read = ''
-        partial_line = ''
-        line = ''
+            while eol_index >= 0:
+                line = partial_line + read[:eol_index]
+                read = read[next_line:]
+                partial_line = ''
 
-        while True:
-            results = ep.poll()
+                if SSHClient.RETURNVALUE_OPEN_DEMARCATOR in line:
+                    haveretstr = True
+                elif SSHClient.RETURNVALUE_CLOSE_DEMARCATOR in line:
+                    haveretstr = False
+                    endidx = line.find(SSHClient.RETURNVALUE_CLOSE_DEMARCATOR)
+                    retstrio.write(line[0:endidx])
+                    self._returnobject = json.loads(retstrio.getvalue())
+                    retstrio.close()
+                elif haveretstr:
+                    retstrio.write(line)
+                else:
+                    self._lock.acquire()
+                    print self._banner + line.strip()
+                    self._lock.release()
 
-            for fd,evt in results:
-                if fd == self._stream.channel.fileno():
-                    if evt & select.EPOLLIN:
-                        if self._read_stderr:
-                            read = self._stream.channel.recv_stderr(1000)
-                        else:
-                            read = self._stream.channel.recv(1000)
+                eol_index = read.find('\n')
+                next_line = eol_index + 1
 
-                        if not read:
-                            return
+            partial_line += read
 
-                        eol_index = read.find('\n')
-                        next_line = eol_index + 1
+        self._state = Reader.State(haveretstr, read, partial_line, line, retstrio)
 
-                        while eol_index >= 0:
-                            line = partial_line + read[:eol_index]
-                            read = read[next_line:]
-                            partial_line = ''
+        ep.modify(self._stream.channel, select.EPOLLIN | select.EPOLLONESHOT)
 
-                            if SSHClient.RETURNVALUE_OPEN_DEMARCATOR in line:
-                                haveretstr = True
-                            elif SSHClient.RETURNVALUE_CLOSE_DEMARCATOR in line:
-                                haveretstr = False
-                                endidx = line.find(SSHClient.RETURNVALUE_CLOSE_DEMARCATOR)
-                                retstrio.write(line[0:endidx])
-                                self._returnobject = json.loads(retstrio.getvalue())
-                                retstrio.close()
-                            elif haveretstr:
-                                retstrio.write(line)
-                            else:
-                                self._lock.acquire()
-                                print self._banner + line.strip()
-                                self._lock.release()
-
-                            eol_index = read.find('\n')
-                            next_line = eol_index + 1
-
-                        partial_line += read
-
-                    ep.modify(self._stream.channel, select.EPOLLIN | select.EPOLLONESHOT)
+        return False
 
 
     def returnobject(self):
@@ -157,31 +152,46 @@ class ExecuteThread(Thread):
         self._connection = connection
         self._command = command
         self._banner = '[' + host + '] '
+        self._returnobject = None
+
 
     def run(self):
         stdi, stdo, stde = self._connection.exec_command(self._command)
-        
-        self._stdoreader = ReadThread(stdo, 
-                                      ExecuteThread.lock, 
-                                      self.name + '-stdo',
-                                      self._banner,
-                                      False)
 
-        self._stdereader = ReadThread(stde, 
-                                      ExecuteThread.lock, 
-                                      self.name + '-stde',
-                                      self._banner,
-                                      True)
+        readers = { stdo.channel.fileno():Reader(stdo, 
+                                                 ExecuteThread.lock, 
+                                                 self.name + '-stdo',
+                                                 self._banner,
+                                                 False) }
 
-        self._stdoreader.start()
-        self._stdereader.start()
-            
-        self._stdoreader.join()
-        self._stdereader.join()
+        readers_finished = { stdo.channel.fileno(): False }
 
-        
+        ep = select.epoll()
+
+        ep.register(stdo.channel, select.EPOLLIN | select.EPOLLONESHOT)
+
+        if stde.channel.fileno() != stdo.channel.fileno():
+            readers[stde.channel.fileno()] = Reader(stde, 
+                                                    ExecuteThread.lock, 
+                                                    self.name + '-stde',
+                                                    self._banner,
+                                                    True)
+
+            readers_finished[stde.channel.fileno()] = False
+
+            ep.register(stde.channel, select.EPOLLIN | select.EPOLLONESHOT)
+
+        while not all(readers_finished.values()):
+            results = ep.poll()
+
+            for fd,evt in results:
+                readers_finished[fd] = readers[fd].read(ep, evt)
+
+        self._returnobject = readers[stdo.channel.fileno()].returnobject()
+
+
     def returnobject(self):
-        return self._stdoreader.returnobject()
+        return self._returnobject
 
 
 class SSHClient(etce.fieldclient.FieldClient):
