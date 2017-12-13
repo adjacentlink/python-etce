@@ -35,6 +35,7 @@ import datetime
 import argparse
 import os
 import shutil
+import signal
 import sys
 import traceback
 
@@ -276,6 +277,14 @@ def run_test(args):
 
     client = None
 
+    def sigint_handler(signum, frame):
+        if signum == signal.SIGINT:
+            if client:
+                print 'keyboard interrupt'
+                client.interrupt()
+
+    signal.signal(signal.SIGINT, sigint_handler)
+
     resultsubdirs = []
 
     try:
@@ -327,6 +336,8 @@ def run_test(args):
             tokens = args.hookscript.split(':')
             script = tokens[0]
             hookscript_format = tokens[0] + ' %s %s %s ' + ' '.join(tokens[1:])
+
+        keyboard_interrupt = False
 
         for test in tests:
             try:
@@ -423,10 +434,9 @@ def run_test(args):
 
                     print stepdivider
 
-                    # call kill to kill any applications that
-                    # stored pids to lockfiles on previous runs
-                    command = 'kill kill'
-                    client.execute(command, allnodes)
+                    # before starting, kill any processes that stored pids
+                    # to lockfiles
+                    client.execute('kill kill', allnodes)
 
                     # call testprepper to publish test definition and
                     # create logdir on the root nodes
@@ -443,7 +453,10 @@ def run_test(args):
 
                         print 'step: %s %s %s' % (stepname, starttime, trialdir)
 
-                        client.execute(command, worknodes, 'definition')
+                        try:
+                            client.execute(command, worknodes, 'definition')
+                        except KeyboardInterrupt as kbint:
+                            keyboard_interrupt = True
 
                     trialend = datetime.datetime.now()
 
@@ -471,6 +484,9 @@ def run_test(args):
                     namevaldict.update(test.info())
 
                     store.update(namevaldict)
+                    
+                    # kill any remaining processes that stored pids to lockfiles
+                    client.execute('kill kill', allnodes)
 
                     if args.deletecompleted:
                         print 'removing %s from testnodes' % remoteresultssubdir
@@ -497,6 +513,11 @@ def run_test(args):
 
                     print 'END "%s" trial %d' % (test.name(),i+1)
 
+                    # raise a cached KeyboardInterrupt on completion
+                    # to close
+                    if keyboard_interrupt:
+                        raise KeyboardInterrupt()
+                    
             except ETCEExecuteException as e:
                 print >>sys.stderr
                 print >>sys.stderr,'Failed test "%s" with exception:' \
@@ -512,6 +533,8 @@ def run_test(args):
                 else:
                     print 'Continuing to next test.'
 
+    except KeyboardInterrupt:
+        print 'Quitting on interrupt.'
     except FieldConnectionError as fce:
         print >>sys.stderr
         print >>sys.stderr,fce.message

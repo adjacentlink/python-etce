@@ -77,7 +77,7 @@ def strtimetodatetime(referencetime, truncatesecs=True):
 
 def field_time_now(client, hosts):
     reftimemap = client.execute('timeutils getstrtimenow', [hosts[0]])
-    return reftimemap[hosts[0]]['result'] 
+    return reftimemap[hosts[0]].retval['result'] 
     
 
 def time_offset(referencetimestr, delayseconds,quantizesecs=None):

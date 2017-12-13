@@ -25,6 +25,8 @@ missing
 build
 dist
 *.pyc
+python-etce-0.1.1.tar.gz
+python_etce.egg-info
 
 # debs
 deb_dist

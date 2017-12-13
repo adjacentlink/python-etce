@@ -95,7 +95,7 @@ def startfield(args):
                                  other_hosts)
 
             for k in ret:
-                print '[%s] return: %s' % (k, ret[k]['result'])
+                print '[%s] return: %s' % (k, ret[k].retval['result'])
 
         finally:
             if client:
@@ -135,7 +135,7 @@ def stopfield(args):
                 ret = client.execute(command, other_hosts)
 
                 for k in ret:
-                    print '[%s] return: %s' % (k, ret[k]['result'])
+                    print '[%s] return: %s' % (k, ret[k].retval['result'])
 
             finally:
                 if client:

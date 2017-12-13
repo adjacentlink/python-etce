@@ -1,4 +1,4 @@
-#!/usr/bin/env python -u
+#!/usr/bin/env python
 #
 # Copyright (c) 2013-2017 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
@@ -31,6 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+import gc
 import imp
 import json
 import os
@@ -43,6 +44,12 @@ import etce.utils
 from etce.config import ConfigDictionary
 from etce.sshclient import SSHClient
 
+# Force sys.stdout to be unbuffered w/o using the python -u option, which
+# does not always work as #!/usr/bin/env python -u
+# Solution from:
+# https://stackoverflow.com/questions/107705/disable-output-buffering
+gc.garbage.append(sys.stdout)
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 def sendreturnandexit(isexception,
                       result):    
@@ -53,7 +60,7 @@ def sendreturnandexit(isexception,
     print SSHClient.RETURNVALUE_OPEN_DEMARCATOR
     print json.dumps({ 'isexception':isexception, 'result':result, 'traceback':tracebackmsg })
     print SSHClient.RETURNVALUE_CLOSE_DEMARCATOR
-
+    
     if(isexception):
         sys.exit(1)
     else:

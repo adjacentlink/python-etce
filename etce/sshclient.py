@@ -80,7 +80,7 @@ class GetThread(Thread):
 
 
 class Reader(Thread):
-    State = namedtuple('State', ['haveretstr', 'read', 'partial_line', 'line','retstrio'])
+    State = namedtuple('State', ['haveretstr', 'read', 'partial_line', 'line', 'retstrio'])
 
     def __init__(self, stream, lock, name, banner, read_stderr):
         Thread.__init__(self, name=name)
@@ -89,10 +89,11 @@ class Reader(Thread):
         self._banner = banner
         self._read_stderr = read_stderr
         self._state = Reader.State(False, '', '', '', StringIO.StringIO())
-        # Initialize return as a an exception message - No Value Returned
-        self._returnobject = { 'isexception':True,
-                               'result': None,
-                               'traceback':None }
+
+        # Initialize return object
+        self._remote_returnobject = { 'isexception':False,
+                                      'result': None,
+                                      'traceback':None }
 
     def read(self, ep, evt):
         haveretstr, read, partial_line, line, retstrio = self._state
@@ -102,7 +103,6 @@ class Reader(Thread):
                 read = self._stream.channel.recv_stderr(1000)
             else:
                 read = self._stream.channel.recv(1000)
-
             if not read:
                 return True
 
@@ -120,7 +120,7 @@ class Reader(Thread):
                     haveretstr = False
                     endidx = line.find(SSHClient.RETURNVALUE_CLOSE_DEMARCATOR)
                     retstrio.write(line[0:endidx])
-                    self._returnobject = json.loads(retstrio.getvalue())
+                    self._remote_returnobject = json.loads(retstrio.getvalue())
                     retstrio.close()
                 elif haveretstr:
                     retstrio.write(line)
@@ -142,17 +142,25 @@ class Reader(Thread):
 
 
     def returnobject(self):
-        return self._returnobject
+        return self._remote_returnobject
 
 
 class ExecuteThread(Thread):
+    ReturnObject = namedtuple('ReturnObject', ['keyboard_interrupt', 'retval'])
+
     lock = Lock()
+    
     def __init__(self, connection, command, host):
         Thread.__init__(self, name=host)
         self._connection = connection
         self._command = command
         self._banner = '[' + host + '] '
-        self._returnobject = None
+        self._remote_returnobject = ExecuteThread.ReturnObject(False, None)
+        self._read_pipe, self._write_pipe = os.pipe()
+
+
+    def interrupt(self):
+        os.write(self._write_pipe, 'interrupt')
 
 
     def run(self):
@@ -181,17 +189,31 @@ class ExecuteThread(Thread):
 
             ep.register(stde.channel, select.EPOLLIN | select.EPOLLONESHOT)
 
-        while not all(readers_finished.values()):
-            results = ep.poll()
+        # also, register our read pipe for keyboard interrupt
+        ep.register(self._read_pipe, select.EPOLLIN)
 
-            for fd,evt in results:
-                readers_finished[fd] = readers[fd].read(ep, evt)
+        try:
+            while not all(readers_finished.values()):
+                results = ep.poll()
 
-        self._returnobject = readers[stdo.channel.fileno()].returnobject()
+                for fd,evt in results:
+                    if fd == self._read_pipe:
+                        raise KeyboardInterrupt
+                    else:
+                        readers_finished[fd] = readers[fd].read(ep, evt)
+            self._remote_returnobject = \
+                ExecuteThread.ReturnObject(False,
+                                           readers[stdo.channel.fileno()].returnobject())
+
+        except KeyboardInterrupt:
+            self._remote_returnobject = \
+                ExecuteThread.ReturnObject(True,
+                                           readers[stdo.channel.fileno()].returnobject())
 
 
     def returnobject(self):
-        return self._returnobject
+        return self._remote_returnobject
+
 
 
 class SSHClient(etce.fieldclient.FieldClient):
@@ -202,6 +224,8 @@ class SSHClient(etce.fieldclient.FieldClient):
         etce.fieldclient.FieldClient.__init__(self, hosts)
 
         self._connection_dict = {}
+
+        self._execute_threads = []
 
         user = kwargs.get('user', None)
 
@@ -252,11 +276,10 @@ class SSHClient(etce.fieldclient.FieldClient):
                 raise FieldConnectionError('Unable to connect to host "%s". Quitting.' % host)
 
             except Exception as e:
-                print 'here exception'
                 message = 'Unable to connect to host "%s" (%s). Quitting.' % (host, str(e))
                 raise FieldConnectionError(message)
 
-            
+
     def sourceisdestination(self, host, srcfilename, dstfilename):
         if srcfilename == dstfilename:
             p = Platform()        
@@ -351,38 +374,61 @@ class SSHClient(etce.fieldclient.FieldClient):
             os.chdir(cwd)
 
 
+    def interrupt(self):
+        for thread in self._execute_threads:
+            thread.interrupt()
+
+            
     def execute(self, commandstr, hosts, workingdir=None):
         # execute an etce command over ssh
-        threads = []
+        self._execute_threads = []
 
         fullcommandstr = ''
+
         if self._envfile is not None:
             fullcommandstr += '. %s; ' % self._envfile
         fullcommandstr += 'etce-exec.ssh '
+
         if not workingdir is None:
             fullcommandstr += '--cwd %s ' % workingdir
+
         fullcommandstr += commandstr
         for host in hosts:
             if host in self._connection_dict:
-                threads.append(ExecuteThread(self._connection_dict[host],
-                                             fullcommandstr,
-                                             host))
+                self._execute_threads.append(ExecuteThread(self._connection_dict[host],
+                                                           fullcommandstr,
+                                                           host))
+
         # start the threads
-        for t in threads:
+        for t in self._execute_threads:
             t.start()
 
         # collect the return objects and monitor for exception
         returnobjs = {}
+        
         exception = False
-        for t in threads:
-            t.join()
-            returnobjs[t.name] = t.returnobject()
-            if returnobjs[t.name]['isexception']:
-                exception = True
 
+        keyboard_interrupt = False
+
+        for t in self._execute_threads:
+            # cycle on join to allow keyboard interrupts
+            # to occur immediately
+            while t.isAlive():
+                t.join(5.0)
+            
+            returnobjs[t.name] = t.returnobject()
+            
+            if returnobjs[t.name].retval['isexception']:
+                exception = True
+            elif returnobjs[t.name].keyboard_interrupt:
+                keyboard_interrupt = True
+                
         # raise an exception if any return object is an exception
         if exception:
             raise ETCEExecuteException(returnobjs)
+
+        if keyboard_interrupt:
+            raise KeyboardInterrupt()
 
         # return in error free case
         return returnobjs
@@ -429,11 +475,13 @@ class SSHClient(etce.fieldclient.FieldClient):
 
         # prep the items to fetch - tar them up and get their names
         retvals = self.execute('utils prepfiles %s' % remotesrc, srchosts)
+
         tarfiles = {}
+
         for host in retvals:
-            if retvals[host]['result'] is not None:
-                tarfiles[host] = retvals[host]['result']
-        
+            if retvals[host].retval['result'] is not None:
+                tarfiles[host] = retvals[host].retval['result']
+
         if not tarfiles:
             print '   Warning: no files to transfer.'
             return
@@ -481,7 +529,7 @@ class SSHClient(etce.fieldclient.FieldClient):
         for t in threads:
             t.join()
             returnobjs[t.name] = t.returnobject()
-            if returnobjs[t.name]['isexception']:
+            if returnobjs[t.name].retval['isexception']:
                 exception = True
 
         # raise an exception if any return object is an exception

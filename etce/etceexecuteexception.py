@@ -35,10 +35,10 @@ class ETCEExecuteException(Exception):
         message = ''
         self._traceback = ''
         for key, obj in returnobjs.items():
-            if obj['isexception']:
-                retobj = obj['result']
-                traceback = obj['traceback']                
-                message += '[%s]: %s\n' % (key, str(retobj))
+            if obj.retval['isexception']:
+                result = obj.retval['result']
+                traceback = obj.retval['traceback']                
+                message += '[%s]: %s\n' % (key, str(result))
                 self._traceback += '[%s]: %s\n' % (key, traceback)
         Exception.__init__(self, message)
 
