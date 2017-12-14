@@ -138,6 +138,19 @@ def add_run_arguments(parser):
                         default=1,
                         type=int,
                         help='number of trials to run for each test')
+    parser.add_argument('--kill', 
+                        action='store',
+                        nargs='*',
+                        choices=['before','after'],
+                        default=['before', 'after'],
+                        help='''Many ETCE Wrappers save process PIDs to lockfiles
+                        saved in a location specified by the 
+                        LOCK_FILE_DIRECTORY value in etce.conf. etce-test
+                        will attempt to clean-up processes on field members
+                        between tests by killing any process where a lock
+                        file is found. Use the kill command to specify when
+                        etce-test should attempt clean-up, before or after
+                        the test.''')
     parser.add_argument('--outdir',
                         action='store',
                         default=ConfigDictionary().get('etce',
@@ -434,9 +447,10 @@ def run_test(args):
 
                     print stepdivider
 
-                    # before starting, kill any processes that stored pids
-                    # to lockfiles
-                    client.execute('kill kill', allnodes)
+                    # kill any processes with pids stored in left-over lockfiles
+                    # before starting the test
+                    if 'before' in args.kill:
+                        client.execute('kill kill', allnodes)
 
                     # call testprepper to publish test definition and
                     # create logdir on the root nodes
@@ -484,9 +498,11 @@ def run_test(args):
                     namevaldict.update(test.info())
 
                     store.update(namevaldict)
-                    
-                    # kill any remaining processes that stored pids to lockfiles
-                    client.execute('kill kill', allnodes)
+
+                    # kill any processes with pids stored in left-over lockfiles
+                    # before finishing the test
+                    if 'after' in args.kill:
+                        client.execute('kill kill', allnodes)
 
                     if args.deletecompleted:
                         print 'removing %s from testnodes' % remoteresultssubdir
