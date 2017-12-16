@@ -30,19 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import os
-import shlex
-import signal
-import subprocess
-import sys
 
-import etce.utils
-import etce.timeutils
-from etce.argproxy import ArgProxy
 from etce.argregistrar import ArgRegistrar
-from etce.platform import Platform
-from etce.wrapperstore import WrapperStore
-from etce.config import ConfigDictionary
 
 
 class WrapperContext(ArgRegistrar):
@@ -68,102 +57,50 @@ class WrapperContext(ArgRegistrar):
         Overlays are parameter values passed to wrappers from the
         etce.conf file on the host where the wrapper runs. 
     '''
-    def __init__(self,
-                 wrappername,
-                 wrapperinstance,
-                 trialargs,
-                 testargs,
-                 nodeconfig,
-                 testdir):
-        self._trialargs = trialargs
-        self._testargs = testargs
-        self._nodeconfig = nodeconfig
-        self._testdir = testdir
-        self._platform = Platform()
-        self._wrappername = wrappername
-        self._default_pidfilename = '%s/etce.%s.%s.pid' \
-                % (ConfigDictionary().get('etce', 'LOCK_FILE_DIRECTORY'),
-                   self.platform.hostname(),
-                   self._wrappername)
-
-        self._description = wrapperinstance.__doc__
-
-        
-        # start with empty dicts ...
-        self._args = { 'infile':None, 'outfile': None }
-        self._overlays = {}
-
-        # ... fill in the values registered by the wrapper
-        wrapperinstance.register(self)
-
-        # ... overlay with commonly needed names
-        self._args.update({
-            'default_pidfilename':self._default_pidfilename,
-            'nodename':self._testdir.nodename(),
-            'nodeid':self._testdir.nodeid(),
-            'testname':self._testdir.name(),
-            'wrappername':self._wrappername
-            })
-
-        # ... and with items generated on each trial
-        self._args.update(trialargs)
-
-        storefile = os.path.join(self._trialargs['logdirectory'],
-                                 'etce.store')
-
-        self._wrapperstore = WrapperStore(storefile)
+    def __init__(self, impl):
+        self._impl = impl
 
 
     def register_argument(self, argname, defaultval, description):
-        if self._testdir.hasconfig(self._wrappername,
-                                   argname):
-            self._args[argname] = self._testdir.getconfig(self._wrappername,
-                                                           argname,
-                                                           defaultval)
-        elif argname in self._testargs:
-            self._args[argname] = self._testargs[argname]
-        else:
-            self._args[argname] = defaultval
+        self._impl.register_argument(argname, defaultval, description)
 
 
     def register_overlay(self, overlayname, defaultval, description):
-        self._overlays[overlayname] = \
-            self._nodeconfig.get('overlays',overlayname,defaultval)
+        self._impl.register_overlay(overlayname, defaultval, description)
 
 
     def register_infile_name(self, name):
-        self._args['infile'] = self._testdir.getfile(name)
+        self._impl.register_infile_name(name)
 
 
     def register_outfile_name(self, name):
-        self._args['outfile'] = os.path.join(
-            self._trialargs['logdirectory'], name)
+        self._impl.register_outfile_name(name)
 
 
     def store(self, namevaldict):
-        self._wrapperstore.update({self._args['wrappername']:namevaldict})
+        self._impl.store(namevaldict)
 
 
     @property
     def platform(self):
-        return self._platform
+        return self._impl.platform
 
 
     @property
     def args(self):
-        return ArgProxy(self._args)
+        return self._impl.args
 
 
     @property
     def overlays(self):
-        return ArgProxy(self._overlays)
+        return self._impl.overlays
 
 
     @property
     def default_pidfilename(self):
-        return self._default_pidfilename
+        return self._impl.default_pidfilename
     
-    
+
     def daemonize(self,
                   commandstr,
                   stdout=None,
@@ -172,38 +109,14 @@ class WrapperContext(ArgRegistrar):
                   genpidfile=True,
                   pidincrement=0,
                   starttime=None):
-        
-        # 1. call self.stop(pidfilename)
-        self.stop(pidfilename)
 
-        # run the command
-        pid,subprocess = \
-            etce.utils.daemonize_command(commandstr,
-                                         stdout,
-                                         stderr,
-                                         starttime)
-
-        # return on parent
-        if pid > 0:
-            return
-
-        # 2. if genpidfile is True, and pidfilename is None,
-        #    generate the pidfilename
-        if genpidfile and pidfilename is None:
-            pidfilename = self.default_pidfilename
-
-        # 3. write the pid to pidfilename
-        if genpidfile:
-            with open(pidfilename, 'w') as pidfile:
-                pidfile.write(str(subprocess.pid+pidincrement))
-
-        # 4. wait on subprocess
-        subprocess.wait()
-
-        # 5. exit, do not return, because returning
-        #    will cause any subsequent wrappers in this
-        #    step to be rerun
-        sys.exit(0)
+        self._impl.daemonize(commandstr,
+                             stdout,
+                             stderr,
+                             pidfilename,
+                             genpidfile,
+                             pidincrement,
+                             starttime)
 
 
     def run(self,
@@ -214,57 +127,13 @@ class WrapperContext(ArgRegistrar):
             genpidfile=True,
             pidincrement=0):
 
-        # 1. call self.stop(pidfilename)
-        self.stop(pidfilename)
-
-        # 2. print the command name
-        print commandstr
-
-        # 3. shlex the command string
-        command = shlex.split(commandstr)
-
-        stdoutfd = None
-        stderrfd = None
-        if not stdout is None:
-            stdoutfd = open(stdout, 'w')
-
-        if not stderr is None:
-            if stdout == stderr:
-                stderrfd = stdoutfd
-            else:
-                stderrfd = open(stderr, 'w')
-
-        # 4. if genpidfile is True, and pidfilename is None,
-        #    generate the pidfilename
-        if genpidfile and pidfilename is None:
-            pidfilename = self.default_pidfilename
-
-        # 5. create the Popen subprocess
-        sp = subprocess.Popen(command, stdout=stdoutfd, stderr=stderrfd)
-
-        # 6. write the pid to pidfilename
-        if genpidfile:
-            with open(pidfilename, 'w') as pidfile:
-                pidfile.write(str(sp.pid+pidincrement))
-
-        # 7. wait on subprocess
-        sp.wait()
+        self._impl.run(commandstr,
+                       stdout,
+                       stderr,
+                       pidfilename,
+                       genpidfile,
+                       pidincrement)
 
 
     def stop(self, pidfilename=None):
-        # use default pidfilename if None specified
-        if pidfilename is None:
-            pidfilename = self.default_pidfilename
-
-        pid = self._platform.readpid(pidfilename)
-
-        # if found a pid, kill the process and remove the file
-        if pid:
-            try:
-                print 'killing pid %d found in %s' % (pid, pidfilename)
-                os.kill(pid, signal.SIGQUIT)
-            except OSError as e:
-                # orphaned pidfile - process already dead
-                pass 
-            finally:
-                os.remove(pidfilename)
+        self._impl.stop(pidfilename)

@@ -41,6 +41,7 @@ from etce.stepsdoc import StepsDoc
 from etce.config import ConfigDictionary
 from etce.platform import Platform
 from etce.wrappercontext import WrapperContext
+from etce.wrappercontextimpl import WrapperContextImpl
 from etce.wrapperloader import WrapperLoader
 
 
@@ -70,11 +71,12 @@ class Executer(object):
             os.makedirs(logdirectory)
 
         if wrappers:
-            # pass stepname as parameter
-            trialargs = {}
-            trialargs['logdirectory'] = logdirectory
-            trialargs['starttime'] = starttime
-            trialargs['stepname'] = stepname
+            trialargs = {
+                'logdirectory':logdirectory,
+                'starttime':starttime,
+                'stepname':stepname,
+                'dryrun':False
+            }
 
             wldr = WrapperLoader()
             
@@ -88,12 +90,12 @@ class Executer(object):
                 # instance of the wrapper context
                 os.chdir(hostdir)
 
-                ctx = WrapperContext(wrappername,
-                                     wrapperinstance,
-                                     trialargs,
-                                     testargs,
-                                     self._config,
-                                     self._test)
+                ctx = WrapperContext(WrapperContextImpl(wrappername,
+                                                        wrapperinstance,
+                                                        trialargs,
+                                                        testargs,
+                                                        self._config,
+                                                        self._test))
 
                 if methodname == 'run':
                     # run calls prerun, run, postrun to encourage

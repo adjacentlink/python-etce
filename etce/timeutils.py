@@ -80,7 +80,7 @@ def field_time_now(client, hosts):
     return reftimemap[hosts[0]].retval['result'] 
     
 
-def time_offset(referencetimestr, delayseconds,quantizesecs=None):
+def time_offset(referencetimestr, delayseconds, quantizesecs=None):
     referencetime = strtimetodatetime(referencetimestr)
     delta = datetime.timedelta(seconds=int(delayseconds))
     if quantizesecs is None:
