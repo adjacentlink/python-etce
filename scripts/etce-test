@@ -40,6 +40,7 @@ import sys
 import traceback
 
 import etce.timeutils
+import etce.utils
 from etce.apprunner import AppRunner
 from etce.config import ConfigDictionary
 from etce.etceexecuteexception import ETCEExecuteException
@@ -70,6 +71,10 @@ def buildtestname(testprefix, testname):
 
 
 def add_run_arguments(parser):
+    default_work_directory = ConfigDictionary().get('etce', 'WORK_DIRECTORY')
+    
+    default_data_directory = os.path.join(default_work_directory, 'data')
+    
     parser.add_argument('--basedir', 
                         action='store', 
                         default=None,
@@ -153,10 +158,9 @@ def add_run_arguments(parser):
                         the test.''')
     parser.add_argument('--outdir',
                         action='store',
-                        default=ConfigDictionary().get('etce',
-                                                       'WORK_DIRECTORY'),
+                        default=default_data_directory,
                         help='''Local output directory for test artifacts - 
-                        default: None.''')
+                        default: %s.''' % default_data_directory)
     parser.add_argument('--quitonerror', 
                         action='store_true', 
                         default=False,
@@ -365,10 +369,9 @@ def run_test(args):
                     localtestresultsdir = os.path.join(args.outdir,
                                                        testdir)
 
-                    localtesttemplatedir = os.path.join(localtestresultsdir,
-                                                        'template')
+                    localtesttemplatedir = os.path.join(localtestresultsdir, 'template')
 
-                    remoteresultssubdir = testdir
+                    remoteresultssubdir = os.path.join('data', testdir)
 
                     # prepare test template directory - copy it to fixed
                     # location and add config file and hostsfile
@@ -421,8 +424,8 @@ def run_test(args):
                                           filtersteps)
 
                     # put the template directory to the rootnodes
-                    client.put(localtesttemplatedir, 
-                               '.', 
+                    client.put(localtesttemplatedir,
+                               remoteresultssubdir,
                                filesystemnodes, 
                                doclobber=True)
 
@@ -452,11 +455,13 @@ def run_test(args):
                     if 'before' in args.kill:
                         client.execute('kill kill', allnodes)
 
+                    remotetemplatedir = os.path.join(remoteresultssubdir, 'template') 
+
                     # call testprepper to publish test definition and
                     # create logdir on the root nodes
                     command = 'testprepper run %s %s %s' % \
-                              (starttime, 'template', trialdir)
-
+                              (starttime, remotetemplatedir, trialdir)
+                    print command
                     client.execute(command, filesystemnodes)
 
                     for stepname in steps:
@@ -468,7 +473,7 @@ def run_test(args):
                         print 'step: %s %s %s' % (stepname, starttime, trialdir)
 
                         try:
-                            client.execute(command, worknodes, 'definition')
+                            client.execute(command, worknodes, 'current_test')
                         except KeyboardInterrupt as kbint:
                             keyboard_interrupt = True
 
@@ -557,7 +562,7 @@ def run_test(args):
         print >>sys.stderr
     except Exception as e:
         print >>sys.stderr
-        print >>sys.stderr,e.message
+        print >>sys.stderr,str(e)
         print >>sys.stderr
         if args.verbose:
             print traceback.format_exc()

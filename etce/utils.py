@@ -47,6 +47,33 @@ import etce.timeutils
 from etce.config import ConfigDictionary
 
 
+def generate_tempfile_name(directory=None, prefix=None):
+    # create a unique name by creating a temporaryfile
+    # then deleting & using the name.
+    # mkstemp returns a tuple (filedescriptor, filename)
+    fd = name = None
+
+    if directory:
+        if prefix:
+            fd,name = tempfile.mkstemp(dir=directory, prefix=prefix)
+        else:
+            fd,name = tempfile.mkstemp(dir=directory)
+            
+        os.close(fd)
+        os.remove(name)
+    else:
+        if prefix:
+            fd,name = tempfile.mkstemp(prefix=prefix)
+        else:
+            fd,name = tempfile.mkstemp()
+
+        os.close(fd)
+        os.remove(name)
+        name = os.path.basename(name)
+
+    return name
+
+
 # tar and zip src to dstarchive.
 def tarzip(srclist, dstarchive=None):
     if not srclist:
@@ -57,13 +84,7 @@ def tarzip(srclist, dstarchive=None):
             raise RuntimeError('%s does not exist' % src)
 
     if not dstarchive:
-        # create a unique name by creating a temporaryfile
-        # then deleting & using the name.
-        # mkstemp returns a tuple (filedescriptor, filename)
-        dstarchive = tempfile.mkstemp()
-        os.close(dstarchive[0])            
-        os.remove(dstarchive[1])
-        dstarchive = os.path.basename(dstarchive[1]) + '.tgz'
+        dstarchive = generate_tempfile_name() + '.tgz'
     try:
         t = tarfile.open(dstarchive, 'w:gz')
         for src in srclist:

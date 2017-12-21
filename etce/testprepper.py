@@ -45,9 +45,7 @@ class TestPrepper(object):
 
         templatedir = os.path.join(etcedir, templatesubdir)
 
-        testdefdir = os.path.join(etcedir,
-                                  os.path.join(os.path.dirname(templatesubdir),
-                                               'definition'))
+        testdefdir = os.path.join(etcedir, 'current_test')
 
         trialdir = os.path.join(etcedir, trialsubdir)
 

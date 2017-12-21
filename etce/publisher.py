@@ -63,14 +63,13 @@ class Publisher(object):
         self._mergedir = mergedir
 
         self._trialdir = trialdir
-
         manifestfilenameabs = os.path.join(self._testdir,
                                            TestDirectory.MANIFESTFILENAME)
 
         if not os.path.exists(manifestfilenameabs) or not os.path.isfile(manifestfilenameabs):
             raise ValueError('Invalid test directory (%s)\n'
                              'No manifestfile (%s) found.' % \
-                                 (self._testdir, manifest))
+                                 (self._testdir, manifestfilenameabs))
 
         self._manifestdoc = ManifestFileDoc(manifestfilenameabs)
 
@@ -124,8 +123,11 @@ class Publisher(object):
 
                 if not os.path.exists(dirname):
                     os.makedirs(dirname)
-                    
-                shutil.copyfile(srcfile, dstfile)
+
+                if subfile == TestDirectory.MANIFESTFILENAME:
+                    self._manifestdoc.rewrite_without_basedir(dstfile)
+                else:
+                    shutil.copyfile(srcfile, dstfile)
 
         # move the extra files
         for srcfile,dstfile in extrafiles:
@@ -175,6 +177,7 @@ class Publisher(object):
                directory, maintaining directory structure.
             2. Instantiate template directories and files (if any)
         '''
+        print
         print 'Publishing %s to %s' % (self._testname, publishdir)
 
         if os.path.exists(publishdir):
@@ -188,6 +191,12 @@ class Publisher(object):
         self._move(self._movefiles, publishdir)
 
         self._instantiate_templates(publishdir)
+
+        if not self._testdir == self._mergedir:
+            print 'Removing mergedirectory "%s".' % self._mergedir
+            shutil.rmtree(self._mergedir)
+
+        print
 
 
     def _readmanifest(self, 
@@ -224,7 +233,8 @@ class Publisher(object):
 
         templates = []
 
-        templateselems = manifestdoc.findall("./templates")
+        templateselems = manifestdoc.findall('./templates')
+
         if len (templateselems) > 0:
             templateselem = templateselems[0]
 
@@ -298,9 +308,9 @@ class Publisher(object):
                              'etce_hostname':first_level_entry }
 
             overlays.update(self._overlaydict)
-            
+
             fulldstfile = os.path.join(dstdir, relname)
-            
+
             dstfiledir = os.path.dirname(fulldstfile)
 
             if not os.path.exists(dstfiledir):
@@ -347,8 +357,7 @@ class Publisher(object):
 
 
 def add_publish_arguments(parser):
-    default_merge_directory = \
-        os.path.join(ConfigDictionary().get('etce', 'WORK_DIRECTORY'), 'template')
+    work_directory = ConfigDictionary().get('etce', 'WORK_DIRECTORY')
 
     parser.add_argument('--basedir',
                         action='store',
@@ -359,10 +368,11 @@ def add_publish_arguments(parser):
                         default: None''')
     parser.add_argument('--mergedirectory',
                         action='store',
-                        default=default_merge_directory,
+                        default=None,
                         help='''An intermediate directory to store a version 
-                        of the test directory merged its base. 
-                        default: %s''' % default_merge_directory)
+                        of the test directory merged with its base. If not
+                        specified, a directory name is generated and placed in
+                        the ETCE working directory (%s).''' % work_directory)
     parser.add_argument('--overlayfile',
                         action='store',
                         default=None,
@@ -416,8 +426,21 @@ def publish_test(args):
                 runtimeoverlays[n] = v
 
     try:
+        mergedirectory = args.mergedirectory
+
+        if not mergedirectory:
+            tmp_directory = os.path.join(ConfigDictionary().get('etce', 'WORK_DIRECTORY'),
+                                         'tmp')
+
+            if not os.path.exists(tmp_directory):
+                os.makedirs(tmp_directory)
+
+            mergedirectory = \
+                etce.utils.generate_tempfile_name(directory=tmp_directory,
+                                                  prefix='template_')
+
         publisher = Publisher(args.testdirectory,
-                              args.mergedirectory,
+                              mergedirectory,
                               runtimeoverlays=runtimeoverlays,
                               absbasedir_override=args.basedir)
 

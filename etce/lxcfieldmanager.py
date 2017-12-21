@@ -56,7 +56,7 @@ def startfield(args):
 
     if os.path.isfile(lockfilename):
         err = 'Detected an active lxc field with root at: %s. ' \
-              'Run "etcelxc stop" first.' % \
+              'Run "etce-lxc stop" first.' % \
               plandoc.lxc_root_directory(this_hostname)
         raise LXCError(err)
             
@@ -207,7 +207,7 @@ def main():
     parser_stop = \
         subparsers.add_parser('stop', 
                               help = 'Stop the LXC container network previously started with ' \
-                              '"etcelxc start"')
+                              '"etce-lxc start"')
 
     parser_stop.set_defaults(func=stopfield)
 

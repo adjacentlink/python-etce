@@ -103,7 +103,10 @@ class ManifestFileDoc(etce.xmldoc.XMLDoc):
     def rewrite_without_basedir(self, outfile):
         new_root = lxml.etree.Element('manifest')
 
-        for elem in self._rootelem:
+        # preserve our root
+        doc_copy = copy.deepcopy(self._rootelem)
+        
+        for elem in doc_copy:
             new_root.append(elem)
 
         with open(outfile, 'w') as outf:
