@@ -51,61 +51,55 @@ from lxml.etree import _Comment
 from lxml.etree import DocumentInvalid
 
 class Publisher(object):
-    def __init__(self,
-                 testdir,
-                 mergedir=None,
-                 extrafiles=[],
-                 absbasedir_override=None,
-                 trialdir=None,
-                 runtimeoverlays={}):
-        self._testdir = testdir
+    def __init__(self, test_directory):
+        self._test_directory = test_directory
 
-        self._mergedir = mergedir
+        manifest_filename_abs = os.path.join(self._test_directory,
+                                             TestDirectory.MANIFESTFILENAME)
 
-        self._trialdir = trialdir
-        manifestfilenameabs = os.path.join(self._testdir,
-                                           TestDirectory.MANIFESTFILENAME)
-
-        if not os.path.exists(manifestfilenameabs) or not os.path.isfile(manifestfilenameabs):
-            raise ValueError('Invalid test directory (%s)\n'
-                             'No manifestfile (%s) found.' % \
-                                 (self._testdir, manifestfilenameabs))
-
-        self._manifestdoc = ManifestFileDoc(manifestfilenameabs)
+        self._manifestdoc = ManifestFileDoc(manifest_filename_abs)
 
         self._testname = self._manifestdoc.name()
 
-        if self._mergedir:
-            self.mergebase(self._mergedir, extrafiles, absbasedir_override)
-        else:
-            self._mergedir = self._testdir
-            
-        self._movefiles,      \
-        self._templates,      \
-        self._overlaydict = self._readmanifest(self._manifestdoc,
-                                               self._mergedir,
-                                               runtimeoverlays)
-
         
-    def mergebase(self, mergedir, extrafiles=[], absbasedir_override=None):
+    def merge_with_base(self, mergedir, absbasedir_override=None, extrafiles=[]):
         '''
         Merge the files from the basedirectory (if there is one), the
         test directory and the extrafiles to the merge directory.
         '''
+        if not mergedir:
+            raise ValueError('A merge directory must be specified in merging ' \
+                             'a test directory with its base directory. ' \
+                             'Quitting.')
+                    
+        # Quit if the merge directory already exists. This also handles the case
+        # where mergedir is the same as the self._test_directory
         if os.path.exists(mergedir):
-            errstr = 'ERROR: merge directory "%s" already exists.' \
-                     % mergedir
-            raise ValueError(errstr)
+            print >>sys.stderr,'Merge directory "%s" already exists, skipping merge.' % mergedir
+            return
+        
+        srcdirs = [self._test_directory]
 
-        srcdirs = [ self._testdir ]
-
-        # figure out base directory
+        # choose the base directory for the merge
+        base_directory = None
+        
         if absbasedir_override:
-            srcdirs.insert(0, absbasedir_override)
+            base_directory = absbasedir_override
+        elif self._manifestdoc.base_directory():
+            base_directory = os.path.join(self._test_directory, self._manifestdoc.base_directory())
         else:
-            relbasedir = self._manifestdoc.base_directory()
-            if relbasedir:
-                srcdirs.insert(0, os.path.join(self._testdir, relbasedir))
+            # merge devolves to copying the test directory to merge directory
+            pass
+
+        # check that the base directory exists
+        if base_directory:
+            if os.path.isdir(base_directory):
+                srcdirs.insert(0, base_directory)
+            else:
+                errstr = 'In merging test directory "%s", cannot find base directory "%s". Quitting.' % \
+                         (self._test_directory, base_directory)
+                raise ValueError(errstr)
+
 
         # move the files in basedirectory, then test directory
         for srcdir in srcdirs:
@@ -168,39 +162,79 @@ class Publisher(object):
             os.makedirs(os.path.join(mergedir, empty_template_directory))
 
 
-    def publish(self, publishdir, overwrite=False):
+    def publish(self,
+                publishdir,
+                mergedir=None,
+                absbasedir_override=None,
+                runtimeoverlays={},
+                extrafiles=[],
+                overwrite_existing_publishdir=False,
+                remove_temporary_mergedir=True):
         '''Publish the directory described by the testdirectory and
            its manifest.xml file to the destination directory.
-           Translation performs these steps:
 
-            1. Copy all non-template files from test directory to destination
-               directory, maintaining directory structure.
-            2. Instantiate template directories and files (if any)
+            1. If the test defines a base directory, or if a mergedir
+               is specified, merge the basedirectory and test directory
+               to the mergedir.
+            2. From the mergedirectory, copy all non-template files to
+               the publish directory, maintaining the directory structure
+               and filling in any template parameters.
+            3. Instantiate template directories and files (if any) and
+               write them to the publishdir.
         '''
+        temporary_merge_location_generated = False
+        
+        if self._manifestdoc.base_directory():
+            # If the test has a base directory
+            # and no merge directory is specified, choose a temporary
+            # location.
+            if not mergedir:
+                temporary_merge_location_generated = True
+
+                mergedir = \
+                    etce.utils.generate_tempfile_name(\
+                        directory=ConfigDictionary().get('etce', 'WORK_DIRECTORY'),
+                                                      prefix='template_')
+        else:
+            # otherwise, a merge is not required
+            mergedir = self._test_directory
+
+
+        # merge, if requested
+        self.merge_with_base(mergedir, absbasedir_override, extrafiles)
+       
+        movefiles,      \
+        templates,      \
+        overlaydict = self._readmanifest(self._manifestdoc,
+                                         publishdir,
+                                         mergedir,
+                                         runtimeoverlays)
+
         print
-        print 'Publishing %s to %s' % (self._testname, publishdir)
+        print 'Publishing %s to %s' % (self._manifestdoc.name(), publishdir)
 
         if os.path.exists(publishdir):
-            if overwrite:
+            if overwrite_existing_publishdir:
                 shutil.rmtree(publishdir)
             else:
                 errstr = 'ERROR: destination dir "%s" already exists.' \
                          % publishdir
                 raise ValueError(errstr)
 
-        self._move(self._movefiles, publishdir)
+        self._move(movefiles, overlaydict, mergedir, publishdir)
 
-        self._instantiate_templates(publishdir)
+        self._instantiate_templates(templates, publishdir)
 
-        if not self._testdir == self._mergedir:
-            print 'Removing mergedirectory "%s".' % self._mergedir
-            shutil.rmtree(self._mergedir)
+        if remove_temporary_mergedir and temporary_merge_location_generated:
+            print 'Removing temporary merge directory "%s".' % mergedir
+            shutil.rmtree(mergedir)
 
         print
 
 
     def _readmanifest(self, 
                       manifestdoc,
+                      publishdir,
                       mergedir,
                       runtimeoverlays):
         overlaydict = \
@@ -255,7 +289,7 @@ class Publisher(object):
 
                 if elem.tag == 'file':
                     templates.append(TemplateFile(mergedir,
-                                                  self._trialdir,
+                                                  publishdir,
                                                   elem, 
                                                   manifestdoc.indices(),
                                                   nodeoverlaydict, 
@@ -267,7 +301,7 @@ class Publisher(object):
 
                 elif elem.tag == 'directory':
                     template_directory = TemplateDirectory(mergedir,
-                                                           self._trialdir,
+                                                           publishdir,
                                                            elem, 
                                                            manifestdoc.indices(),
                                                            nodeoverlaydict,
@@ -276,16 +310,15 @@ class Publisher(object):
                     templates.append(template_directory)
 
                     self._prunedir(subfiles, template_directory.template_subdir)
-
-                    
+            
         self._manifestdoc = manifestdoc
 
         return (subfiles,templates,overlaydict)
 
 
-    def _move(self, srcfiles, dstdir):
-        # copy non-template files from testdir to dstdir
-        os.makedirs(dstdir)
+    def _move(self, srcfiles, overlaydict, mergedir, publishdir):
+        # copy non-template files from testdir to publishdir
+        os.makedirs(publishdir)
 
         skipfiles = (TestDirectory.CONFIGFILENAME,
                      TestDirectory.HOSTFILENAME)
@@ -298,18 +331,18 @@ class Publisher(object):
             if first_level_entry in omitdirs:
                 continue
 
-            fullsrcfile = os.path.join(self._mergedir, relname)
+            fullsrcfile = os.path.join(mergedir, relname)
 
             overlays = {}
 
             # first_level_entry is a nodename if it is a directory
-            if os.path.isdir(os.path.join(self._mergedir, first_level_entry)):
-                overlays = { 'etce_log_path':os.path.join(dstdir, first_level_entry),
+            if os.path.isdir(os.path.join(mergedir, first_level_entry)):
+                overlays = { 'etce_log_path':os.path.join(publishdir, first_level_entry),
                              'etce_hostname':first_level_entry }
 
-            overlays.update(self._overlaydict)
+            overlays.update(overlaydict)
 
-            fulldstfile = os.path.join(dstdir, relname)
+            fulldstfile = os.path.join(publishdir, relname)
 
             dstfiledir = os.path.dirname(fulldstfile)
 
@@ -324,8 +357,8 @@ class Publisher(object):
                 format_file(fullsrcfile, fulldstfile, overlays)
 
 
-    def _instantiate_templates(self, publishdir):
-        for template in self._templates:
+    def _instantiate_templates(self, templates, publishdir):
+        for template in templates:
             template.instantiate(publishdir)
 
 
@@ -426,25 +459,26 @@ def publish_test(args):
                 runtimeoverlays[n] = v
 
     try:
-        mergedirectory = args.mergedirectory
+        merge_directory = args.mergedirectory
 
-        if not mergedirectory:
+        if not merge_directory:
             tmp_directory = os.path.join(ConfigDictionary().get('etce', 'WORK_DIRECTORY'),
                                          'tmp')
 
             if not os.path.exists(tmp_directory):
                 os.makedirs(tmp_directory)
 
-            mergedirectory = \
+            merge_directory = \
                 etce.utils.generate_tempfile_name(directory=tmp_directory,
                                                   prefix='template_')
 
-        publisher = Publisher(args.testdirectory,
-                              mergedirectory,
-                              runtimeoverlays=runtimeoverlays,
-                              absbasedir_override=args.basedir)
+        publisher = Publisher(args.testdirectory)
+        
+        publisher.publish(args.outdirectory,
+                          mergedir=merge_directory,
+                          runtimeoverlays=runtimeoverlays,
+                          absbasedir_override=args.basedir)
 
-        publisher.publish(args.outdirectory)
     except DocumentInvalid as ie:
         print >>sys.stderr, ie
     except KeyError as ke:

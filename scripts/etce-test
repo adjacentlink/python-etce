@@ -382,10 +382,11 @@ def run_test(args):
                         extrafiles.append((args.configfile,
                                            TestDirectory.CONFIGFILENAME))
 
-                    publisher = Publisher(test.location(),
-                                          mergedir=localtesttemplatedir,
-                                          extrafiles=extrafiles,
-                                          absbasedir_override=args.basedir)
+                    publisher = Publisher(test.location())
+
+                    publisher.merge_with_base(mergedir=localtesttemplatedir,
+                                              extrafiles=extrafiles,
+                                              absbasedir_override=args.basedir)
 
                     if hookscript_format:
                         print stepdivider

@@ -51,19 +51,20 @@ class TestDirectory(object):
     HOSTFILENAME = 'nodefile.txt'
     DOCSUBDIRNAME = 'doc'
 
-    def __init__(self, rootdir, basedir_override, merged=False):
+    def __init__(self, rootdir, basedir_override):
         
         self._rootdir = rootdir
         
         self._platform = Platform()
 
-        self._merged = merged
-
         self._manifestfile = ManifestFileDoc(
             os.path.join(self._rootdir,
                          TestDirectory.MANIFESTFILENAME))
 
+        self._merged = not self._manifestfile.has_base_directory()
+        
         self._basedir = self._manifestfile.base_directory()
+
         if not basedir_override is None:
             self._basedir = basedir_override
 

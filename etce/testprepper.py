@@ -52,12 +52,11 @@ class TestPrepper(object):
         # instantiate the template files and write overlays
         runtimeoverlays = { 'etce_install_path':testdefdir }
 
-        publisher = Publisher(templatedir,
-                              mergedir=None,
-                              trialdir=trialdir,
-                              runtimeoverlays=runtimeoverlays)
+        publisher = Publisher(templatedir)
 
-        publisher.publish(testdefdir, overwrite=True)
+        publisher.publish(testdefdir,
+                          runtimeoverlays=runtimeoverlays,
+                          overwrite_existing_publishdir=True)
 
         self._checkdir(trialdir)
 
@@ -67,7 +66,7 @@ class TestPrepper(object):
     def _checkdir(self, logdirectory):
         if not os.path.exists(logdirectory):
             os.makedirs(logdirectory)
-    
+
 
     def _savemeta(self, logdirectory):
         hostname = Platform().hostname()

@@ -46,7 +46,10 @@ class ManifestFileDoc(etce.xmldoc.XMLDoc):
         etce.xmldoc.XMLDoc.__init__(self,
                                     'manifestfile.xsd')
 
-        self._manifestfile = manifestfile
+        if not os.path.exists(manifestfile) or not os.path.isfile(manifestfile):
+            raise ValueError('Cannot find manifest file "%s". Quitting.' %
+                             manifestfile)
+
         self._parsefile(manifestfile)
 
 
@@ -92,6 +95,10 @@ class ManifestFileDoc(etce.xmldoc.XMLDoc):
         return self._rootelem.findall(xpathstr)
 
 
+    def has_base_directory(self):
+        return not self._basedir is None
+
+    
     def base_directory(self):
         # relative path to local path
         if self._basedir:
