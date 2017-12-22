@@ -123,7 +123,7 @@ class TemplateDirectory(object):
             
             node_publishdir = os.path.join(publishdir, nodeoverlays['etce_hostname'])
 
-            print 'Processing template directory "%s" for index=%d and destination=%s' % \
+            print 'Processing template directory "%s" for etce_index=%d and destination=%s' % \
                 (self._absname, index, node_publishdir)
 
             self._createdir(node_publishdir, nodeoverlays)

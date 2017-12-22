@@ -178,7 +178,7 @@ class Publisher(object):
                to the mergedir.
             2. From the mergedirectory, copy all non-template files to
                the publish directory, maintaining the directory structure
-               and filling in any template parameters.
+               and filling in any template overlays.
             3. Instantiate template directories and files (if any) and
                write them to the publishdir.
         '''

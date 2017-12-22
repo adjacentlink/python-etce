@@ -80,9 +80,7 @@ parser.add_argument('--port',
                     type=int,
                     default=None,
                     help='''Connect to remote field via specified port. 
-                    This defaults to of "SSH_PORT" parameter
-                    specified in the [etce] section of the 
-                    etceconf file.''')
+                    This defaults to etce.conf "SSH_PORT" value.''')
 parser.add_argument('--workingdir',
                     action='store',
                     default='.',

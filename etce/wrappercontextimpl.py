@@ -46,28 +46,7 @@ from etce.config import ConfigDictionary
 
 
 class WrapperContextImpl(ArgRegistrar):
-    ''' WrapperContextImpl groups various objects and data, useful 
-        to wrappers, into a single interface. It makes two
-        groups of parameters available to the wrapper - "args"
-        and "overlays".
-
-        args are parameter values passed to wrappers on a test
-        by test basis. They are set in the test steps.xml file,
-        the (optional) test config.xml file and from internal 
-        values calculated on each test run:
-
-           default_pidfilename
-           logdirectory
-           nodename
-           nodeid
-           starttime
-           stepname
-           testname
-           wrappername
-
-        Overlays are parameter values passed to wrappers from the
-        etce.conf file on the host where the wrapper runs. 
-    '''
+    ''' WrapperContextImpl implements the WrapperContext interface.'''
     def __init__(self,
                  wrappername,
                  wrapperinstance,

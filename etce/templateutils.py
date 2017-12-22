@@ -48,7 +48,7 @@ class CaptureContext(Context):
         return self._keys
 
 
-def get_file_params(templatefile):
+def get_file_overlays(templatefile):
     t = Template(filename=templatefile)
 
     ctx = CaptureContext()

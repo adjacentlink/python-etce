@@ -120,19 +120,19 @@ class StepsDoc(etce.xmldoc.XMLDoc):
             stepwrappers = []
 
             for child in stepelem:
-                paramdict = {}
+                argdict = {}
 
-                for pelem in child.findall('./param'):
+                for pelem in child.findall('./arg'):
                     val = etce.utils.configstrtoval(pelem.attrib['value'])
 
-                    paramdict[pelem.attrib['name']] = val
+                    argdict[pelem.attrib['name']] = val
 
                 if child.tag is etree.Comment:
                     continue
 
                 stepwrappers.append((child.attrib['wrapper'],
                                      child.tag,
-                                     paramdict))
+                                     argdict))
 
             if stepname in steplist:
                 errstr = \

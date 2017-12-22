@@ -50,30 +50,30 @@ class ConfigFileDoc(etce.xmldoc.XMLDoc):
             return config
 
         configelem = self.parse(configfile)
-        for paramelem in configelem.findall('./param'):
-            config[('default',paramelem.attrib['name'])] = \
-                etce.utils.configstrtoval(paramelem.attrib['value'])
+        for argelem in configelem.findall('./arg'):
+            config[('default',argelem.attrib['name'])] = \
+                etce.utils.configstrtoval(argelem.attrib['value'])
 
         for wrapperelem in configelem.findall('./wrapper'):
             wrappername = wrapperelem.attrib['name'] 
-            for paramelem in wrapperelem.findall('./param'):
-                config[(wrappername, paramelem.attrib['name'])] = \
-                    etce.utils.configstrtoval(paramelem.attrib['value'])
+            for argelem in wrapperelem.findall('./arg'):
+                config[(wrappername, argelem.attrib['name'])] = \
+                    etce.utils.configstrtoval(argelem.attrib['value'])
 
         return config
 
 
-    def hasconfig(self, wrappername, paramname):
-        if (wrappername, paramname) in self._config:
+    def hasconfig(self, wrappername, argname):
+        if (wrappername, argname) in self._config:
             return True
-        if ('default',paramname) in self._config:
+        if ('default',argname) in self._config:
             return True
         return False
 
 
-    def getconfig(self, wrappername, paramname, default):
-        if (wrappername, paramname) in self._config:
-            return self._config[(wrappername,paramname)]
-        if ('default',paramname) in self._config:
-            return self._config[('default',paramname)]
+    def getconfig(self, wrappername, argname, default):
+        if (wrappername, argname) in self._config:
+            return self._config[(wrappername,argname)]
+        if ('default',argname) in self._config:
+            return self._config[('default',argname)]
         return default

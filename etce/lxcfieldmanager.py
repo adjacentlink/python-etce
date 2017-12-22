@@ -161,9 +161,7 @@ def main():
                         default=None,
                         help='''If the LXCPLANFILE contains remote host(s),
                         connect to the hosts via the specified port. 
-                        This defaults to of "SSH_PORT" parameter
-                        specified in the [etce] section of the 
-                        etce.conf file.''')
+                        This defaults to etce.conf "SSH_PORT" value.''')
     parser.add_argument('--user',
                         action='store',
                         default=None,

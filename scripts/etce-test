@@ -85,7 +85,7 @@ def add_run_arguments(parser):
                         action='store', 
                         default=None,
                         help='''Optional config file containing runtime
-                        parameters. default: None.''')
+                        wrapper arguments. default: None.''')
     parser.add_argument('--delaysecs',
                         type=int,
                         default=40,
@@ -103,9 +103,8 @@ def add_run_arguments(parser):
     #                    action='store',
     #                    default=None,
     #                    help='''An ETCE Steps file defining steps to run
-    #                    at the beginnig of every test. Overrides
-    #                    etcetest ENTRYHOOKFILE parameter value.
-    #                    default: None.''')
+    #                    at the beginnig of every test. Overrides the
+    #                    etce.conf ENTRYHOOKFILE value. default: None.''')
     parser.add_argument('--envfile',
                         action='store',
                         default=None,
@@ -116,9 +115,8 @@ def add_run_arguments(parser):
     #                    action='store',
     #                    default=None,
     #                    help='''An ETCE Steps file defining steps to run
-    #                    at the end of every test. Overrides
-    #                    etcetest EXITHOOKFILE parameter value.
-    #                    default: None.''')
+    #                    at the end of every test. Overrides the
+    #                    etce.conf EXITHOOKFILE value. default: None.''')
     parser.add_argument('--filtersteps',
                         action='store',
                         default=None,
@@ -170,7 +168,7 @@ def add_run_arguments(parser):
     parser.add_argument('--runfromstep',
                         default=None,
                         help='''Only run from the named step of the steps
-                        file. When set, numtrials parameter is ignored (set 
+                        file. When set, the numtrials argument is ignored (set 
                         to 1), and testroot must only contain one
                         test. Useful for debugging. If used in 
                         conjunction with runtostep, will only run the 
@@ -180,7 +178,7 @@ def add_run_arguments(parser):
     parser.add_argument('--runtostep',
                         default=None,
                         help='''Only run until the named step of the steps
-                        file. When set, numtrials parameter is ignored (set 
+                        file. When set, the numtrials argument is ignored (set 
                         to 1), and testroot must only contain one
                         test. Useful for debugging. If used in 
                         conjunction with runfromstep, will only run the 
@@ -199,9 +197,7 @@ def add_run_arguments(parser):
                         type=int,
                         default=None,
                         help='''Connect to remote field via specified port. 
-                        This defaults to of "SSH_PORT" parameter
-                        specified in the [etce] section of the 
-                        etceconf file.''')
+                        This defaults to of etce.conf "SSH_PORT" value.''')
     parser.add_argument('-v',
                         '--verbose', 
                         action='store_true', 
@@ -606,17 +602,15 @@ def main():
                               help='''Publish a test, filling in template
                               values.''',
                               description='''Publish the specified 
-                              TESTDIRECTORY filling in parameter values
-                              of any template files specified in the 
-                              tests manifest.xml file. Overlay values are
-                              specified 1) in the [overlays] section
-                              of the site etceconf file, 2) in the test
-                              manifest.xml file and 3) in the optional
-                              OVERLAYFILE argument - with later values
-                              taking precedence. Parameter tags listed in
-                              the IGNOREFILE are left in the published test
-                              files.  The resulting test is written to
-                              OUTDIRECTORY.''')
+                              TESTDIRECTORY filling in overlay values.
+                              Overlay values are specified:
+                              1) in the [overlays] section of the etce.conf
+                              file, 2) in the test manifest.xml file,
+                              3) in the optional OVERLAYFILE argument - with 
+                              later values taking precedence. Overlay names
+                              listed in the IGNOREFILE are left in the 
+                              generated files. The resulting test is written
+                              to OUTDIRECTORY.''')
 
     add_publish_arguments(parser_publish)
 

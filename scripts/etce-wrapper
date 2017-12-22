@@ -110,10 +110,10 @@ def run_wrapper(args):
                 'dryrun':args.dryrun
             }
 
-            wrapperparams = {}
-            for param in args.params:
-                name,val = param.split(':')
-                wrapperparams[name] = etce.utils.configstrtoval(val)
+            wrapperargs = {}
+            for arg in args.args:
+                name,val = arg.split(':')
+                wrapperargs[name] = etce.utils.configstrtoval(val)
 
             configfiledoc = ConfigFileDoc(args.configfile)
 
@@ -126,7 +126,7 @@ def run_wrapper(args):
                     WrapperContextImpl(args.wrappername,
                                        wut,
                                        trialargs,
-                                       wrapperparams,
+                                       wrapperargs,
                                        ConfigDictionary(),
                                        PseudoTestDirectory(configfiledoc, nodename)))
 
@@ -187,7 +187,7 @@ def main():
     parser_run.add_argument('--configfile',
                             default='',
                             help='''An ETCE configuration file (conforming to configfile.xsd,
-                            for setting wrapper configuration parameters.''')
+                            for setting wrapper arguments.''')
                                  
     parser_run.add_argument('--delaysecs',
                             default=1,
@@ -213,7 +213,7 @@ def main():
                             default=None,
                             help='''ETCE test directory layout orgainzes configuration files
                             by subdirectories named for the host that will use them. This layout
-                            may not be present running the wrapper directoy. Use this parameter
+                            may not be present running the wrapper directoy. Use this argument
                             to specify the nodename passed to the wrapper in the wrapper context. 
                             If not specified, the CONFIGPATH directory name will be passed as the
                             nodename.''')
@@ -239,10 +239,10 @@ def main():
                             current working directory is switched to CONFIGPATH
                             before loading and running the wrapper.''')
 
-    parser_run.add_argument('params',
-                            metavar='PARAMNAME:PARAMVALUE',
+    parser_run.add_argument('args',
+                            metavar='ARGNAME:ARGVALUE',
                             nargs='*',
-                            help='''Wrapper parameter values to pass to the wrapper via the
+                            help='''Wrapper arguments to pass to the wrapper via the
                             context "args" member.''')
 
     parser_run.set_defaults(func=run_wrapper)

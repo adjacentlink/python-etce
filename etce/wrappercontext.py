@@ -35,15 +35,31 @@ from etce.argregistrar import ArgRegistrar
 
 
 class WrapperContext(ArgRegistrar):
-    ''' WrapperContext groups various objects and data, useful 
-        to wrappers, into a single interface. It makes two
-        groups of parameters available to the wrapper - "args"
-        and "overlays".
+    ''' WrapperContext defines the interface of the context
+        object passed to ETCE wrappers during tests. It
+        provides the following:
 
-        args are parameter values passed to wrappers on a test
-        by test basis. They are set in the test steps.xml file,
-        the (optional) test config.xml file and from internal 
-        values calculated on each test run:
+        1. Methods to register the input and output 
+           file names the wrapper uses for configuration and
+           output/logging.
+
+        2. Methods to register the arguments and overlays the
+           wrapper accepts for modifying execution.
+
+        3. Methods to run, daemonize or stop the application
+           associated with the wrapper.
+   
+        The context passes name/value pairs to the wrapper in two
+        members, "args" and "overlays".
+
+        The arguments that wrappers register with the context are
+        passed in the "args" member. These are values that are
+        generally useful to change on a test by test basis - 
+        log levels are a typical example. Arg values are set
+        in the test steps.xml or the optional config.xml file.
+
+        The args member also passes in a small number of fixed 
+        ETCE defined values that cannot be overwritten:
 
            default_pidfilename
            logdirectory
@@ -54,8 +70,14 @@ class WrapperContext(ArgRegistrar):
            testname
            wrappername
 
-        Overlays are parameter values passed to wrappers from the
+        Overlay values are passed to wrappers from the
         etce.conf file on the host where the wrapper runs. 
+        Overlays are intended to be values that vary 
+        across testbeds but not tests. Network interface
+        names are a typical example. Overlays are mainly used
+        for setting values in ETCE template files, but they
+        are passed to wrappers in the context's "overlays"
+        member as well.
     '''
     def __init__(self, impl):
         self._impl = impl
@@ -95,11 +117,6 @@ class WrapperContext(ArgRegistrar):
     def overlays(self):
         return self._impl.overlays
 
-
-    @property
-    def default_pidfilename(self):
-        return self._impl.default_pidfilename
-    
 
     def daemonize(self,
                   commandstr,

@@ -42,7 +42,7 @@ usagestr = '''
 description: Many to one copy function. Copies remotesrc from hosts specified 
              in the hostfile to the localdst directory on the local machine. 
              remotesrc names a file or subdirectory that exists under the 
-             directory named by the WORK_DIRECTORY configuration parameter on
+             directory named by the etce.conf WORK_DIRECTORY value on
              the remote nodes. localsrc specifies an absolute or relative path
              to a directory on the local host. remotesrc is only copied from the 
              root nodes of the two-level hostfile tree structure.

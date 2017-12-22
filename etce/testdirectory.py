@@ -39,7 +39,7 @@ from etce.configfiledoc import ConfigFileDoc
 from etce.field import Field
 from etce.manifestfiledoc import ManifestFileDoc
 from etce.platform import Platform
-from etce.templateutils import get_file_params
+from etce.templateutils import get_file_overlays
 from etce.testdirectoryerror import TestDirectoryError
 import etce.utils
 
@@ -83,12 +83,12 @@ class TestDirectory(object):
             self._verified_nodes = self._verify_nodes_in_hostfile(hostfile)
 
 
-    def hasconfig(self, wrappername, paramname):
-        return self._configfile.hasconfig(wrappername, paramname)
+    def hasconfig(self, wrappername, argname):
+        return self._configfile.hasconfig(wrappername, argname)
 
 
-    def getconfig(self, wrappername, paramname, default):
-        return self._configfile.getconfig(wrappername, paramname, default)
+    def getconfig(self, wrappername, argname, default):
+        return self._configfile.getconfig(wrappername, argname, default)
 
 
     def location(self):
@@ -112,8 +112,8 @@ class TestDirectory(object):
         return self._manifestfile.description()
 
     
-    def overlayparams(self):
-        return self._findparams()
+    def overlay_names(self):
+        return self._find_overlay_names()
 
 
     def stepsfile(self):
@@ -127,8 +127,8 @@ class TestDirectory(object):
         s += '-' * len(info['name']) + '\n'
         s += 'location:\n\t%s\n' % self._rootdir
         s += 'description:\n\t%s\n' % info['description']
-        s += 'overlayparams:\n'
-        for p in self.overlayparams():
+        s += 'overlays:\n'
+        for p in self.overlay_names():
             s += '\t%s\n' % p
         return s
 
@@ -245,8 +245,8 @@ class TestDirectory(object):
                  if self._platform.hostname_has_local_address(other) ]
 
 
-    def _findparams(self):
-        params = set([])
+    def _find_overlay_names(self):
+        overlays = set([])
 
         search_dirs = [self._basedir]
 
@@ -261,7 +261,7 @@ class TestDirectory(object):
                     # ignore doc sub directory
                     continue
                 for filename in filenames:
-                    params.update(
-                        get_file_params(os.path.join(dirname,filename)))
+                    overlays.update(
+                        get_file_overlays(os.path.join(dirname,filename)))
 
-        return tuple(sorted(params))
+        return tuple(sorted(overlays))

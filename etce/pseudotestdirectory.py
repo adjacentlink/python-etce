@@ -82,9 +82,9 @@ class PseudoTestDirectory(object):
         return None
 
 
-    def hasconfig(self, wrappername, paramname):
-        return self._configfile.hasconfig(wrappername, paramname)
+    def hasconfig(self, wrappername, argname):
+        return self._configfile.hasconfig(wrappername, argname)
 
 
-    def getconfig(self, wrappername, paramname, default):
-        return self._configfile.getconfig(wrappername, paramname, default)
+    def getconfig(self, wrappername, argname, default):
+        return self._configfile.getconfig(wrappername, argname, default)
