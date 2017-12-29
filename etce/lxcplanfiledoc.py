@@ -496,9 +496,9 @@ class Container(object):
         return s
 
 
-class LXCPlanDoc(etce.xmldoc.XMLDoc):
+class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
     def __init__(self, lxcplanfile):
-        etce.xmldoc.XMLDoc.__init__(self, 'lxcplandoc.xsd')
+        etce.xmldoc.XMLDoc.__init__(self, 'lxcplanfile.xsd')
 
         if not os.path.isfile(lxcplanfile):
             raise LXCError('Cannot find lxcplanfile "%s". Quitting.' % lxcplanfile)
@@ -729,13 +729,13 @@ def main():
     import sys
 
     if len(sys.argv) != 2:
-        print 'usage: lxcplandoc.py lxcplanfile'
+        print 'usage: lxcplanfiledoc.py lxcplanfile'
         exit(1)
 
     lxcplanfile = sys.argv[1]
 
     try:
-        plandoc = LXCPlanDoc(lxcplanfile)
+        plandoc = LXCPlanFileDoc(lxcplanfile)
 
         # get containers and bridges for this host. Use only
         # machine name

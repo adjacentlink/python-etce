@@ -40,14 +40,14 @@ from etce.clientbuilder import ClientBuilder
 from etce.config import ConfigDictionary
 from etce.lxcerror import LXCError
 from etce.lxcmanager import startlxcs,stoplxcs
-from etce.lxcplandoc import LXCPlanDoc
+from etce.lxcplanfiledoc import LXCPlanFileDoc
 from etce.platform import Platform
 
 
 def startfield(args):
     this_hostname = Platform().hostname()
 
-    plandoc = LXCPlanDoc(args.lxcplanfile)
+    plandoc = LXCPlanFileDoc(args.lxcplanfile)
 
     # lockfile
     lockfilename = \
@@ -110,7 +110,7 @@ def stopfield(args):
     if not os.path.exists(lockfilename) or not os.path.isfile(lockfilename):
         raise LXCError('Lockfile "%s" not found. Quitting.' % lockfilename)
 
-    plandoc = LXCPlanDoc(lockfilename)
+    plandoc = LXCPlanFileDoc(lockfilename)
 
     other_hosts = set(plandoc.hostnames()).difference(
         ['localhost', Platform().hostname()])

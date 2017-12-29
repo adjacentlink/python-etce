@@ -40,19 +40,19 @@ import etce.utils
 
 from etce.platform import Platform
 from etce.config import ConfigDictionary
-from etce.lxcplandoc import LXCPlanDoc
+from etce.lxcplanfiledoc import LXCPlanFileDoc
 from etce.lxcerror import LXCError
 
 
 def startlxcs(lxcplan, writehosts=False, forcelxcroot=False, dryrun=False):
-    lxcplandoc = lxcplan
+    lxcplanfiledoc = lxcplan
 
-    if not type(lxcplan) == LXCPlanDoc:
+    if not type(lxcplan) == LXCPlanFileDoc:
         # assume file name
-        lxcplandoc = LXCPlanDoc(lxcplan)
+        lxcplanfiledoc = LXCPlanFileDoc(lxcplan)
 
     try:
-        LXCManagerImpl().start(lxcplandoc,
+        LXCManagerImpl().start(lxcplanfiledoc,
                                writehosts=writehosts,
                                forcelxcroot=forcelxcroot,
                                dryrun=dryrun)
@@ -61,14 +61,14 @@ def startlxcs(lxcplan, writehosts=False, forcelxcroot=False, dryrun=False):
 
 
 def stoplxcs(lxcplan):
-    lxcplandoc = lxcplan
+    lxcplanfiledoc = lxcplan
 
-    if not type(lxcplan) == LXCPlanDoc:
+    if not type(lxcplan) == LXCPlanFileDoc:
         # assume file name
-        lxcplandoc = LXCPlanDoc(lxcplan)
+        lxcplanfiledoc = LXCPlanFileDoc(lxcplan)
 
     try:
-        LXCManagerImpl().stop(lxcplandoc)
+        LXCManagerImpl().stop(lxcplanfiledoc)
     except Exception as e:
         raise LXCError(e.message)
 

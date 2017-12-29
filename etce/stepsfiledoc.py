@@ -39,7 +39,7 @@ import etce.xmldoc
 from lxml import etree
 
 
-class StepsDoc(etce.xmldoc.XMLDoc):
+class StepsFileDoc(etce.xmldoc.XMLDoc):
     def __init__(self, stepsfile):
         etce.xmldoc.XMLDoc.__init__(self,
                                     'stepsfile.xsd')
