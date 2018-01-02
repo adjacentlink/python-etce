@@ -51,7 +51,7 @@ from etce.platform import Platform
 from etce.publisher import add_publish_arguments,publish_test,Publisher
 from etce.testcollection import add_list_arguments,list_tests,TestCollection,TestCollectionError
 from etce.testdirectory import TestDirectory
-from etce.stepsdoc import StepsDoc
+from etce.stepsfiledoc import StepsFileDoc
 from etce.wrapperstore import WrapperStore
 from etce.xmldocerror import XMLDocError
 
@@ -324,9 +324,9 @@ def run_test(args):
                 exit(1)
             hookfiles.append(entryhookfile)
             entryhooksteps = \
-                StepsDoc(entryhookfile).getsteps(args.runfromstep, 
-                                                 args.runtostep, 
-                                                 filtersteps)
+                StepsFileDoc(entryhookfile).getsteps(args.runfromstep, 
+                                                     args.runtostep, 
+                                                     filtersteps)
 
         exithookfile = None
         #exithookfile = config.get('etcetest', 'ENTRYHOOKFILE', args.exithookfile)
@@ -339,9 +339,9 @@ def run_test(args):
                 exit(1)
             hookfiles.append(exithookfile)
             exithooksteps = \
-                StepsDoc(exithookfile).getsteps(args.runfromstep, 
-                                                args.runtostep, 
-                                                filtersteps)
+                StepsFileDoc(exithookfile).getsteps(args.runfromstep, 
+                                                    args.runtostep, 
+                                                    filtersteps)
 
         hookscript_format = None
 
@@ -411,14 +411,14 @@ def run_test(args):
                                            port=args.port,
                                            envfile=args.envfile)
 
-                    stepsdoc = \
-                        StepsDoc(os.path.join(localtesttemplatedir,
-                                              test.stepsfile()))
+                    stepsfiledoc = \
+                        StepsFileDoc(os.path.join(localtesttemplatedir,
+                                                  test.stepsfile()))
 
                     steps = \
-                        stepsdoc.getsteps(args.runfromstep, 
-                                          args.runtostep, 
-                                          filtersteps)
+                        stepsfiledoc.getsteps(args.runfromstep, 
+                                              args.runtostep, 
+                                              filtersteps)
 
                     # put the template directory to the rootnodes
                     client.put(localtesttemplatedir,
