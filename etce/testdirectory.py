@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ import shutil
 from etce.config import ConfigDictionary
 from etce.configfiledoc import ConfigFileDoc
 from etce.field import Field
-from etce.manifestfiledoc import ManifestFileDoc
+from etce.testfiledoc import TestFileDoc
 from etce.platform import Platform
 from etce.templateutils import get_file_overlays
 from etce.testdirectoryerror import TestDirectoryError
@@ -45,7 +45,7 @@ import etce.utils
 
 
 class TestDirectory(object):
-    MANIFESTFILENAME = 'manifest.xml'
+    TESTFILENAME = 'test.xml'
     STEPSFILENAME = 'steps.xml'
     CONFIGFILENAME = 'config.xml'
     HOSTFILENAME = 'nodefile.txt'
@@ -57,13 +57,13 @@ class TestDirectory(object):
         
         self._platform = Platform()
 
-        self._manifestfile = ManifestFileDoc(
+        self._testfile = TestFileDoc(
             os.path.join(self._rootdir,
-                         TestDirectory.MANIFESTFILENAME))
+                         TestDirectory.TESTFILENAME))
 
-        self._merged = not self._manifestfile.has_base_directory()
+        self._merged = not self._testfile.has_base_directory()
         
-        self._basedir = self._manifestfile.base_directory()
+        self._basedir = self._testfile.base_directory()
 
         if not basedir_override is None:
             self._basedir = basedir_override
@@ -101,15 +101,15 @@ class TestDirectory(object):
 
 
     def name(self):
-        return self._manifestfile.name()
+        return self._testfile.name()
 
 
     def tags(self):
-        return self._manifestfile.tags()
+        return self._testfile.tags()
 
 
     def description(self):
-        return self._manifestfile.description()
+        return self._testfile.description()
 
     
     def overlay_names(self):
@@ -170,7 +170,7 @@ class TestDirectory(object):
                     continue
                 hostnames.update([entry])
 
-        formatted_dirnames = self._manifestfile.formatted_directory_names()
+        formatted_dirnames = self._testfile.formatted_directory_names()
 
         hostnames.update(formatted_dirnames)
 

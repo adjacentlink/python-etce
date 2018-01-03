@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ import traceback
 
 import etce.utils
 from etce.configfiledoc import ConfigFileDoc
-from etce.manifestfiledoc import ManifestFileDoc
+from etce.testfiledoc import TestFileDoc
 from etce.templateutils import format_file
 from etce.templatefile import TemplateFile
 from etce.templatedirectory import TemplateDirectory
@@ -54,12 +54,12 @@ class Publisher(object):
     def __init__(self, test_directory):
         self._test_directory = test_directory
 
-        manifest_filename_abs = os.path.join(self._test_directory,
-                                             TestDirectory.MANIFESTFILENAME)
+        test_filename_abs = os.path.join(self._test_directory,
+                                         TestDirectory.TESTFILENAME)
 
-        self._manifestdoc = ManifestFileDoc(manifest_filename_abs)
+        self._testdoc = TestFileDoc(test_filename_abs)
 
-        self._testname = self._manifestdoc.name()
+        self._testname = self._testdoc.name()
 
         
     def merge_with_base(self, mergedir, absbasedir_override=None, extrafiles=[]):
@@ -85,8 +85,8 @@ class Publisher(object):
         
         if absbasedir_override:
             base_directory = absbasedir_override
-        elif self._manifestdoc.base_directory():
-            base_directory = os.path.join(self._test_directory, self._manifestdoc.base_directory())
+        elif self._testdoc.base_directory():
+            base_directory = os.path.join(self._test_directory, self._testdoc.base_directory())
         else:
             # merge devolves to copying the test directory to merge directory
             pass
@@ -118,8 +118,8 @@ class Publisher(object):
                 if not os.path.exists(dirname):
                     os.makedirs(dirname)
 
-                if subfile == TestDirectory.MANIFESTFILENAME:
-                    self._manifestdoc.rewrite_without_basedir(dstfile)
+                if subfile == TestDirectory.TESTFILENAME:
+                    self._testdoc.rewrite_without_basedir(dstfile)
                 else:
                     shutil.copyfile(srcfile, dstfile)
 
@@ -135,9 +135,9 @@ class Publisher(object):
             shutil.copyfile(srcfile, dstfile)
 
         # check for corner case where a template directory is specified
-        # in manifest file but is empty. Issue a warning, but move
+        # in test file but is empty. Issue a warning, but move
         # it to the mergedirectory anyway.
-        template_directory_names = self._manifestdoc.template_directory_names()
+        template_directory_names = self._testdoc.template_directory_names()
         
         empty_template_directories = set([])
 
@@ -171,7 +171,7 @@ class Publisher(object):
                 overwrite_existing_publishdir=False,
                 remove_temporary_mergedir=True):
         '''Publish the directory described by the testdirectory and
-           its manifest.xml file to the destination directory.
+           its test.xml file to the destination directory.
 
             1. If the test defines a base directory, or if a mergedir
                is specified, merge the basedirectory and test directory
@@ -184,7 +184,7 @@ class Publisher(object):
         '''
         temporary_merge_location_generated = False
         
-        if self._manifestdoc.base_directory():
+        if self._testdoc.base_directory():
             # If the test has a base directory
             # and no merge directory is specified, choose a temporary
             # location.
@@ -205,13 +205,13 @@ class Publisher(object):
        
         movefiles,      \
         templates,      \
-        overlaydict = self._readmanifest(self._manifestdoc,
+        overlaydict = self._readtest(self._testdoc,
                                          publishdir,
                                          mergedir,
                                          runtimeoverlays)
 
         print
-        print 'Publishing %s to %s' % (self._manifestdoc.name(), publishdir)
+        print 'Publishing %s to %s' % (self._testdoc.name(), publishdir)
 
         if os.path.exists(publishdir):
             if overwrite_existing_publishdir:
@@ -232,15 +232,15 @@ class Publisher(object):
         print
 
 
-    def _readmanifest(self, 
-                      manifestdoc,
-                      publishdir,
-                      mergedir,
-                      runtimeoverlays):
+    def _readtest(self, 
+                  testdoc,
+                  publishdir,
+                  mergedir,
+                  runtimeoverlays):
         overlaydict = \
             OverlayChainFactory(mergedir).make(
-                manifestdoc.findall("./overlays/overlay"),
-                manifestdoc.findall("./overlays/overlaycsv"))
+                testdoc.findall("./overlays/overlay"),
+                testdoc.findall("./overlays/overlaycsv"))
 
         configdict = ConfigDictionary()
 
@@ -267,17 +267,17 @@ class Publisher(object):
 
         templates = []
 
-        templateselems = manifestdoc.findall('./templates')
+        templateselems = testdoc.findall('./templates')
 
         if len (templateselems) > 0:
             templateselem = templateselems[0]
 
             overlaylistelems = \
-                manifestdoc.findall("./templates/overlaylist")
+                testdoc.findall("./templates/overlaylist")
 
             nodeoverlaydict = \
                 OverlayListChainFactory().make(overlaylistelems,
-                                               manifestdoc.indices())
+                                               testdoc.indices())
 
             # iterate over elem's children
             for elem in list(templateselem):
@@ -291,7 +291,7 @@ class Publisher(object):
                     templates.append(TemplateFile(mergedir,
                                                   publishdir,
                                                   elem, 
-                                                  manifestdoc.indices(),
+                                                  testdoc.indices(),
                                                   nodeoverlaydict, 
                                                   overlaydict))
                     # same template file might be use multiple times so
@@ -303,7 +303,7 @@ class Publisher(object):
                     template_directory = TemplateDirectory(mergedir,
                                                            publishdir,
                                                            elem, 
-                                                           manifestdoc.indices(),
+                                                           testdoc.indices(),
                                                            nodeoverlaydict,
                                                            overlaydict)
                     
@@ -311,7 +311,7 @@ class Publisher(object):
 
                     self._prunedir(subfiles, template_directory.template_subdir)
             
-        self._manifestdoc = manifestdoc
+        self._testdoc = testdoc
 
         return (subfiles,templates,overlaydict)
 
@@ -349,8 +349,8 @@ class Publisher(object):
             if not os.path.exists(dstfiledir):
                 os.makedirs(dstfiledir)
 
-            if relname == TestDirectory.MANIFESTFILENAME:
-                self._manifestdoc.rewrite_without_basedir(fulldstfile)
+            if relname == TestDirectory.TESTFILENAME:
+                self._testdoc.rewrite_without_basedir(fulldstfile)
             elif relname in skipfiles:
                 shutil.copyfile(fullsrcfile, fulldstfile)
             else:
@@ -397,7 +397,7 @@ def add_publish_arguments(parser):
                         default=None,
                         help='''Specify an absolute path to test base 
                         directory, overridding the (optional) base
-                        directory defined in the test manifest.xml file.
+                        directory defined in the test test.xml file.
                         default: None''')
     parser.add_argument('--mergedirectory',
                         action='store',

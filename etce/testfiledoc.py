@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,16 +41,16 @@ import etce.utils
 from etce.config import ConfigDictionary
 
 
-class ManifestFileDoc(etce.xmldoc.XMLDoc):
-    def __init__(self, manifestfile):
+class TestFileDoc(etce.xmldoc.XMLDoc):
+    def __init__(self, testfile):
         etce.xmldoc.XMLDoc.__init__(self,
-                                    'manifestfile.xsd')
+                                    'testfile.xsd')
 
-        if not os.path.exists(manifestfile) or not os.path.isfile(manifestfile):
-            raise ValueError('Cannot find manifest file "%s". Quitting.' %
-                             manifestfile)
+        if not os.path.exists(testfile) or not os.path.isfile(testfile):
+            raise ValueError('Cannot find test file "%s". Quitting.' %
+                             testfile)
 
-        self._parsefile(manifestfile)
+        self._parsefile(testfile)
 
 
     def name(self):
@@ -108,7 +108,7 @@ class ManifestFileDoc(etce.xmldoc.XMLDoc):
 
 
     def rewrite_without_basedir(self, outfile):
-        new_root = lxml.etree.Element('manifest')
+        new_root = lxml.etree.Element('test')
 
         # preserve our root
         doc_copy = copy.deepcopy(self._rootelem)
@@ -120,9 +120,9 @@ class ManifestFileDoc(etce.xmldoc.XMLDoc):
             outf.write(lxml.etree.tostring(new_root, pretty_print=True))
 
 
-    def _parsefile(self, manifestfile):
-        # open manifestfile, extract its contents
-        self._rootelem = self.parse(manifestfile)
+    def _parsefile(self, testfile):
+        # open testfile, extract its contents
+        self._rootelem = self.parse(testfile)
 
         self._basedir = self._rootelem.attrib.get('base', None)
  
