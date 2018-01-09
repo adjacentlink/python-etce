@@ -46,12 +46,12 @@ class OverlayChainFactory(object):
         overlaydict = {}
 
         for overlayelem in overlayelems:
-            #<overlay tag='FREQ1' val='2347000000'/>
-            tag = overlayelem.attrib['tag']
+            #<overlay name='FREQ1' value='2347000000'/>
+            name = overlayelem.attrib['name']
 
             val = overlayelem.attrib['value']
 
-            overlaydict[tag] = etce.utils.configstrtoval(val)
+            overlaydict[name] = etce.utils.configstrtoval(val)
 
         for overlaycsvelem in overlaycsvelems:
             #<overlaycsv file='FREQ1' column='2347000000'/>

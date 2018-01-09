@@ -44,7 +44,7 @@ class OverlayListChainFactory(object):
             valsmap[index] = {}
 
         for overlaylistelem in overlaylistelems:
-            tag = overlaylistelem.attrib['tag']
+            name = overlaylistelem.attrib['name']
             separator=overlaylistelem.attrib.get('separator',',')
             values = overlaylistelem.attrib['values'].split(separator)
 
@@ -52,10 +52,10 @@ class OverlayListChainFactory(object):
             if not len(indiceslist) == len(values):
                 err = 'overlaylist error: number of indices (%d) and ' \
                       'number of values (%d) do not match for overlaylist ' \
-                      'tag "%s"' % (len(indiceslist), len(values), tag)
+                      'name "%s"' % (len(indiceslist), len(values), name)
                 raise OverlayError(err)
                 
             for index,value in zip(indiceslist,values):
-                valsmap[index][tag] = configstrtoval(value.strip())
+                valsmap[index][name] = configstrtoval(value.strip())
 
         return valsmap

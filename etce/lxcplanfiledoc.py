@@ -656,7 +656,7 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
                 overlays = ConfigDictionary().asdict()['overlays']
 
                 for overlayelem in containerelem.findall('./overlays/overlay'):
-                    oname = overlayelem.attrib['tag']
+                    oname = overlayelem.attrib['name']
 
                     ovalue = overlayelem.attrib['value']
 
@@ -666,7 +666,7 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
                 overlaylists = {}
 
                 for overlaylistelem in containerelem.findall('./overlays/overlaylist'):
-                    oname = overlaylistelem.attrib['tag']
+                    oname = overlaylistelem.attrib['name']
 
                     separator = overlaylistelem.attrib.get('separator',',')
 
@@ -674,7 +674,7 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
 
                     overlaylists[oname] = ovalues
 
-                # treat all values for each tag as an int if possible,
+                # treat all values for each name as an int if possible,
                 # else all strings
                 for oname,ovals in overlaylists.items():
                     converted_vals = []

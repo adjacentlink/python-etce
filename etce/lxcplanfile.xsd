@@ -66,14 +66,14 @@
 
   <xs:element name="overlay">
     <xs:complexType>
-      <xs:attribute name="tag" type="xs:string"/>
+      <xs:attribute name="name" type="xs:string"/>
       <xs:attribute name="value" type="xs:string"/>
     </xs:complexType>
   </xs:element>
 
   <xs:element name="overlaylist">
     <xs:complexType>
-      <xs:attribute name="tag" type="xs:string"/>
+      <xs:attribute name="name" type="xs:string"/>
       <xs:attribute name="separator" type="xs:string" use="optional"/>
       <xs:attribute name="values" type="xs:string"/>
     </xs:complexType>

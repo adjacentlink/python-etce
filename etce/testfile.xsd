@@ -35,7 +35,7 @@
 
   <xs:element name="overlaylist">
     <xs:complexType>
-      <xs:attribute name="tag" type="xs:string" use="required"/>
+      <xs:attribute name="name" type="xs:string" use="required"/>
       <xs:attribute name="separator" type="xs:string" use="optional"/>
       <xs:attribute name="values" type="xs:string" use="required"/>
     </xs:complexType>
@@ -67,7 +67,7 @@
               <xs:choice minOccurs="0" maxOccurs="unbounded">
                 <xs:element name="overlay" minOccurs="0" maxOccurs="1">
                   <xs:complexType>
-                    <xs:attribute name="tag" type="xs:string" use="required"/>
+                    <xs:attribute name="name" type="xs:string" use="required"/>
                     <xs:attribute name="value" type="xs:string" use="required"/>
                   </xs:complexType>
                 </xs:element>

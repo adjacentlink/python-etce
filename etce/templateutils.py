@@ -77,6 +77,6 @@ def format_string(template_string, overlays):
         return template.render(**overlays)
     except NameError as ne:
         message = \
-            '%s for template string "%s". Available tags are {%s}. Quitting.' % \
+            '%s for template string "%s". Available overlays are {%s}. Quitting.' % \
             (ne.message, template_string, ','.join(overlays.keys()))
         raise NameError(message)

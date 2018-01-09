@@ -45,13 +45,13 @@ class OverlayCSVReader(object):
                        % (column_name, self._csvfile)
             raise ValueError(message)
 
-        tag_dict = {}
+        overlay_dict = {}
 
-        for tag,v in zip(self._column_dict['tag'], 
+        for n,v in zip(self._column_dict['name'], 
                          self._column_dict[column_name]):
-            tag_dict[tag] = v
+            overlay_dict[n] = v
 
-        return tag_dict
+        return overlay_dict
 
 
     def _parse(self, csvfile):
@@ -63,10 +63,10 @@ class OverlayCSVReader(object):
             raise ValueError('"%s" file rows not the same length. Quitting.' \
                              % (csvfile))
         
-        tags = rows[0]
+        names = rows[0]
 
-        if not 'TAG' in [ t.upper() for t in tags ]:
-            message = 'No "tag" column header found in "%s" ' \
+        if not 'NAME' in [ n.upper() for n in names ]:
+            message = 'No "name" column header found in "%s" ' \
                       'overlay file. Quitting' % csvfile
             raise ValueError(message)
 
@@ -74,8 +74,8 @@ class OverlayCSVReader(object):
 
         column_dict = {}
 
-        for tag,vals in zip(tags,column_vals):
-            column_dict[tag] = vals
+        for name,vals in zip(names,column_vals):
+            column_dict[name] = vals
 
         return column_dict
 

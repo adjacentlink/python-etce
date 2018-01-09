@@ -409,9 +409,9 @@ def add_publish_arguments(parser):
     parser.add_argument('--overlayfile',
                         action='store',
                         default=None,
-                        help='''File name containing TAG=VALUE pairs,
-                        one per line, to use as tag overlays
-                        to use for publishing. These tag values 
+                        help='''File name containing NAME=VALUE pairs,
+                        one per line, to use as overlays
+                        for publishing. These overlay values 
                         override those specified in the local etce.conf file. 
                         default: None''')
     parser.add_argument('testdirectory',
