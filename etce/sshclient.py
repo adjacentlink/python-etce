@@ -211,6 +211,11 @@ class ExecuteThread(Thread):
                                            readers[stdo.channel.fileno()].returnobject())
 
 
+        finally:
+            os.close(self._read_pipe)
+            os.close(self._write_pipe)
+
+            
     def returnobject(self):
         return self._remote_returnobject
 
