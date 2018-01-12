@@ -109,7 +109,8 @@ def add_run_arguments(parser):
                         action='store',
                         default=None,
                         help='''Environment file to invoke on remove nodes
-                        before running the specified command.
+                        before running the specified command. Must be 
+                        specified as an absolute file.
                         default: None.''')
     #parser.add_argument('--exithookfile',
     #                    action='store',
@@ -232,6 +233,11 @@ def run_test(args):
     if not os.path.isfile(args.hostfile):
         print >>sys.stderr,'Cannot find hostfile "%s". Quitting.' % args.hostfile
         exit(1)
+
+    if args.envfile:
+        if not args.envfile[0] == os.path.sep:
+            print >>sys.stderr, 'envfile argument must be an absolute path. Quitting'
+            exit(1)
 
     field = Field(args.hostfile)
 
