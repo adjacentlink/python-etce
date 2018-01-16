@@ -67,7 +67,6 @@ class TemplateFileBuilder(object):
             oval = overlayelem.attrib['value']
 
             self._template_local_overlays[oname] = etce.utils.configstrtoval(oval)
-
         
         self._template_local_overlaylists = \
             OverlayListChainFactory().make(templatefileelem.findall('./overlaylist'),
@@ -145,21 +144,32 @@ class TemplateFileBuilder(object):
                                    nodeoverlays['etce_hostname'], 
                                    self._output_file_name)
 
+        other_keys = set([])
+
+        non_reserved_overlays = [ runtime_overlays,
+                                  env_overlays,
+                                  self._template_local_overlaylists[index],
+                                  self._template_local_overlays,
+                                  self._templates_global_overlaylists[index],
+                                  self._global_overlays,
+                                  etce_config_overlays ] 
+
+        map(other_keys.update, non_reserved_overlays)
+
+        key_clashes =  other_keys.intersection(set(reserved_overlays.keys()))
+
+        if key_clashes:
+            raise ValueError('Overlay keys {%s} are reserved. Quitting.' % \
+                             ','.join(map(str,key_clashes)))
+
+        overlays = ChainMap(reserved_overlays, *non_reserved_overlays)
+
         # format str can add subdirectories, so make those if necessary
         if not os.path.exists(os.path.dirname(publishfile)):
             os.makedirs(os.path.dirname(publishfile))
 
         if os.path.exists(publishfile):
             print 'Warning: %s already exists. Overwriting!' % publishfile
-
-        overlays = ChainMap(reserved_overlays,
-                            runtime_overlays,
-                            env_overlays,
-                            self._template_local_overlaylists[index],
-                            self._template_local_overlays,
-                            self._templates_global_overlaylists[index],
-                            self._global_overlays,
-                            etce_config_overlays)
 
         format_file(self._absname, publishfile, overlays)
 

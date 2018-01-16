@@ -159,20 +159,32 @@ class TemplateDirectoryBuilder(object):
             
         node_publishdir = os.path.join(publishdir, reserved_overlays['etce_hostname'])
 
+        non_reserved_overlays = [ runtime_overlays,
+                                  env_overlays,
+                                  self._template_local_overlaylists[index],
+                                  self._template_local_overlays,
+                                  self._templates_global_overlaylists[index],
+                                  self._global_overlays,
+                                  etce_config_overlays ] 
+        
+        other_keys = set([])
+
+        map(other_keys.update, non_reserved_overlays)
+
+        key_clashes =  other_keys.intersection(set(reserved_overlays))
+
+        if key_clashes:
+            raise ValueError('Overlay keys {%s} are reserved. Quitting.' % \
+                             ','.join(map(str,key_clashes)))
+
+        overlays = ChainMap(reserved_overlays, *non_reserved_overlays)
+        
         print 'Processing template directory "%s" for etce_index=%d and destination=%s' % \
             (templatedir, index, node_publishdir)
 
         if not os.path.exists(node_publishdir):
             os.makedirs(node_publishdir)
 
-        overlays = ChainMap(reserved_overlays,
-                            runtime_overlays,
-                            env_overlays,
-                            self._template_local_overlaylists[index],
-                            self._template_local_overlays,
-                            self._templates_global_overlaylists[index],
-                            self._global_overlays,
-                            etce_config_overlays)
 
         # To publish a directory:
         # 1. walk the directory (and each of its subdirectories)
