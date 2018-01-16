@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -632,7 +632,7 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
             alllxcids = set([])
 
             for containerelem in hostelem.findall('./containers/container'):
-                containerlxcids = etce.utils.nodestrtonodes(
+                containerlxcids = etce.utils.nodestr_to_nodelist(
                     str(containerelem.attrib['lxc_indices']))
 
                 repeatedids = alllxcids.intersection(containerlxcids)
@@ -649,7 +649,7 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
 
                 template = containertemplates.get(templatename, None)
 
-                lxcids = etce.utils.nodestrtonodes(
+                lxcids = etce.utils.nodestr_to_nodelist(
                     str(containerelem.attrib['lxc_indices']))
 
                 # fetch the overlays, use etce file values as default

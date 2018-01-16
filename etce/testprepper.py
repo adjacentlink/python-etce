@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -50,13 +50,14 @@ class TestPrepper(object):
         trialdir = os.path.join(etcedir, trialsubdir)
 
         # instantiate the template files and write overlays
-        runtimeoverlays = { 'etce_install_path':testdefdir }
+        runtime_overlays = { 'etce_install_path':testdefdir }
 
         publisher = Publisher(templatedir)
 
-        publisher.publish(testdefdir,
-                          runtimeoverlays=runtimeoverlays,
-                          overwrite_existing_publishdir=True)
+        publisher.merge_with_base_and_publish(testdefdir,
+                                              logdir=trialsubdir,
+                                              runtime_overlays=runtime_overlays,
+                                              overwrite_existing_publishdir=True)
 
         self._checkdir(trialdir)
 

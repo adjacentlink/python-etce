@@ -37,17 +37,12 @@ import sys
 import traceback
 
 import etce.utils
-from etce.configfiledoc import ConfigFileDoc
+from etce.chainmap import ChainMap
 from etce.testfiledoc import TestFileDoc
 from etce.templateutils import format_file
-from etce.templatefile import TemplateFile
-from etce.templatedirectory import TemplateDirectory
 from etce.testdirectory import TestDirectory
-from etce.overlaychainfactory import OverlayChainFactory
-from etce.overlaylistchainfactory import OverlayListChainFactory
 from etce.config import ConfigDictionary
 
-from lxml.etree import _Comment
 from lxml.etree import DocumentInvalid
 
 class Publisher(object):
@@ -59,9 +54,7 @@ class Publisher(object):
 
         self._testdoc = TestFileDoc(test_filename_abs)
 
-        self._testname = self._testdoc.name()
 
-        
     def merge_with_base(self, mergedir, absbasedir_override=None, extrafiles=[]):
         '''
         Merge the files from the basedirectory (if there is one), the
@@ -71,18 +64,18 @@ class Publisher(object):
             raise ValueError('A merge directory must be specified in merging ' \
                              'a test directory with its base directory. ' \
                              'Quitting.')
-                    
+
         # Quit if the merge directory already exists. This also handles the case
         # where mergedir is the same as the self._test_directory
         if os.path.exists(mergedir):
             print >>sys.stderr,'Merge directory "%s" already exists, skipping merge.' % mergedir
             return
-        
+
         srcdirs = [self._test_directory]
 
         # choose the base directory for the merge
         base_directory = None
-        
+
         if absbasedir_override:
             base_directory = absbasedir_override
         elif self._testdoc.base_directory():
@@ -137,6 +130,10 @@ class Publisher(object):
         # check for corner case where a template directory is specified
         # in test file but is empty. Issue a warning, but move
         # it to the mergedirectory anyway.
+        self._warn_on_empty_template_directory(srcdirs)
+
+
+    def _warn_on_empty_template_directory(self, srcdirs):
         template_directory_names = self._testdoc.template_directory_names()
         
         empty_template_directories = set([])
@@ -162,14 +159,15 @@ class Publisher(object):
             os.makedirs(os.path.join(mergedir, empty_template_directory))
 
 
-    def publish(self,
-                publishdir,
-                mergedir=None,
-                absbasedir_override=None,
-                runtimeoverlays={},
-                extrafiles=[],
-                overwrite_existing_publishdir=False,
-                remove_temporary_mergedir=True):
+    def merge_with_base_and_publish(self,
+                                    publishdir,
+                                    mergedir=None,
+                                    logdir=None,
+                                    absbasedir_override=None,
+                                    runtime_overlays={},
+                                    extrafiles=[],
+                                    overwrite_existing_publishdir=False,
+                                    preserve_temporary_mergedir=False):
         '''Publish the directory described by the testdirectory and
            its test.xml file to the destination directory.
 
@@ -183,7 +181,7 @@ class Publisher(object):
                write them to the publishdir.
         '''
         temporary_merge_location_generated = False
-        
+
         if self._testdoc.base_directory():
             # If the test has a base directory
             # and no merge directory is specified, choose a temporary
@@ -191,9 +189,10 @@ class Publisher(object):
             if not mergedir:
                 temporary_merge_location_generated = True
 
+                workdir = ConfigDictionary().get('etce', 'WORK_DIRECTORY')
+
                 mergedir = \
-                    etce.utils.generate_tempfile_name(\
-                        directory=ConfigDictionary().get('etce', 'WORK_DIRECTORY'),
+                    etce.utils.generate_tempfile_name(os.path.join(workdir,'tmp'),
                                                       prefix='template_')
         else:
             # otherwise, a merge is not required
@@ -202,13 +201,12 @@ class Publisher(object):
 
         # merge, if requested
         self.merge_with_base(mergedir, absbasedir_override, extrafiles)
-       
-        movefiles,      \
-        templates,      \
-        overlaydict = self._readtest(self._testdoc,
-                                         publishdir,
-                                         mergedir,
-                                         runtimeoverlays)
+
+        movefiles,templates = self._get_templates(mergedir)
+        
+        etce_config_overlays, env_overlays = self._get_host_and_env_overlays()
+
+        testfile_global_overlays = self._testdoc.global_overlays(mergedir)
 
         print
         print 'Publishing %s to %s' % (self._testdoc.name(), publishdir)
@@ -221,102 +219,79 @@ class Publisher(object):
                          % publishdir
                 raise ValueError(errstr)
 
-        self._move(movefiles, overlaydict, mergedir, publishdir)
 
-        self._instantiate_templates(templates, publishdir)
+        # move non-template files, filling in overlays
+        self._move(movefiles,
+                   runtime_overlays,
+                   env_overlays,
+                   testfile_global_overlays,
+                   etce_config_overlays,
+                   publishdir,
+                   mergedir,
+                   logdir)
 
-        if remove_temporary_mergedir and temporary_merge_location_generated:
-            print 'Removing temporary merge directory "%s".' % mergedir
-            shutil.rmtree(mergedir)
+        self._instantiate_templates(templates,
+                                    runtime_overlays,
+                                    env_overlays,
+                                    etce_config_overlays,
+                                    publishdir,
+                                    mergedir,
+                                    logdir)
+
+        if temporary_merge_location_generated:
+            if preserve_temporary_mergedir:
+                print 'Preserving temporary merge directory "%s".' % mergedir
+            else:
+                print 'Removing temporary merge directory "%s".' % mergedir
+                shutil.rmtree(mergedir)
 
         print
 
 
-    def _readtest(self, 
-                  testdoc,
-                  publishdir,
-                  mergedir,
-                  runtimeoverlays):
-        overlaydict = \
-            OverlayChainFactory(mergedir).make(
-                testdoc.findall("./overlays/overlay"),
-                testdoc.findall("./overlays/overlaycsv"))
-
+    def _get_host_and_env_overlays(self):
+        # Assemble overlays from
+        # 1. etce.conf
+        etce_config_overlays = {}
+        
         configdict = ConfigDictionary()
 
         for k,v in configdict.items('overlays'):
-            overlaydict.update({ k:etce.utils.configstrtoval(v) })
+            etce_config_overlays[k] = etce.utils.configstrtoval(v)
 
-        # env_overlays_allow names env variables permitted to
-        # use as overlays
-        env_overlays_allow = configdict.get('etce', 'ENV_OVERLAYS_ALLOW', '')
-
+        # 3. overlay set by environment variables, identified by
+        #    etce.conf ENV_OVERLAYS_ALLOW
         env_overlays = {}
+
+        env_overlays_allow = configdict.get('etce', 'ENV_OVERLAYS_ALLOW', '')
 
         if len(env_overlays_allow):
             for overlay in env_overlays_allow.split(':'):
                 if overlay in os.environ:
-                    env_overlays[overlay] = os.environ[overlay]
+                    env_overlays[overlay] = etce.utils.configstrtoval(os.environ[overlay])
 
-        overlaydict.update(env_overlays)
+        return (etce_config_overlays, env_overlays)
+    
 
-        for k,v in runtimeoverlays.items():
-            overlaydict.update({ k:etce.utils.configstrtoval(v) })
-
+    def _get_templates(self, mergedir):
         subfiles = self._get_subfiles(mergedir)
 
-        templates = []
+        templates = self._testdoc.templates()
 
-        templateselems = testdoc.findall('./templates')
+        for template in templates:
+            template.prune(subfiles)
 
-        if len (templateselems) > 0:
-            templateselem = templateselems[0]
-
-            overlaylistelems = \
-                testdoc.findall("./templates/overlaylist")
-
-            nodeoverlaydict = \
-                OverlayListChainFactory().make(overlaylistelems,
-                                               testdoc.indices())
-
-            # iterate over elem's children
-            for elem in list(templateselem):
-                # ignore comments
-                if isinstance(elem, _Comment):
-                    continue
-
-                name = elem.attrib['name']
-
-                if elem.tag == 'file':
-                    templates.append(TemplateFile(mergedir,
-                                                  publishdir,
-                                                  elem, 
-                                                  testdoc.indices(),
-                                                  nodeoverlaydict, 
-                                                  overlaydict))
-                    # same template file might be use multiple times so
-                    # check if previously removed
-                    if name in subfiles:
-                        subfiles.pop(subfiles.index(name))
-
-                elif elem.tag == 'directory':
-                    template_directory = TemplateDirectory(mergedir,
-                                                           publishdir,
-                                                           elem, 
-                                                           testdoc.indices(),
-                                                           nodeoverlaydict,
-                                                           overlaydict)
-                    
-                    templates.append(template_directory)
-
-                    self._prunedir(subfiles, template_directory.template_subdir)
-            
-        self._testdoc = testdoc
-
-        return (subfiles,templates,overlaydict)
+        return (subfiles,templates)
 
 
-    def _move(self, srcfiles, overlaydict, mergedir, publishdir):
+    def _move(self,
+              srcfiles,
+              runtime_overlays,
+              env_overlays,
+              testfile_global_overlays,
+              etce_config_overlays,
+              publishdir,
+              mergedir,
+              logdir):
         # copy non-template files from testdir to publishdir
         os.makedirs(publishdir)
 
@@ -333,14 +308,27 @@ class Publisher(object):
 
             fullsrcfile = os.path.join(mergedir, relname)
 
-            overlays = {}
+            reserved_overlays = {}
 
             # first_level_entry is a nodename if it is a directory
             if os.path.isdir(os.path.join(mergedir, first_level_entry)):
-                overlays = { 'etce_log_path':os.path.join(publishdir, first_level_entry),
-                             'etce_hostname':first_level_entry }
+                reserved_overlays = { 'etce_log_path':os.path.join(publishdir, first_level_entry),
+                                      'etce_hostname':first_level_entry }
 
-            overlays.update(overlaydict)
+            # for non-template file, overlays maps are searched in precedence:
+            #
+            # 1. reserved overlays
+            # 2. runtime overlays (passed in by user or calling function)
+            # 3. overlays set by environment variable
+            # 4. overlays set in the test.xml file that apply to all files (at
+            #    the top level)
+            # 5. overlays set in the etce.conf "overlays" section - default
+            #    values
+            overlays = ChainMap(reserved_overlays,
+                                runtime_overlays,
+                                env_overlays,
+                                testfile_global_overlays,
+                                etce_config_overlays)   
 
             fulldstfile = os.path.join(publishdir, relname)
 
@@ -357,9 +345,21 @@ class Publisher(object):
                 format_file(fullsrcfile, fulldstfile, overlays)
 
 
-    def _instantiate_templates(self, templates, publishdir):
+    def _instantiate_templates(self,
+                               templates,
+                               runtime_overlays,
+                               env_overlays,
+                               etce_config_overlays,
+                               publishdir,
+                               mergedir,
+                               logdir):
         for template in templates:
-            template.instantiate(publishdir)
+            template.instantiate(mergedir,
+                                 publishdir,
+                                 logdir,
+                                 runtime_overlays,
+                                 env_overlays,
+                                 etce_config_overlays)
 
 
     def _get_subfiles(self, directory):
@@ -376,19 +376,6 @@ class Publisher(object):
         return files
 
 
-    def _prunedir(self, subfiles, subdir):
-        # remove any member of subfiles whose key is contained under srcdir
-        rmfiles = []
-
-        for subfile in subfiles:
-            if subfile.startswith(subdir + '/'):
-                rmfiles.append(subfile)
-
-        for rmfile in rmfiles:
-            subfiles.pop(subfiles.index(rmfile))
-
-
-
 def add_publish_arguments(parser):
     work_directory = ConfigDictionary().get('etce', 'WORK_DIRECTORY')
 
@@ -399,13 +386,20 @@ def add_publish_arguments(parser):
                         directory, overridding the (optional) base
                         directory defined in the test test.xml file.
                         default: None''')
+    parser.add_argument('--nocleanup',
+                        action='store_true',
+                        default=False,
+                        help='''If an intermediate merge step to a temporary directory
+                        is performed (see mergedirectory), the preserve the merge directory.
+                        The default is to remove it.''')
     parser.add_argument('--mergedirectory',
                         action='store',
                         default=None,
-                        help='''An intermediate directory to store a version 
-                        of the test directory merged with its base. If not
-                        specified, a directory name is generated and placed in
-                        the ETCE working directory (%s).''' % work_directory)
+                        help='''An intermediate directory to merge the TESTDIRECTORY
+                        with its optional base directory. If the test's test.xml file
+                        does not specify a base directory then the merge step is
+                        skipped. A temporary directory in the ETCE working directory
+                        (%s) is generated if no argument is specified.''' % work_directory)
     parser.add_argument('--overlayfile',
                         action='store',
                         default=None,
@@ -414,6 +408,10 @@ def add_publish_arguments(parser):
                         for publishing. These overlay values 
                         override those specified in the local etce.conf file. 
                         default: None''')
+    parser.add_argument('--verbose',
+                        default=False,
+                        action='store_true',
+                        help='Print verbose information on error.')
     parser.add_argument('testdirectory',
                         metavar='TESTDIRECTORY',
                         action='store',
@@ -447,7 +445,7 @@ def publish_test(args):
             print >>sys.stderr,message
             exit(1)
         
-    runtimeoverlays = {}
+    runtime_overlays = {}
     if args.overlayfile is not None:
         if not os.path.isfile(args.overlayfile):
             print >>sys.stderr, 'overlayfile "%s" doesn\'t exist. Quitting' % args.overlayfile
@@ -456,32 +454,18 @@ def publish_test(args):
             line = line.strip()
             if len(line) > 0:
                 n,v = line.split('=')
-                runtimeoverlays[n] = v
+                runtime_overlays[n] = v
 
     try:
-        merge_directory = args.mergedirectory
-
-        if not merge_directory:
-            tmp_directory = os.path.join(ConfigDictionary().get('etce', 'WORK_DIRECTORY'),
-                                         'tmp')
-
-            if not os.path.exists(tmp_directory):
-                os.makedirs(tmp_directory)
-
-            merge_directory = \
-                etce.utils.generate_tempfile_name(directory=tmp_directory,
-                                                  prefix='template_')
-
         publisher = Publisher(args.testdirectory)
         
-        publisher.publish(args.outdirectory,
-                          mergedir=merge_directory,
-                          runtimeoverlays=runtimeoverlays,
-                          absbasedir_override=args.basedir)
+        publisher.merge_with_base_and_publish(args.outdirectory,
+                                              args.mergedirectory,
+                                              runtime_overlays=runtime_overlays,
+                                              absbasedir_override=args.basedir,
+                                              preserve_temporary_mergedir=args.nocleanup)
 
-    except DocumentInvalid as ie:
-        print >>sys.stderr, ie
-    except KeyError as ke:
-        print >>sys.stderr, 'No value specified for key %s. Quitting. ' % ke
-    except ValueError as ve:
-        print >>sys.stderr, ve
+    except Exception as e:
+        print >>sys.stderr, e
+        if args.verbose:
+            print traceback.format_exc()

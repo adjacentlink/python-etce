@@ -256,19 +256,26 @@ def timestamp():
     return '%04d%02d%02d%02d%02d%02d' % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
 
 
-def nodestrtonodes(nodestr):
-    nodes = []
-    if nodestr is None:
+def nodestr_to_nodelist(nodestr):
+    nodes=[]
+
+    if not nodestr:
         return nodes
+
     if len(nodestr.strip()) == 0:
         return nodes
 
     noderanges = nodestr.split(',')
+
     for noderange in noderanges:
         endpoints = noderange.split('-')
+
         startendpoint = int(endpoints[0])
+
         stopendpoint = int(endpoints[-1])
+
         newnodes = []
+
         if startendpoint > stopendpoint:
             newnodes = [ i for i in range(startendpoint,stopendpoint-1,-1) ]
         else:

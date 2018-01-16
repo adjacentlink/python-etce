@@ -38,7 +38,10 @@ import lxml.etree
 
 import etce.xmldoc
 import etce.utils
-from etce.config import ConfigDictionary
+from etce.templatedirectorybuilder import TemplateDirectoryBuilder
+from etce.templatefilebuilder import TemplateFileBuilder
+from etce.overlaycsvreader import OverlayCSVReader
+from etce.overlaylistchainfactory import OverlayListChainFactory
 
 
 class TestFileDoc(etce.xmldoc.XMLDoc):
@@ -75,10 +78,21 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
         return copy.copy(self._indices)
 
 
-    def template_file_names(self):
-        return self._template_file_names
+    def global_overlays(self, mergedir):
+        global_overlays = copy.copy(self._global_overlays)
+        
+        for csvfile,column in self._global_overlay_csvfiles:
+            csvfileabs = os.path.join(mergedir,csvfile)
+            
+            global_overlays.update(OverlayCSVReader,csvfileabs).values(column)
+
+        return global_overlays
 
 
+    def templates(self):
+        return self._templates
+
+    
     def template_directory_names(self):
         return self._template_directory_names
 
@@ -121,16 +135,9 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
 
 
     def _parsefile(self, testfile):
-        # open testfile, extract its contents
         self._rootelem = self.parse(testfile)
 
         self._basedir = self._rootelem.attrib.get('base', None)
- 
-        self._indices = self._parseindices(self._rootelem)
-
-        self._template_file_names,      \
-        self._template_directory_names, \
-        self._formatted_directory_names = self._read_formattednames(self._rootelem)
 
         self._name = self.findall('./name')[0].text
 
@@ -143,81 +150,81 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
 
         self._description = self.findall('./description')[0].text
 
+        self._global_overlays = {}
+        
+        for oelem in self._rootelem.findall("./overlays/overlay"):
+            #<overlay name='FREQ1' value='2347000000'/>
+            name = oelem.attrib['name']
+            val = oelem.attrib['value']
+            self._global_overlays[name] = etce.utils.configstrtoval(val)
 
-    def _parseindices(self, rootelem):
-        indicesset = set([])
+        self._global_overlay_csvfiles = []
 
-        hosts = []
+        for oelem in self._rootelem.findall("./overlays/overlaycsv"):
+            #<overlaycsv file='FREQ1' column='2347000000'/>
+            self._global_overlay_csvfile.append((oelem.attrib['file'], oelem.attrib['column']))
 
-        for templateselem in rootelem.findall('./templates'):
-
-            indices = etce.utils.nodestrtonodes(
-                templateselem.get('indices', None))
-
-            indicesset.update(indices)
-
-            for elem in list(templateselem):
-                templateindicesset = \
-                    set(etce.utils.nodestrtonodes(elem.attrib.get('indices', None)))
-
-                if not templateindicesset.issubset(indicesset):
-                    message = 'indices for template element "%s" are not ' \
-                              'a subset of parent templatefiles indices. ' \
-                              'Quitting.' % elem.attrib['name']
-                    raise RuntimeError(message)
-
-        return sorted(list(indicesset))
+        self._indices,                  \
+        self._templates,                \
+        self._template_directory_names, \
+        self._formatted_directory_names = self._parse_templates(self._rootelem)
 
 
-    def _read_formattednames(self, rootelem):
-        template_file_names = set([])
+    def _parse_templates(self, rootelem):
+        indices = []
+
+        templates = []
 
         template_directory_names = set([])
 
         formatted_dir_names = set([])
 
-        default_hostname_format = ConfigDictionary().get('etce', 'DEFAULT_ETCE_HOSTNAME_FORMAT')
-
-        template_suffix = ConfigDictionary().get('etce', 'TEMPLATE_SUFFIX')
-
         for templateselem in rootelem.findall('./templates'):
+            indices = etce.utils.nodestr_to_nodelist(templateselem.get('indices'))
 
-            for templatefileelem in templateselem.findall('./file'):
-                filename = templatefileelem.attrib.get('name')
+            indices_set = set(indices)
+            
+            templates_global_overlaylists = \
+                OverlayListChainFactory().make(templateselem.findall("./overlaylist"),
+                                               indices)
 
-                template_file_names.update([filename])
+            for elem in list(templateselem):
+                # ignore comments
+                if isinstance(elem, lxml.etree._Comment):
+                    continue
 
-                # use the file indicesset if present
-                indices = self._indices
+                template_indices = indices
 
-                if 'indices' in templatefileelem.attrib:
-                    indices = etce.utils.nodestrtonodes(templatefileelem.attrib['indices'])
+                template_indices_str = elem.attrib.get('indices')
 
-                hostname_format = \
-                    templatefileelem.attrib.get('hostname_format',
-                                                default_hostname_format)
+                if template_indices_str:
+                    template_indices =  etce.utils.nodestr_to_nodelist(template_indices_str)
 
-                for index in indices:
-                    formatted_dir_names.update([hostname_format % index ])
+                if not set(template_indices).issubset(indices_set):
+                    message = 'indices for template element "%s" are not ' \
+                              'a subset of parent templatefiles indices. ' \
+                              'Quitting.' % elem.attrib['name']
+                    raise RuntimeError(message)
 
-            # generated template directories are hostnames for the host where
-            # they will be run
-            for templatedirelem in templateselem.findall('./directory'):
-                template_directory = '.'.join([templatedirelem.attrib['name'], template_suffix])
+                if elem.tag == 'directory':
+                    templates.append(TemplateDirectoryBuilder(elem, 
+                                                              template_indices,
+                                                              self._global_overlays,
+                                                              templates_global_overlaylists))
+                elif elem.tag == 'file':
+                    templates.append(TemplateFileBuilder(elem, 
+                                                         template_indices,
+                                                         self._global_overlays,
+                                                         templates_global_overlaylists))
 
-                template_directory_names.update([template_directory])
+        for t in templates:
+            for index in t.indices:
+                formatted_dir_names.update([t.hostname_format % index ])
 
-                # use the file indicesset if present
-                indices = self._indices
+            if isinstance(t, TemplateDirectoryBuilder):
+                template_directory_names.update([t.template_directory_name])
 
-                if 'indices' in templatedirelem.attrib:
-                    indices = etce.utils.nodestrtonodes(templatedirelem.attrib['indices'])
-
-                hostname_format = templatedirelem.attrib.get('hostname_format', default_hostname_format)
-
-                for index in indices:
-                    formatted_dir_names.update([hostname_format % index])
-
-        return (sets.ImmutableSet(template_file_names),
+        return (indices,
+                templates,
                 sets.ImmutableSet(template_directory_names),
                 sets.ImmutableSet(formatted_dir_names))

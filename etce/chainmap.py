@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,45 +30,37 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import os.path
-
-import etce.utils
-from etce.overlayerror import OverlayError
-from etce.overlaycsvreader import OverlayCSVReader
+from collections import Mapping
 
 
-class OverlayChainFactory(object):
-    def __init__(self, mergedir):
-        self._mergedir = mergedir
+class ChainMap(Mapping):
+    ''' ChainMap is a minimal version of the collections.ChainMap
+        class available in python 3.x which allows searching 
+        a collection of maps in order, by key, and returning the
+        first found. As in a regular dict, a KeyError is raised
+        if the key is not found in any map.
+    '''
+        
+    def __init__(self, *maps):
+        self._maps = maps
+
+        self._keys = set([])
+
+        map(self._keys.update, self._maps)
 
 
-    def make(self, overlayelems, overlaycsvelems):
-        overlaydict = {}
+    def __len__(self):
+        return len(self._keys)
 
-        for overlayelem in overlayelems:
-            #<overlay name='FREQ1' value='2347000000'/>
-            name = overlayelem.attrib['name']
 
-            val = overlayelem.attrib['value']
+    def __iter__(self):
+        for key in self._keys:
+            yield key
 
-            overlaydict[name] = etce.utils.configstrtoval(val)
 
-        for overlaycsvelem in overlaycsvelems:
-            #<overlaycsv file='FREQ1' column='2347000000'/>
-            csvfile = overlaycsvelem.attrib['file']
+    def __getitem__(self, key):
+        for d in self._maps:
+            if key in d:
+                return d[key]
 
-            fullcsvfile = os.path.join(self._mergedir, csvfile)
-
-            column = overlaycsvelem.attrib['column']
-
-            if not os.path.isfile(fullcsvfile):
-                message = 'Cannot find overlay csvfile "%s" in ' \
-                          'test directory or basedirectory. Quitting' \
-                          % csvfile
-                raise OverlayError(message)
-                
-            overlays = OverlayCSVReader(fullcsvfile).values(column)
-            
-            overlaydict.update(overlays)
-
-        return overlaydict
+        raise KeyError(key)

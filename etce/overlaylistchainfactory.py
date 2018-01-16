@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from etce.utils import nodestrtonodes,configstrtoval
+from collections import defaultdict
+from etce.utils import configstrtoval
 from etce.overlayerror import OverlayError
 
 
@@ -39,13 +40,13 @@ class OverlayListChainFactory(object):
         pass
 
     def make(self, overlaylistelems, indiceslist):
-        valsmap = {}
-        for index in indiceslist:
-            valsmap[index] = {}
+        valsmap = defaultdict(lambda: {})
 
         for overlaylistelem in overlaylistelems:
             name = overlaylistelem.attrib['name']
+
             separator=overlaylistelem.attrib.get('separator',',')
+
             values = overlaylistelem.attrib['values'].split(separator)
 
             # number of indices and vals must agree
