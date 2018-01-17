@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 
 
 from collections import namedtuple
+import errno
 import getpass
 import os
 import json
@@ -160,7 +161,16 @@ class ExecuteThread(Thread):
 
 
     def interrupt(self):
-        os.write(self._write_pipe, 'interrupt')
+        try:
+            os.write(self._write_pipe, 'interrupt')
+        except OSError as e:
+            if e.errno == errno.EBADF:
+                # ignore a write error on a thread that has already
+                # terminated and closed its interrupt pipe. we don't care.
+                pass
+            else:
+                # rethrow otherwise
+                raise e
 
 
     def run(self):
@@ -210,12 +220,11 @@ class ExecuteThread(Thread):
                 ExecuteThread.ReturnObject(True,
                                            readers[stdo.channel.fileno()].returnobject())
 
-
         finally:
             os.close(self._read_pipe)
             os.close(self._write_pipe)
 
-            
+
     def returnobject(self):
         return self._remote_returnobject
 
