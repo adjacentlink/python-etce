@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,41 +52,45 @@ class WrapperContextImpl(ArgRegistrar):
                  wrapperinstance,
                  trialargs,
                  testargs,
-                 nodeconfig,
+                 config,
                  testdir):
         self._trialargs = trialargs
         self._testargs = testargs
-        self._nodeconfig = nodeconfig
+        self._config = config
         self._testdir = testdir
         self._platform = Platform()
         self._wrappername = wrappername
         self._default_pidfilename = '%s/etce.%s.%s.pid' \
-                                    % (ConfigDictionary().get('etce', 'LOCK_FILE_DIRECTORY'),
+                                    % (self._config.get('etce', 'LOCK_FILE_DIRECTORY'),
                                        self.platform.hostname(),
                                        self._wrappername)
 
         self._description = wrapperinstance.__doc__
 
-        
-        # start with empty dicts ...
-        self._args = { 'infile':None, 'outfile': None }
-        self._overlays = {}
 
-        # ... fill in the values registered by the wrapper
-        wrapperinstance.register(self)
-
-        # ... overlay with commonly needed names
-        self._args.update({
+        # start with reserved args set here ...
+        self._args = {
             'default_pidfilename':self._default_pidfilename,
             'nodename':self._testdir.nodename(),
             'nodeid':self._testdir.nodeid(),
             'testname':self._testdir.name(),
-            'wrappername':self._wrappername
-        })
+            'wrappername':self._wrappername,
+            'infile':None,
+            'outfile':None
+        }
 
-        # ... and with items generated on each trial
+        # ... and the ones passed in
         self._args.update(trialargs)
 
+        # these are the reserved args that cannot be overwritten
+        self._reserved_args = set(self._args)
+
+        # overlays
+        self._overlays = {}
+
+        # fill in the arguments registered by the wrapper
+        wrapperinstance.register(self)
+        
         storefile = os.path.join(self._trialargs['logdirectory'],
                                  'etce.store')
 
@@ -94,11 +98,15 @@ class WrapperContextImpl(ArgRegistrar):
 
 
     def register_argument(self, argname, defaultval, description):
-        if self._testdir.hasconfig(self._wrappername,
-                                   argname):
-            self._args[argname] = self._testdir.getconfig(self._wrappername,
-                                                          argname,
-                                                          defaultval)
+        if argname in self._reserved_args:
+            raise ValueError('Wrapper "%s" attempting to register a ' \
+                             'reserved argument "%s". Quitting.' % \
+                             (self._args['wrappername'],
+                              argname))
+
+        if self._testdir.hasconfig(self._wrappername, argname):
+            self._args[argname] = \
+                self._testdir.getconfig(self._wrappername, argname, defaultval)
         elif argname in self._testargs:
             self._args[argname] = self._testargs[argname]
         else:
@@ -107,7 +115,7 @@ class WrapperContextImpl(ArgRegistrar):
 
     def register_overlay(self, overlayname, defaultval, description):
         self._overlays[overlayname] = \
-            self._nodeconfig.get('overlays',overlayname,defaultval)
+            self._config.get('overlays', overlayname, defaultval)
 
 
     def register_infile_name(self, name):
@@ -115,8 +123,7 @@ class WrapperContextImpl(ArgRegistrar):
 
 
     def register_outfile_name(self, name):
-        self._args['outfile'] = os.path.join(
-            self._trialargs['logdirectory'], name)
+        self._args['outfile'] = os.path.join(self._trialargs['logdirectory'], name)
 
 
     def store(self, namevaldict):
