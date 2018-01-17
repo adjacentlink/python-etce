@@ -54,6 +54,8 @@ class Publisher(object):
 
         self._testdoc = TestFileDoc(test_filename_abs)
 
+        self._config = ConfigDictionary()
+
 
     def merge_with_base(self, mergedir, absbasedir_override=None, extrafiles=[]):
         '''
@@ -92,7 +94,6 @@ class Publisher(object):
                 errstr = 'In merging test directory "%s", cannot find base directory "%s". Quitting.' % \
                          (self._test_directory, base_directory)
                 raise ValueError(errstr)
-
 
         # move the files in basedirectory, then test directory
         for srcdir in srcdirs:
@@ -189,7 +190,7 @@ class Publisher(object):
             if not mergedir:
                 temporary_merge_location_generated = True
 
-                workdir = ConfigDictionary().get('etce', 'WORK_DIRECTORY')
+                workdir = self._config.get('etce', 'WORK_DIRECTORY')
 
                 mergedir = \
                     etce.utils.generate_tempfile_name(os.path.join(workdir,'tmp'),
@@ -253,16 +254,14 @@ class Publisher(object):
         # 1. etce.conf
         etce_config_overlays = {}
         
-        configdict = ConfigDictionary()
-
-        for k,v in configdict.items('overlays'):
+        for k,v in self._config.items('overlays'):
             etce_config_overlays[k] = etce.utils.configstrtoval(v)
 
         # 3. overlay set by environment variables, identified by
         #    etce.conf ENV_OVERLAYS_ALLOW
         env_overlays = {}
 
-        env_overlays_allow = configdict.get('etce', 'ENV_OVERLAYS_ALLOW', '')
+        env_overlays_allow = self._config.get('etce', 'ENV_OVERLAYS_ALLOW', '')
 
         if len(env_overlays_allow):
             for overlay in env_overlays_allow.split(':'):
@@ -280,9 +279,37 @@ class Publisher(object):
         for template in templates:
             template.prune(subfiles)
 
+        subfiles = self._prune_unused_template_directories(mergedir, subfiles)
+
         return (subfiles,templates)
 
 
+    def _prune_unused_template_directories(self, mergedir, subfiles):
+        directory_templates_used_by_test = self._testdoc.template_directory_names()
+        
+        suffix = self._config.get('etce', 'TEMPLATE_SUFFIX')
+
+        all_template_directories = \
+            set([ d for d in os.listdir(mergedir) if
+                  os.path.isdir(os.path.join(mergedir,d)) and
+                  d.split('.')[-1] == suffix ])
+        
+        directory_templates_not_used_by_test = \
+            all_template_directories.difference(directory_templates_used_by_test)
+        
+        rmfiles = []
+        
+        for unused in directory_templates_not_used_by_test:
+            for subfile in subfiles:
+                if subfile.startswith(unused + '/'):
+                    rmfiles.append(subfile)
+
+        for rmfile in rmfiles:
+            subfiles.pop(subfiles.index(rmfile))
+
+        return subfiles
+
+        
     def _move(self,
               srcfiles,
               runtime_overlays,
