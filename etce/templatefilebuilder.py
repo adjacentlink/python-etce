@@ -35,8 +35,8 @@ import os.path
 
 from etce.chainmap import ChainMap
 from etce.config import ConfigDictionary
-from etce.templateutils import format_file
-from etce.utils import nodestr_to_nodelist
+from etce.templateutils import format_file,format_string
+from etce.utils import nodestr_to_nodelist,configstrtoval
 from etce.overlaylistchainfactory import OverlayListChainFactory
 
 
@@ -66,7 +66,7 @@ class TemplateFileBuilder(object):
 
             oval = overlayelem.attrib['value']
 
-            self._template_local_overlays[oname] = etce.utils.configstrtoval(oval)
+            self._template_local_overlays[oname] = configstrtoval(oval)
         
         self._template_local_overlaylists = \
             OverlayListChainFactory().make(templatefileelem.findall('./overlaylist'),
@@ -79,13 +79,23 @@ class TemplateFileBuilder(object):
 
 
     @property
-    def hostname_format(self):
-        return self._hostname_format
+    def indices(self):
+        return self._indices
 
 
     @property
-    def indices(self):
-        return self._indices
+    def formatted_hostnames(self):
+        formatted_hostnames = []
+        for index in self.indices:
+            chainmap = ChainMap({'etce_index':index},
+                                self._template_local_overlaylists[index],
+                                self._template_local_overlays,
+                                self._templates_global_overlaylists[index],
+                                self._global_overlays)
+
+            formatted_hostnames.append(format_string(self._hostname_format, chainmap))
+
+        return formatted_hostnames
 
 
     def prune(self, filelist):
@@ -132,9 +142,16 @@ class TemplateFileBuilder(object):
         reserved_overlays = {}
         
         reserved_overlays['etce_index'] = index
-        
-        reserved_overlays['etce_hostname'] = \
-            self._hostname_format % reserved_overlays['etce_index']
+
+        # etce_hostname formats are limited to the index and the
+        # overlays specified in the test.xml file.
+        etce_hostname_cm = ChainMap({'etce_index': reserved_overlays['etce_index']},
+                                    self._template_local_overlaylists[index],
+                                    self._template_local_overlays,
+                                    self._templates_global_overlaylists[index],
+                                    self._global_overlays)
+            
+        reserved_overlays['etce_hostname'] = format_string(self._hostname_format, etce_hostname_cm)
 
         if logdir:
             reserved_overlays['etce_log_path'] = \

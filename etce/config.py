@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,8 +46,8 @@ class ConfigDictionary(object):
                          'VERBOSE':'off',
                          'SSH_USER':os.path.basename(os.path.expanduser('~')),
                          'SSH_PORT':'22',
-                         'DEFAULT_ETCE_HOSTNAME_FORMAT':'node-%03d',
-                         'TEMPLATE_SUFFIX':'tpl',
+                         'DEFAULT_ETCE_HOSTNAME_FORMAT':"node-${'%03d' % etce_index}",
+                         'TEMPLATE_DIRECTORY_SUFFIX':'tpl',
                          'WORK_DIRECTORY':'/tmp/etce',
                          'WRAPPER_PATH':'/opt/etcewrappers',
                          'LOCK_FILE_DIRECTORY':'/run/lock',

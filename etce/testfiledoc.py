@@ -53,7 +53,7 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
             raise ValueError('Cannot find test file "%s". Quitting.' %
                              testfile)
 
-        self._parsefile(testfile)
+        self._rootelem = self._parsefile(testfile)
 
 
     def name(self):
@@ -69,12 +69,8 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
 
 
     def indices(self):
-        '''
-        Mapping of indices of the templatefileelem atribute
-        to hostname. Hostname either determined by the default
-        hostname built from configuration DEFAULT_ETCE_HOSTNAME_FORMAT
-        or explicitly by the templatefileelem host attribute list.
-        '''
+        ''' Return the numeric test indices defined by the (optional) test.xml
+            templates indices attribute.'''
         return copy.copy(self._indices)
 
 
@@ -105,10 +101,6 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
         return self._formatted_directory_names
 
 
-    def findall(self, xpathstr):
-        return self._rootelem.findall(xpathstr)
-
-
     def has_base_directory(self):
         return not self._basedir is None
 
@@ -135,24 +127,24 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
 
 
     def _parsefile(self, testfile):
-        self._rootelem = self.parse(testfile)
+        rootelem = self.parse(testfile)
 
-        self._basedir = self._rootelem.attrib.get('base', None)
+        self._basedir = rootelem.attrib.get('base', None)
 
-        self._name = self.findall('./name')[0].text
+        self._name = rootelem.findall('./name')[0].text
 
         self._tags = {}
 
-        tagelems = self.findall('./tags/tag')
+        tagelems = rootelem.findall('./tags/tag')
         if len(tagelems):
             for tagelem in tagelems[0]:
                 self._tags[tagelem.attrib['name']] = tagelem.attrib['value']
 
-        self._description = self.findall('./description')[0].text
+        self._description = rootelem.findall('./description')[0].text
 
         self._global_overlays = {}
         
-        for oelem in self._rootelem.findall("./overlays/overlay"):
+        for oelem in rootelem.findall("./overlays/overlay"):
             #<overlay name='FREQ1' value='2347000000'/>
             name = oelem.attrib['name']
             val = oelem.attrib['value']
@@ -160,14 +152,16 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
 
         self._global_overlay_csvfiles = []
 
-        for oelem in self._rootelem.findall("./overlays/overlaycsv"):
+        for oelem in rootelem.findall("./overlays/overlaycsv"):
             #<overlaycsv file='FREQ1' column='2347000000'/>
             self._global_overlay_csvfile.append((oelem.attrib['file'], oelem.attrib['column']))
 
         self._indices,                  \
         self._templates,                \
         self._template_directory_names, \
-        self._formatted_directory_names = self._parse_templates(self._rootelem)
+        self._formatted_directory_names = self._parse_templates(rootelem)
+
+        return rootelem
 
 
     def _parse_templates(self, rootelem):
@@ -218,8 +212,7 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
                                                          templates_global_overlaylists))
 
         for t in templates:
-            for index in t.indices:
-                formatted_dir_names.update([t.hostname_format % index ])
+            formatted_dir_names.update(t.formatted_hostnames)
 
             if isinstance(t, TemplateDirectoryBuilder):
                 template_directory_names.update([t.template_directory_name])

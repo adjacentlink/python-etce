@@ -287,7 +287,7 @@ class Publisher(object):
     def _prune_unused_template_directories(self, mergedir, subfiles):
         directory_templates_used_by_test = self._testdoc.template_directory_names()
         
-        suffix = self._config.get('etce', 'TEMPLATE_SUFFIX')
+        suffix = self._config.get('etce', 'TEMPLATE_DIRECTORY_SUFFIX')
 
         all_template_directories = \
             set([ d for d in os.listdir(mergedir) if

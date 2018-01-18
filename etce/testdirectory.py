@@ -136,8 +136,8 @@ class TestDirectory(object):
     def determine_nodenames(self):
         # Determine the nodenames defined by the test files and templates by
         #
-        # 1. read the base directory and test directory aqnd take any
-        #    subdiretory that does not end with .TEMPLATE_SUFFIX to
+        # 1. read the base directory and test directory and take any
+        #    subdirectory that does not end with .TEMPLATE_DIRECTORY_SUFFIX to
         #    be a nodename
         #
         # 2. add all of the directory names that will be generated
@@ -147,7 +147,7 @@ class TestDirectory(object):
         #                                 a place for additional test
         #                                 documentation).
         #
-        template_suffix = ConfigDictionary().get('etce', 'TEMPLATE_SUFFIX')
+        template_suffix = ConfigDictionary().get('etce', 'TEMPLATE_DIRECTORY_SUFFIX')
 
         hostnames = set([])
 
