@@ -259,16 +259,13 @@ class Publisher(object):
 
     def _prune_unused_template_directories(self, subdirectory_map):
         directory_templates_used_by_test = self._testdoc.template_directory_names()
-        print 'directory_templates_used_by_test=',directory_templates_used_by_test
 
         all_template_directory_keys = set([ entry.root_sub_entry for entry in subdirectory_map.values()
                                             if entry.template_directory_member ])
 
-        print 'all_template_directory_keys=',all_template_directory_keys
 
         directory_templates_not_used_by_test = \
             all_template_directory_keys.difference(directory_templates_used_by_test)
-        print 'directory_templates_not_used_by_test=',directory_templates_not_used_by_test
 
         rmpaths = []
         
@@ -334,7 +331,7 @@ class Publisher(object):
                 os.makedirs(dstfiledir)
 
             if relname == TestDirectory.TESTFILENAME:
-                self._testdoc.rewrite_without_basedir(fulldstfile)
+                self._testdoc.rewrite_without_templates_and_overlays(fulldstfile)
             elif relname in skipfiles:
                 shutil.copyfile(entry.full_name, fulldstfile)
             else:

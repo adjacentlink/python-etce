@@ -126,6 +126,24 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
             outf.write(lxml.etree.tostring(new_root, pretty_print=True))
 
 
+    def rewrite_without_templates_and_overlays(self, outfile):
+        new_root = lxml.etree.Element('test')
+
+        # preserve our root
+        doc_copy = copy.deepcopy(self._rootelem)
+
+        remove_tags = ( 'overlays', 'templates' )
+        
+        for elem in doc_copy:
+            if elem.tag in remove_tags:
+                continue
+
+            new_root.append(elem)
+
+        with open(outfile, 'w') as outf:
+            outf.write(lxml.etree.tostring(new_root, pretty_print=True))
+
+            
     def _parsefile(self, testfile):
         rootelem = self.parse(testfile)
 
