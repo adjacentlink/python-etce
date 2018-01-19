@@ -98,24 +98,24 @@ class TemplateFileBuilder(object):
         return formatted_hostnames
 
 
-    def prune(self, filelist):
+    def prune(self, subdirectory_map):
         '''
-        remove template filenames that appear in the filelist
+        remove template filenames that appear in the subdirectory_map
         '''
-        if self._name in filelist:
-            filelist.pop(filelists.index(self._name))
+        if self._name in subdirectory_map:
+            subdirectory_map.pop(self._name)
 
-        return filelist
+        return subdirectory_map
 
                                                  
     def instantiate(self,
-                    srcdir,
+                    subdirectory_map,
                     publishdir,
                     logdir,
                     runtime_overlays,
                     env_overlays,
                     etce_config_overlays):
-        templatefilenameabs = os.path.join(srcdir, self._name)
+        templatefilenameabs = subdirectory_map[self._name]
         
         if not os.path.exists(templatefilenameabs) or \
            not os.path.isfile(templatefilenameabs):
@@ -130,6 +130,8 @@ class TemplateFileBuilder(object):
                              runtime_overlays,
                              env_overlays,
                              etce_config_overlays)
+
+        return self.prune(subdirectory_map)
 
 
     def _createfile(self,
@@ -187,7 +189,7 @@ class TemplateFileBuilder(object):
 
         if os.path.exists(publishfile):
             print 'Warning: %s already exists. Overwriting!' % publishfile
-
+        print 'publishfile=',publishfile
         format_file(self._absname, publishfile, overlays)
 
 

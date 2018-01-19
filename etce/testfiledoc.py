@@ -74,11 +74,11 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
         return copy.copy(self._indices)
 
 
-    def global_overlays(self, mergedir):
+    def global_overlays(self, subdirectory_map):
         global_overlays = copy.copy(self._global_overlays)
         
         for csvfile,column in self._global_overlay_csvfiles:
-            csvfileabs = os.path.join(mergedir,csvfile)
+            csvfileabs = subdirectory_map[csvfile].full_name
             
             global_overlays.update(OverlayCSVReader,csvfileabs).values(column)
 

@@ -107,38 +107,31 @@ class TemplateDirectoryBuilder(object):
         return formatted_hostnames
 
 
-    def prune(self, filelist):
+    def prune(self, subdirectory_map):
         '''
         remove template filenames that appear in the filelist
         '''
-        rmfiles = []
+        rmentrys = []
 
-        for subfile in filelist:
-            if subfile.startswith(self._relative_path + '/'):
-                rmfiles.append(subfile)
+        for relpath in subdirectory_map:
+            if relpath.startswith(self._relative_path + '/'):
+                rmentrys.append(relpath)
 
-        for rmfile in rmfiles:
-            filelist.pop(filelist.index(rmfile))
+        for rmentry in rmentrys:
+            subdirectory_map.pop(rmentry)
 
-        return filelist
+        return subdirectory_map
 
 
     def instantiate(self,
-                    srcdir,
+                    subdirectory_map,
                     publishdir,
                     logdir,
                     runtime_overlays,
                     env_overlays,
                     etce_config_overlays):
-        templatedir = os.path.join(srcdir, self._relative_path)
-
-        if not os.path.exists(templatedir) or \
-           not os.path.isdir(templatedir):
-            raise ValueError('ERROR: %s templatedir does not exist' 
-                             % template_dir)
-
         for index in self.indices:
-            self._createdir(templatedir,
+            self._createdir(subdirectory_map,
                             publishdir,
                             logdir,
                             index,
@@ -146,9 +139,12 @@ class TemplateDirectoryBuilder(object):
                             env_overlays,
                             etce_config_overlays)
 
+        print
+        return self.prune(subdirectory_map)
+
 
     def _createdir(self,
-                   templatedir,
+                   subdirectory_map,
                    publishdir,
                    logdir,
                    index,
@@ -196,36 +192,33 @@ class TemplateDirectoryBuilder(object):
                              ','.join(map(str,key_clashes)))
 
         overlays = ChainMap(reserved_overlays, *non_reserved_overlays)
-        
+
         print 'Processing template directory "%s" for etce_index=%d and destination=%s' % \
-            (templatedir, index, node_publishdir)
+            (self.template_directory_name, index, node_publishdir)
 
         if not os.path.exists(node_publishdir):
             os.makedirs(node_publishdir)
 
 
-        # To publish a directory:
-        # 1. walk the directory (and each of its subdirectories)
-        # 2. for each file found, fill in its template variables
-        #    and save to the publish directory with the same
-        #    relative path and filename.
-        for absdirname,subdirnames,filenames in os.walk(templatedir):
-            dirname = ''
+        found = False
 
-            if absdirname != templatedir:
-                dirname = absdirname.replace(templatedir+'/', '')
+        for relpath,entry in subdirectory_map.items():
+            # ignore files outside of the template directory
+            pathtoks = relpath.split(os.path.sep)
+            
+            if not pathtoks[0] == self.template_directory_name:
+                continue
+            
+            dstfile = os.path.join(node_publishdir,*pathtoks[1:])
 
-            for subdirname in subdirnames:
-                abssubdir = os.path.join(node_publishdir,dirname,subdirname)
-                os.makedirs(abssubdir)
+            dstdir = os.path.dirname(dstfile)
+            
+            if not os.path.exists(dstdir):
+                os.makedirs(dstdir)
 
-            for filename in filenames:
-                srcfile = os.path.join(absdirname,filename)
+            format_file(entry.full_name, dstfile, overlays)
 
-                dstfile = os.path.join(node_publishdir,dirname,filename)
-
-                format_file(srcfile, dstfile, overlays)
-
+                
 
     def _read_attributes(self, templatedirelem):
         template_subdir = '.'.join([self._name,

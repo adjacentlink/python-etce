@@ -39,6 +39,7 @@ import traceback
 import etce.utils
 from etce.chainmap import ChainMap
 from etce.testfiledoc import TestFileDoc
+from etce.testdirectoryentry import TestDirectoryEntry
 from etce.templateutils import format_file
 from etce.testdirectory import TestDirectory
 from etce.config import ConfigDictionary
@@ -80,7 +81,7 @@ class Publisher(object):
 
         if absbasedir_override:
             base_directory = absbasedir_override
-        elif self._testdoc.base_directory():
+        elif self._testdoc.has_base_directory():
             base_directory = os.path.join(self._test_directory, self._testdoc.base_directory())
         else:
             # merge devolves to copying the test directory to merge directory
@@ -117,9 +118,17 @@ class Publisher(object):
                 else:
                     shutil.copyfile(srcfile, dstfile)
 
-        # move the extra files
+        self._move_extra_files(extrafiles, mergedir)
+
+        # check for corner case where a template directory is specified
+        # in test file but is empty. Issue a warning, but move
+        # it to the mergedirectory anyway.
+        self._warn_on_empty_template_directory(srcdirs)
+
+
+    def _move_extra_files(self, extrafiles, dstdir):
         for srcfile,dstfile in extrafiles:
-            dstfile = os.path.join(mergedir, dstfile)
+            dstfile = os.path.join(dstdir, dstfile)
             
             dirname = os.path.dirname(dstfile)
             
@@ -127,12 +136,7 @@ class Publisher(object):
                 os.makedirs(dirname)
                 
             shutil.copyfile(srcfile, dstfile)
-
-        # check for corner case where a template directory is specified
-        # in test file but is empty. Issue a warning, but move
-        # it to the mergedirectory anyway.
-        self._warn_on_empty_template_directory(srcdirs)
-
+        
 
     def _warn_on_empty_template_directory(self, srcdirs):
         template_directory_names = self._testdoc.template_directory_names()
@@ -160,54 +164,42 @@ class Publisher(object):
             os.makedirs(os.path.join(mergedir, empty_template_directory))
 
 
-    def merge_with_base_and_publish(self,
-                                    publishdir,
-                                    mergedir=None,
-                                    logdir=None,
-                                    absbasedir_override=None,
-                                    runtime_overlays={},
-                                    extrafiles=[],
-                                    overwrite_existing_publishdir=False,
-                                    preserve_temporary_mergedir=False):
+    def publish(self,
+                publishdir,
+                logdir=None,
+                absbasedir_override=None,
+                runtime_overlays={},
+                extrafiles=[],
+                overwrite_existing_publishdir=False):
         '''Publish the directory described by the testdirectory and
            its test.xml file to the destination directory.
 
-            1. If the test defines a base directory, or if a mergedir
-               is specified, merge the basedirectory and test directory
-               to the mergedir.
-            2. From the mergedirectory, copy all non-template files to
-               the publish directory, maintaining the directory structure
-               and filling in any template overlays.
-            3. Instantiate template directories and files (if any) and
-               write them to the publishdir.
+            1. First instantiate template directories and files named by test.xml.
+            2. Move other files from the test directory to the destination
+               (filling in overlays).
+            3. Move extra files, specified by the caller, to the destination.
+
+            publish combines the files from the test directory and the (optional)
+            base directory to the destination.
         '''
-        temporary_merge_location_generated = False
+        srcdirs = [ self._test_directory ]
 
-        if self._testdoc.base_directory():
-            # If the test has a base directory
-            # and no merge directory is specified, choose a temporary
-            # location.
-            if not mergedir:
-                temporary_merge_location_generated = True
+        if absbasedir_override:
+            srcdirs.insert(0, absbasedir_override)
+        elif self._testdoc.has_base_directory():
+            srcdirs.insert(0, os.path.join(self._test_directory, self._testdoc.base_directory()))
 
-                workdir = self._config.get('etce', 'WORK_DIRECTORY')
+        templates = self._testdoc.templates()
 
-                mergedir = \
-                    etce.utils.generate_tempfile_name(os.path.join(workdir,'tmp'),
-                                                      prefix='template_')
-        else:
-            # otherwise, a merge is not required
-            mergedir = self._test_directory
+        subdirectory_map = {}
 
+        map(subdirectory_map.update,  map(self._build_subdirectory_map, srcdirs))
 
-        # merge, if requested
-        self.merge_with_base(mergedir, absbasedir_override, extrafiles)
-
-        movefiles,templates = self._get_templates(mergedir)
+        subdirectory_map = self._prune_unused_template_directories(subdirectory_map)
         
         etce_config_overlays, env_overlays = self._get_host_and_env_overlays()
 
-        testfile_global_overlays = self._testdoc.global_overlays(mergedir)
+        testfile_global_overlays = self._testdoc.global_overlays(subdirectory_map)
 
         print
         print 'Publishing %s to %s' % (self._testdoc.name(), publishdir)
@@ -220,33 +212,27 @@ class Publisher(object):
                          % publishdir
                 raise ValueError(errstr)
 
-
-        # move non-template files, filling in overlays
-        self._move(movefiles,
-                   runtime_overlays,
-                   env_overlays,
-                   testfile_global_overlays,
-                   etce_config_overlays,
-                   publishdir,
-                   mergedir,
-                   logdir)
-
+        os.makedirs(publishdir)
+            
+        # move template files
         self._instantiate_templates(templates,
                                     runtime_overlays,
                                     env_overlays,
                                     etce_config_overlays,
                                     publishdir,
-                                    mergedir,
+                                    subdirectory_map,
                                     logdir)
 
-        if temporary_merge_location_generated:
-            if preserve_temporary_mergedir:
-                print 'Preserving temporary merge directory "%s".' % mergedir
-            else:
-                print 'Removing temporary merge directory "%s".' % mergedir
-                shutil.rmtree(mergedir)
+        # and then the remaining files
+        self._move(subdirectory_map,
+                   runtime_overlays,
+                   env_overlays,
+                   testfile_global_overlays,
+                   etce_config_overlays,
+                   publishdir,
+                   logdir)
 
-        print
+        self._move_extra_files(extrafiles, publishdir)
 
 
     def _get_host_and_env_overlays(self):
@@ -271,76 +257,59 @@ class Publisher(object):
         return (etce_config_overlays, env_overlays)
     
 
-    def _get_templates(self, mergedir):
-        subfiles = self._get_subfiles(mergedir)
-
-        templates = self._testdoc.templates()
-
-        for template in templates:
-            template.prune(subfiles)
-
-        subfiles = self._prune_unused_template_directories(mergedir, subfiles)
-
-        return (subfiles,templates)
-
-
-    def _prune_unused_template_directories(self, mergedir, subfiles):
+    def _prune_unused_template_directories(self, subdirectory_map):
         directory_templates_used_by_test = self._testdoc.template_directory_names()
-        
-        suffix = self._config.get('etce', 'TEMPLATE_DIRECTORY_SUFFIX')
+        print 'directory_templates_used_by_test=',directory_templates_used_by_test
 
-        all_template_directories = \
-            set([ d for d in os.listdir(mergedir) if
-                  os.path.isdir(os.path.join(mergedir,d)) and
-                  d.split('.')[-1] == suffix ])
-        
+        all_template_directory_keys = set([ entry.root_sub_entry for entry in subdirectory_map.values()
+                                            if entry.template_directory_member ])
+
+        print 'all_template_directory_keys=',all_template_directory_keys
+
         directory_templates_not_used_by_test = \
-            all_template_directories.difference(directory_templates_used_by_test)
-        
-        rmfiles = []
+            all_template_directory_keys.difference(directory_templates_used_by_test)
+        print 'directory_templates_not_used_by_test=',directory_templates_not_used_by_test
+
+        rmpaths = []
         
         for unused in directory_templates_not_used_by_test:
-            for subfile in subfiles:
-                if subfile.startswith(unused + '/'):
-                    rmfiles.append(subfile)
+            for subpath in subdirectory_map:
+                if subpath.startswith(unused + '/'):
+                    rmpaths.append(subpath)
 
-        for rmfile in rmfiles:
-            subfiles.pop(subfiles.index(rmfile))
+        map(subdirectory_map.pop, rmpaths)
 
-        return subfiles
+        return subdirectory_map
 
-        
+
     def _move(self,
-              srcfiles,
+              subdirectory_map,
               runtime_overlays,
               env_overlays,
               testfile_global_overlays,
               etce_config_overlays,
               publishdir,
-              mergedir,
               logdir):
-        # copy non-template files from testdir to publishdir
-        os.makedirs(publishdir)
-
         skipfiles = (TestDirectory.CONFIGFILENAME,
                      TestDirectory.HOSTFILENAME)
 
         omitdirs = (TestDirectory.DOCSUBDIRNAME,)
 
-        for relname in srcfiles:
-            first_level_entry = relname.split('/')[0]
-
-            if first_level_entry in omitdirs:
+        for relname,entry in subdirectory_map.items():
+            if entry.root_sub_entry in omitdirs:
                 continue
 
-            fullsrcfile = os.path.join(mergedir, relname)
+            # full path to the first level entry
+            first_level_entry_abs = entry.root_sub_entry_absolute
 
             reserved_overlays = {}
 
             # first_level_entry is a nodename if it is a directory
-            if os.path.isdir(os.path.join(mergedir, first_level_entry)):
-                reserved_overlays = { 'etce_log_path':os.path.join(publishdir, first_level_entry),
-                                      'etce_hostname':first_level_entry }
+            if entry.root_sub_entry_is_dir:
+                reserved_overlays = { 'etce_hostname':first_level_entry }
+
+                if logdir:
+                    reserved_overlays['etce_log_path'] = os.path.join(logdir, entry.root_sub_entry)
 
             # for non-template file, overlays maps are searched in precedence:
             #
@@ -367,9 +336,9 @@ class Publisher(object):
             if relname == TestDirectory.TESTFILENAME:
                 self._testdoc.rewrite_without_basedir(fulldstfile)
             elif relname in skipfiles:
-                shutil.copyfile(fullsrcfile, fulldstfile)
+                shutil.copyfile(entry.full_name, fulldstfile)
             else:
-                format_file(fullsrcfile, fulldstfile, overlays)
+                format_file(entry.full_name, fulldstfile, overlays)
 
 
     def _instantiate_templates(self,
@@ -378,16 +347,15 @@ class Publisher(object):
                                env_overlays,
                                etce_config_overlays,
                                publishdir,
-                               mergedir,
+                               subdirectory_map,
                                logdir):
         for template in templates:
-            template.instantiate(mergedir,
-                                 publishdir,
-                                 logdir,
-                                 runtime_overlays,
-                                 env_overlays,
-                                 etce_config_overlays)
-
+            subdirectory_map = template.instantiate(subdirectory_map,
+                                                    publishdir,
+                                                    logdir,
+                                                    runtime_overlays,
+                                                    env_overlays,
+                                                    etce_config_overlays)
 
     def _get_subfiles(self, directory):
         files = []
@@ -403,32 +371,37 @@ class Publisher(object):
         return files
 
 
-def add_publish_arguments(parser):
-    work_directory = ConfigDictionary().get('etce', 'WORK_DIRECTORY')
+    def _build_subdirectory_map(self, directory):
+        subfiles = {}
 
-    parser.add_argument('--basedir',
-                        action='store',
+        for dirname,dirnames,filenames in os.walk(directory):
+            for filename in filenames:
+                fullpath = os.path.join(dirname, filename)
+
+                relpath = os.path.relpath(fullpath, directory)
+
+                subfiles[relpath] = TestDirectoryEntry(directory, relpath)
+
+        return subfiles
+
+    
+def add_publish_arguments(parser):
+    parser.add_argument('--basedirectory',
                         default=None,
                         help='''Specify an absolute path to test base 
                         directory, overridding the (optional) base
                         directory defined in the test test.xml file.
                         default: None''')
-    parser.add_argument('--nocleanup',
-                        action='store_true',
-                        default=False,
-                        help='''If an intermediate merge step to a temporary directory
-                        is performed (see mergedirectory), the preserve the merge directory.
-                        The default is to remove it.''')
-    parser.add_argument('--mergedirectory',
-                        action='store',
+    parser.add_argument('--logdirectory',
                         default=None,
-                        help='''An intermediate directory to merge the TESTDIRECTORY
-                        with its optional base directory. If the test's test.xml file
-                        does not specify a base directory then the merge step is
-                        skipped. A temporary directory in the ETCE working directory
-                        (%s) is generated if no argument is specified.''' % work_directory)
+                        help='''The ETCE reserved overlay 'etce_log_path'
+                        names a location for wrappers to write output files. 
+                        When running a test, etce_log_path is automatically
+                        derived using the etce.conf WORK_DIRECTORY value.
+                        Use the logdirectory argument to pass a location
+                        for output files when publishing a test outside
+                        of running it. Default: None.''')
     parser.add_argument('--overlayfile',
-                        action='store',
                         default=None,
                         help='''File name containing NAME=VALUE pairs,
                         one per line, to use as overlays
@@ -464,11 +437,11 @@ def publish_test(args):
         print
         exit(2)
 
-    # make sure a specified basedir is an absolute path
-    if not args.basedir is None:
-        if not args.basedir[0] == '/':
-            message = 'basedir "%s" must be an absolute path. Quitting' % \
-                      args.basedir
+    # make sure a specified basedirectory is an absolute path
+    if not args.basedirectory is None:
+        if not args.basedirectory[0] == '/':
+            message = 'basedirectory "%s" must be an absolute path. Quitting' % \
+                      args.basedirectory
             print >>sys.stderr,message
             exit(1)
         
@@ -486,11 +459,10 @@ def publish_test(args):
     try:
         publisher = Publisher(args.testdirectory)
         
-        publisher.merge_with_base_and_publish(args.outdirectory,
-                                              args.mergedirectory,
-                                              runtime_overlays=runtime_overlays,
-                                              absbasedir_override=args.basedir,
-                                              preserve_temporary_mergedir=args.nocleanup)
+        publisher.publish(args.outdirectory,
+                          args.logdirectory,
+                          runtime_overlays=runtime_overlays,
+                          absbasedir_override=args.basedirectory)
 
     except Exception as e:
         print >>sys.stderr, e

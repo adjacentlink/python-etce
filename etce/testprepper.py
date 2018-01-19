@@ -54,10 +54,10 @@ class TestPrepper(object):
 
         publisher = Publisher(templatedir)
 
-        publisher.merge_with_base_and_publish(testdefdir,
-                                              logdir=trialsubdir,
-                                              runtime_overlays=runtime_overlays,
-                                              overwrite_existing_publishdir=True)
+        publisher.publish(testdefdir,
+                          logdir=trialsubdir,
+                          runtime_overlays=runtime_overlays,
+                          overwrite_existing_publishdir=True)
 
         self._checkdir(trialdir)
 
