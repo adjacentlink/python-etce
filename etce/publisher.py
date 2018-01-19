@@ -82,7 +82,11 @@ class Publisher(object):
         if absbasedir_override:
             base_directory = absbasedir_override
         elif self._testdoc.has_base_directory():
-            base_directory = os.path.join(self._test_directory, self._testdoc.base_directory())
+            # test.xml file base directory is permitted to be relative or absolute
+            if self._testdoc.base_directory[0] == os.path.sep:
+                base_directory = self._testdoc.base_directory()
+            else:
+                base_directory = os.path.join(self._test_directory, self._testdoc.base_directory())
         else:
             # merge devolves to copying the test directory to merge directory
             pass
@@ -114,7 +118,7 @@ class Publisher(object):
                     os.makedirs(dirname)
 
                 if subfile == TestDirectory.TESTFILENAME:
-                    self._testdoc.rewrite_without_basedir(dstfile)
+                    self._testdoc.rewrite_without_base_directory(dstfile)
                 else:
                     shutil.copyfile(srcfile, dstfile)
 
@@ -187,8 +191,12 @@ class Publisher(object):
         if absbasedir_override:
             srcdirs.insert(0, absbasedir_override)
         elif self._testdoc.has_base_directory():
-            srcdirs.insert(0, os.path.join(self._test_directory, self._testdoc.base_directory()))
-
+            # test.xml file base directory is permitted to be relative or absolute
+            if self._testdoc.base_directory[0] == os.path.sep:
+                srcdirs.insert(0, self._testdoc.base_directory())
+            else:
+                srcdirs.insert(0, os.path.join(self._test_directory, self._testdoc.base_directory()))
+            
         templates = self._testdoc.templates()
 
         subdirectory_map = {}
@@ -331,7 +339,7 @@ class Publisher(object):
                 os.makedirs(dstfiledir)
 
             if relname == TestDirectory.TESTFILENAME:
-                self._testdoc.rewrite_without_templates_and_overlays(fulldstfile)
+                self._testdoc.rewrite_without_overlays_and_templates(fulldstfile)
             elif relname in skipfiles:
                 shutil.copyfile(entry.full_name, fulldstfile)
             else:
@@ -385,9 +393,11 @@ class Publisher(object):
 def add_publish_arguments(parser):
     parser.add_argument('--basedirectory',
                         default=None,
-                        help='''Specify an absolute path to test base 
-                        directory, overridding the (optional) base
-                        directory defined in the test test.xml file.
+                        help='''Specify a path to a test base 
+                        directory, overridding the (optional) value
+                        defined in the test test.xml file. The value
+                        may be an absolute path or a relative path 
+                        to the current working directory. 
                         default: None''')
     parser.add_argument('--logdirectory',
                         default=None,
@@ -434,13 +444,10 @@ def publish_test(args):
         print
         exit(2)
 
-    # make sure a specified basedirectory is an absolute path
-    if not args.basedirectory is None:
-        if not args.basedirectory[0] == '/':
-            message = 'basedirectory "%s" must be an absolute path. Quitting' % \
-                      args.basedirectory
-            print >>sys.stderr,message
-            exit(1)
+    # if basedirectory is a relative path, make it absolute with respect
+    # to the current working directory
+    if args.basedirectory and not args.basedirectory[0] == os.path.sep:
+        args.basedirectory = os.path.join(os.getcwd(), args.basedirectory)
         
     runtime_overlays = {}
     if args.overlayfile is not None:

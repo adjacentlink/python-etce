@@ -74,13 +74,15 @@ def add_run_arguments(parser):
     default_work_directory = ConfigDictionary().get('etce', 'WORK_DIRECTORY')
     
     default_data_directory = os.path.join(default_work_directory, 'data')
-    
-    parser.add_argument('--basedir', 
-                        action='store', 
+
+    parser.add_argument('--basedirectory',
                         default=None,
-                        help='''Specify a test base directory, overriding
-                        the base directory defined by the test.xml file.
-                        default: None.''')
+                        help='''Specify a path to a test base 
+                        directory, overridding the (optional) value
+                        defined in the test test.xml file. The value
+                        may be an absolute path or a relative path 
+                        to the current working directory. 
+                        default: None''')
     parser.add_argument('--configfile', 
                         action='store', 
                         default=None,
@@ -243,19 +245,16 @@ def run_test(args):
 
     platform = Platform()
 
-    # make sure a specified basedir is an absolute path
-    if not args.basedir is None:
-        if not args.basedir[0] == '/':
-            message = 'basedir "%s" must be an absolute path. Quitting' % \
-                      args.basedir
-            print >>sys.stderr,message
-            exit(1)
+    # if basedirectory is a relative path, make it absolute with respect
+    # to the current working directory
+    if args.basedirectory and not args.basedirectory[0] == os.path.sep:
+        args.basedirectory = os.path.join(os.getcwd(), args.basedirectory)
     
     # compose the test collection from test roots
     try:
         tests = TestCollection()
         for testroot in args.testroot:
-            tests.adddirectory(testroot, args.basedir)
+            tests.adddirectory(testroot, args.basedirectory)
     except XMLDocError as xmle:
         print >>sys.stderr,xmle.message
         exit(1)
@@ -388,7 +387,7 @@ def run_test(args):
 
                     publisher.merge_with_base(mergedir=localtesttemplatedir,
                                               extrafiles=extrafiles,
-                                              absbasedir_override=args.basedir)
+                                              absbasedir_override=args.basedirectory)
 
                     if hookscript_format:
                         print stepdivider

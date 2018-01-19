@@ -102,18 +102,18 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
 
 
     def has_base_directory(self):
-        return not self._basedir is None
+        return not self._base_directory is None
 
     
     def base_directory(self):
         # relative path to local path
-        if self._basedir:
-            return self._basedir
+        if self._base_directory:
+            return self._base_directory
 
         return ''
 
 
-    def rewrite_without_basedir(self, outfile):
+    def rewrite_without_base_directory(self, outfile):
         new_root = lxml.etree.Element('test')
 
         # preserve our root
@@ -126,7 +126,7 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
             outf.write(lxml.etree.tostring(new_root, pretty_print=True))
 
 
-    def rewrite_without_templates_and_overlays(self, outfile):
+    def rewrite_without_overlays_and_templates(self, outfile):
         new_root = lxml.etree.Element('test')
 
         # preserve our root
@@ -147,7 +147,7 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
     def _parsefile(self, testfile):
         rootelem = self.parse(testfile)
 
-        self._basedir = rootelem.attrib.get('base', None)
+        self._base_directory = rootelem.attrib.get('base', None)
 
         self._name = rootelem.findall('./name')[0].text
 
