@@ -61,24 +61,7 @@ class TestPrepper(object):
 
         self._checkdir(trialdir)
 
-        self._savemeta(trialdir)
-
 
     def _checkdir(self, logdirectory):
         if not os.path.exists(logdirectory):
             os.makedirs(logdirectory)
-
-
-    def _savemeta(self, logdirectory):
-        hostname = Platform().hostname()
-
-        nodedirectory = os.path.join(logdirectory, hostname)
-
-        if not os.path.exists(nodedirectory):
-            os.makedirs(nodedirectory)
-
-        backingfilename = os.path.join(nodedirectory, 'etce.store')
-
-        store = WrapperStore(backingfilename)
-
-        store.update(ConfigDictionary().asdict()['overlays'], section='overlays')
