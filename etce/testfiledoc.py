@@ -56,18 +56,22 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
         self._rootelem = self._parsefile(testfile)
 
 
+    @property
     def name(self):
         return self._name
 
-
+    
+    @property
     def tags(self):
         return copy.copy(self._tags)
 
 
+    @property
     def description(self):
         return self._description
 
 
+    @property
     def indices(self):
         ''' Return the numeric test indices defined by the (optional) test.xml
             templates indices attribute.'''
@@ -85,14 +89,17 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
         return global_overlays
 
 
+    @property
     def templates(self):
         return self._templates
 
-    
+
+    @property
     def template_directory_names(self):
         return self._template_directory_names
 
 
+    @property
     def formatted_directory_names(self):
         '''
         Union of all of the directory names generated
@@ -101,10 +108,12 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
         return self._formatted_directory_names
 
 
+    @property
     def has_base_directory(self):
         return not self._base_directory is None
 
-    
+
+    @property
     def base_directory(self):
         # relative path to local path
         if self._base_directory:

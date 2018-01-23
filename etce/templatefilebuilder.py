@@ -115,8 +115,9 @@ class TemplateFileBuilder(object):
                     runtime_overlays,
                     env_overlays,
                     etce_config_overlays):
-        templatefilenameabs = subdirectory_map[self._name]
-        
+        templatefilenameabs = subdirectory_map[self._name].full_name
+        print 'templatefilenameabs=',templatefilenameabs
+        print type(templatefilenameabs)
         if not os.path.exists(templatefilenameabs) or \
            not os.path.isfile(templatefilenameabs):
             raise ValueError('ERROR: %s templatefile does not exist' 
@@ -157,10 +158,10 @@ class TemplateFileBuilder(object):
 
         if logdir:
             reserved_overlays['etce_log_path'] = \
-                os.path.join(logdir, indexoverlays['etce_hostname'])
+                os.path.join(logdir, reserved_overlays['etce_hostname'])
 
         publishfile = os.path.join(publishdir, 
-                                   nodeoverlays['etce_hostname'], 
+                                   reserved_overlays['etce_hostname'], 
                                    self._output_file_name)
 
         other_keys = set([])
@@ -189,7 +190,7 @@ class TemplateFileBuilder(object):
 
         if os.path.exists(publishfile):
             print 'Warning: %s already exists. Overwriting!' % publishfile
-        print 'publishfile=',publishfile
+
         format_file(self._absname, publishfile, overlays)
 
 

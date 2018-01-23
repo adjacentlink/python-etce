@@ -81,12 +81,12 @@ class Publisher(object):
 
         if absbasedir_override:
             base_directory = absbasedir_override
-        elif self._testdoc.has_base_directory():
+        elif self._testdoc.has_base_directory:
             # test.xml file base directory is permitted to be relative or absolute
             if self._testdoc.base_directory[0] == os.path.sep:
-                base_directory = self._testdoc.base_directory()
+                base_directory = self._testdoc.base_directory
             else:
-                base_directory = os.path.join(self._test_directory, self._testdoc.base_directory())
+                base_directory = os.path.join(self._test_directory, self._testdoc.base_directory)
         else:
             # merge devolves to copying the test directory to merge directory
             pass
@@ -143,7 +143,7 @@ class Publisher(object):
         
 
     def _warn_on_empty_template_directory(self, srcdirs):
-        template_directory_names = self._testdoc.template_directory_names()
+        template_directory_names = self._testdoc.template_directory_names
         
         empty_template_directories = set([])
 
@@ -190,14 +190,14 @@ class Publisher(object):
 
         if absbasedir_override:
             srcdirs.insert(0, absbasedir_override)
-        elif self._testdoc.has_base_directory():
+        elif self._testdoc.has_base_directory:
             # test.xml file base directory is permitted to be relative or absolute
             if self._testdoc.base_directory[0] == os.path.sep:
-                srcdirs.insert(0, self._testdoc.base_directory())
+                srcdirs.insert(0, self._testdoc.base_directory)
             else:
-                srcdirs.insert(0, os.path.join(self._test_directory, self._testdoc.base_directory()))
+                srcdirs.insert(0, os.path.join(self._test_directory, self._testdoc.base_directory))
             
-        templates = self._testdoc.templates()
+        templates = self._testdoc.templates
 
         subdirectory_map = {}
 
@@ -210,7 +210,7 @@ class Publisher(object):
         testfile_global_overlays = self._testdoc.global_overlays(subdirectory_map)
 
         print
-        print 'Publishing %s to %s' % (self._testdoc.name(), publishdir)
+        print 'Publishing %s to %s' % (self._testdoc.name, publishdir)
 
         if os.path.exists(publishdir):
             if overwrite_existing_publishdir:
@@ -266,7 +266,7 @@ class Publisher(object):
     
 
     def _prune_unused_template_directories(self, subdirectory_map):
-        directory_templates_used_by_test = self._testdoc.template_directory_names()
+        directory_templates_used_by_test = self._testdoc.template_directory_names
 
         all_template_directory_keys = set([ entry.root_sub_entry for entry in subdirectory_map.values()
                                             if entry.template_directory_member ])

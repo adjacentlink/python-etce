@@ -57,13 +57,13 @@ class TestDirectory(object):
         
         self._platform = Platform()
 
-        self._testfile = TestFileDoc(
+        self._testdoc = TestFileDoc(
             os.path.join(self._rootdir,
                          TestDirectory.TESTFILENAME))
 
-        self._merged = not self._testfile.has_base_directory()
+        self._merged = not self._testdoc.has_base_directory
         
-        self._basedir = self._testfile.base_directory()
+        self._basedir = self._testdoc.base_directory
 
         if not basedir_override is None:
             self._basedir = basedir_override
@@ -101,15 +101,15 @@ class TestDirectory(object):
 
 
     def name(self):
-        return self._testfile.name()
+        return self._testdoc.name
 
 
     def tags(self):
-        return self._testfile.tags()
+        return self._testdoc.tags
 
 
     def description(self):
-        return self._testfile.description()
+        return self._testdoc.description
 
     
     def overlay_names(self):
@@ -170,7 +170,7 @@ class TestDirectory(object):
                     continue
                 hostnames.update([entry])
 
-        formatted_dirnames = self._testfile.formatted_directory_names()
+        formatted_dirnames = self._testdoc.formatted_directory_names
 
         hostnames.update(formatted_dirnames)
 
