@@ -127,7 +127,7 @@ class Publisher(object):
         # check for corner case where a template directory is specified
         # in test file but is empty. Issue a warning, but move
         # it to the mergedirectory anyway.
-        self._warn_on_empty_template_directory(srcdirs)
+        self._warn_on_empty_template_directory(srcdirs, mergedir)
 
 
     def _move_extra_files(self, extrafiles, dstdir):
@@ -142,7 +142,7 @@ class Publisher(object):
             shutil.copyfile(srcfile, dstfile)
         
 
-    def _warn_on_empty_template_directory(self, srcdirs):
+    def _warn_on_empty_template_directory(self, srcdirs, mergedir):
         template_directory_names = self._testdoc.template_directory_names
         
         empty_template_directories = set([])

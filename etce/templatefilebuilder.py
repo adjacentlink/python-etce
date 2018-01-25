@@ -116,8 +116,7 @@ class TemplateFileBuilder(object):
                     env_overlays,
                     etce_config_overlays):
         templatefilenameabs = subdirectory_map[self._name].full_name
-        print 'templatefilenameabs=',templatefilenameabs
-        print type(templatefilenameabs)
+
         if not os.path.exists(templatefilenameabs) or \
            not os.path.isfile(templatefilenameabs):
             raise ValueError('ERROR: %s templatefile does not exist' 
