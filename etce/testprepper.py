@@ -55,7 +55,7 @@ class TestPrepper(object):
         publisher = Publisher(templatedir)
 
         publisher.publish(testdefdir,
-                          logdir=trialsubdir,
+                          logdir=trialdir,
                           runtime_overlays=runtime_overlays,
                           overwrite_existing_publishdir=True)
 
