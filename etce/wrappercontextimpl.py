@@ -127,7 +127,8 @@ class WrapperContextImpl(ArgRegistrar):
 
 
     def store(self, namevaldict):
-        self._wrapperstore.update({self._args['wrappername']:namevaldict})
+        self._wrapperstore.update({self._args['wrappername']:namevaldict},
+                                  self._args['nodename'])
 
 
     @property
