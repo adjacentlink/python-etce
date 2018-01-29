@@ -192,26 +192,14 @@ def add_run_arguments(parser):
                         help='''Quit when an error occurs. Default behavior
                         is to continue to the next test, skipping any 
                         remaining trials of the errant test''')
-    parser.add_argument('--runfromstep',
-                        default=None,
-                        help='''Only run from the named step of the steps
-                        file. When set, the numtrials argument is ignored (set 
-                        to 1), and testroot must only contain one
-                        test. Useful for debugging. If used in 
-                        conjunction with runtostep, will only run the 
-                        steps in the interval defined by both 
-                        runfromstep:runtostep. 
-                        default: run all steps.''')
     parser.add_argument('--runtostep',
                         default=None,
-                        help='''Only run until the named step of the steps
-                        file. When set, the numtrials argument is ignored (set 
-                        to 1), and testroot must only contain one
-                        test. Useful for debugging. If used in 
-                        conjunction with runfromstep, will only run the 
-                        steps in the interval defined by both 
-                        runfromstep:runtostep. 
-                        default: run all steps.''')
+                        help='''Only run the steps file steps up to and 
+                        including the named step. When set, the numtrials 
+                        argument is ignored (set to 1), the kill argument
+                        "after" is ignored and TESTROOT must only contain
+                        one test. Useful for debugging. default: run all 
+                        steps.''')
     parser.add_argument('--user',
                         action='store',
                         default=None,
@@ -291,19 +279,18 @@ def run_test(args):
     else:
         print tests
         
-    if not args.runtostep is None:
+    if args.runtostep:
         if args.numtrials > 1 or len(tests) > 1:
             print >>sys.stderr,'Cannot mix --runtostep option with ' \
                 '--itererations > 1 or with testroot containing more ' \
                 'than one test'
             exit(1)
 
-    if not args.runfromstep is None:
-        if args.numtrials > 1 or len(tests) > 1:
-            print >>sys.stderr,'Cannot mix --runfromstep option with ' \
-                '--itererations > 1 or with testroot containing more ' \
-                'than one test'
-            exit(1)
+        if 'after' in args.kill:
+            args.kill.remove('after')
+            print >>sys.stderr,'Ignoring kill argument "after" used ' \
+                'in conjunction with runtostep.'
+            print >>sys.stderr
 
     try:
         worknodes = tests.participant_nodes(field.leaves())
@@ -353,7 +340,7 @@ def run_test(args):
                 exit(1)
             hookfiles.append(entryhookfile)
             entryhooksteps = \
-                StepsFileDoc(entryhookfile).getsteps(args.runfromstep, 
+                StepsFileDoc(entryhookfile).getsteps(None, 
                                                      args.runtostep, 
                                                      filtersteps)
 
@@ -368,7 +355,7 @@ def run_test(args):
                 exit(1)
             hookfiles.append(exithookfile)
             exithooksteps = \
-                StepsFileDoc(exithookfile).getsteps(args.runfromstep, 
+                StepsFileDoc(exithookfile).getsteps(None, 
                                                     args.runtostep, 
                                                     filtersteps)
 
@@ -445,7 +432,7 @@ def run_test(args):
                                                   test.stepsfile()))
 
                     steps = \
-                        stepsfiledoc.getsteps(args.runfromstep, 
+                        stepsfiledoc.getsteps(None, 
                                               args.runtostep, 
                                               filtersteps)
 
