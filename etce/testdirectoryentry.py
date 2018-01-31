@@ -70,9 +70,8 @@ class TestDirectoryEntry(object):
         if len(sub_path_toks) > 1:
             self._tail = os.path.sep.join(sub_path_toks[1:])
 
+        self._root_sub_entry_is_dir = os.path.isdir(self._root_sub_entry_absolute)
 
-        self._root_sub_entry_isdir = os.path.isdir(self._root_sub_entry_absolute)
-        
         suffix = ConfigDictionary().get('etce', 'TEMPLATE_DIRECTORY_SUFFIX')
 
         self._template_directory_member = \
@@ -112,7 +111,7 @@ class TestDirectoryEntry(object):
 
     @property
     def root_sub_entry_is_dir(self):
-        self._root_sub_entry_isdir
+        return self._root_sub_entry_is_dir
 
 
     @property

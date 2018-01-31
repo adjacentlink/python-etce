@@ -311,7 +311,7 @@ class Publisher(object):
 
             # first_level_entry is a nodename if it is a directory
             if entry.root_sub_entry_is_dir:
-                reserved_overlays = { 'etce_hostname':first_level_entry }
+                reserved_overlays = { 'etce_hostname':entry.root_sub_entry }
 
                 if logdir:
                     reserved_overlays['etce_log_path'] = os.path.join(logdir, entry.root_sub_entry)
