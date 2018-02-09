@@ -111,7 +111,7 @@ try:
    ret = client.execute('hello hello', hosts, workingdir=args.workingdir)
 
    for k in ret:
-      print '[%s] return: %s' % (k, ret[k]['result'])
+      print '[%s] return: %s' % (k, ret[k].retval['result'])
 
 finally:
    client.close()
