@@ -463,8 +463,8 @@ def publish_test(args):
     try:
         publisher = Publisher(args.testdirectory)
         
-        publisher.publish(args.outdirectory,
-                          args.logdirectory,
+        publisher.publish(publishdir=args.outdirectory,
+                          logdir=args.logdirectory,
                           runtime_overlays=runtime_overlays,
                           absbasedir_override=args.basedirectory)
 

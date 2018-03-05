@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,38 +30,23 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import os
+import unittest
 
-from etce.testdirectory import TestDirectory
-from etce.platform import Platform
-from etce.config import ConfigDictionary
-from etce.publisher import Publisher
-from etce.wrapperstore import WrapperStore
+from etce.chainmap import ChainMap
 
 
-class TestPrepper(object):
-    def run(self, starttime, templatesubdir, trialsubdir):
-        etcedir = ConfigDictionary().get('etce', 'WORK_DIRECTORY')
-
-        templatedir = os.path.join(etcedir, templatesubdir)
-
-        testdefdir = os.path.join(etcedir, 'current_test')
-
-        trialdir = os.path.join(etcedir, trialsubdir)
-
-        # instantiate the template files and write overlays
-        runtime_overlays = { 'etce_install_path':testdefdir }
-
-        publisher = Publisher(templatedir)
-
-        publisher.publish(publishdir=testdefdir,
-                          logdir=trialdir,
-                          runtime_overlays=runtime_overlays,
-                          overwrite_existing_publishdir=True)
-
-        self._checkdir(trialdir)
+class TestChainMap(unittest.TestCase):
+    def setUp(self):
+        self.chainmap = ChainMap({'foo1': 1}, {'foo2':2, 'foo3':3}, {'foo2':3, 'foo4':4 })
 
 
-    def _checkdir(self, logdirectory):
-        if not os.path.exists(logdirectory):
-            os.makedirs(logdirectory)
+    def test_hit(self):
+        self.assertEqual(self.chainmap['foo1'], 1)
+        self.assertEqual(self.chainmap['foo2'], 2)
+        self.assertEqual(self.chainmap['foo3'], 3)
+
+
+    def test_miss(self):
+        with self.assertRaises(KeyError):
+            print self.chainmap['foo7']
+        
