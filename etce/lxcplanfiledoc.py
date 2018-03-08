@@ -624,8 +624,13 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
 
             params = []
 
+            containerselem = hostelem.findall('./containers')[0]
+
+            default_root_directory = os.path.join(ConfigDictionary().get('etce', 'WORK_DIRECTORY'), 'lxcroot')
+            
             root_directory = str(
-                hostelem.findall('./containers')[0].attrib['root_directory'])
+                containerselem.attrib.get('root_directory', default_root_directory))
+                
             rootdirectories[hostname] = root_directory
 
             # ensure no repeated lxc_indices

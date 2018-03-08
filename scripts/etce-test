@@ -170,17 +170,16 @@ def add_run_arguments(parser):
                         help='number of trials to run for each test')
     parser.add_argument('--kill', 
                         action='store',
-                        nargs='*',
-                        choices=['before','after'],
-                        default=['before', 'after'],
+                        choices=['before','after','both','none'],
+                        default='both',
                         help='''Many ETCE Wrappers save process PIDs to
                         lockfiles saved in a location specified by the 
                         LOCK_FILE_DIRECTORY value in etce.conf. etce-test
                         will attempt to clean-up processes on field members
                         between tests by killing any process where a lock
                         file is found. Use the kill command to specify when
-                        etce-test should attempt clean-up, before or after
-                        the test.''')
+                        etce-test should attempt clean-up, "before", "after"
+                        "both" (before and after) or "none". Default: both.''')
     parser.add_argument('--outdir',
                         action='store',
                         default=default_data_directory,
@@ -286,10 +285,15 @@ def run_test(args):
                 'than one test'
             exit(1)
 
-        if 'after' in args.kill:
-            args.kill.remove('after')
+        if args.kill == 'after':
+            args.kill = 'none'
             print >>sys.stderr,'Ignoring kill argument "after" used ' \
-                'in conjunction with runtostep.'
+                'in conjunction with runtostep. Using "none" instead.'
+            print >>sys.stderr  
+        elif args.kill == 'both':
+            args.kill = 'before'
+            print >>sys.stderr,'Ignoring kill argument "both" used ' \
+                'in conjunction with runtostep. Using "before" instead.'
             print >>sys.stderr
 
     try:
@@ -465,7 +469,7 @@ def run_test(args):
 
                     # kill any processes with pids stored in left-over lockfiles
                     # before starting the test
-                    if 'before' in args.kill:
+                    if args.kill == 'before' or args.kill == 'both':
                         client.execute('kill kill', allnodes)
 
                     remotetemplatedir = os.path.join(remoteresultssubdir, 'template') 
@@ -518,7 +522,7 @@ def run_test(args):
 
                     # kill any processes with pids stored in left-over lockfiles
                     # before finishing the test
-                    if 'after' in args.kill:
+                    if args.kill == 'after' or args.kill == 'both':
                         client.execute('kill kill', allnodes)
 
                     if args.deletecompleted:
