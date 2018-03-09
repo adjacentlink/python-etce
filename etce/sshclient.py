@@ -37,6 +37,7 @@ import getpass
 import os
 import json
 import paramiko
+import paramiko.client
 import re
 import select
 import socket
@@ -250,18 +251,24 @@ class SSHClient(etce.fieldclient.FieldClient):
         self._envfile = kwargs.get('envfile', None)
 
         self._config = ConfigDictionary()
-
+        
         if user is None:
             user = self._config.get('etce', 'SSH_USER')
 
         if port is None:
             port = int(self._config.get('etce', 'SSH_PORT'))
 
+        missing_key_policy = self._config.get('etce', 'SSH_MISSING_HOST_KEY_POLICY')
+
+        policy_class = paramiko.client.__dict__[missing_key_policy]
+        
         for host in hosts:
             try:
                 client = paramiko.SSHClient()
 
-                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                client.set_missing_host_key_policy(policy_class())
+
+                client.load_system_host_keys()
 
                 self._connection_dict[host] = client
 

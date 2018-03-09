@@ -1,13 +1,118 @@
+##################################################
+#
+# ETCE exposes a handful of configuration parameters
+# for customization. /etc/etce/etce.conf is the
+# expected path to a site-wide file. Users may override
+# values with a .etce.conf file placed in their home
+# directory - ETCE combines the user and site files
+# to arrive at the overall configuration.
+#
+# The values shown here are the configuration value
+# defaults.
+#
+# ETCE configuration values are placed in the "etce"
+# section. The overlay section is used to specify site
+# test configuration file template values that will
+# be substituted into test files on execution.
+#
+##################################################
+
 [etce]
-#DEFAULT_ETCE_HOSTNAME_FORMAT=node-${'%03d' % etce_index}
-#ENV_OVERLAYS_ALLOW=
-#LOCK_FILE_DIRECTORY=/run/lock
+##################################################
+#
+# SSH parameters specify the default user and port to use
+# to connect to field members. Default for SSH_USER is
+# to use the current user.
+#
+# ETCE uses the Paramiko library for handling SSH connections.
+# The SSH_MISSING_HOST_KEY_POLICY names the policy to
+# use when a field host key is not found in the user's known_hosts
+# file. The values are the names of Paramiko classes that handle
+# the policy behavior - one of:
+#
+#     RejectPolicy (default): fail and quit
+#     WarningPolicy: issue a warning and connect
+#     AutoAddPolicy: automatically add the unknown key (not recommended)
+#
+##################################################
 #SSH_USER=
 #SSH_PORT=22
-#TEMPLATE_DIRECTORY_SUFFIX=tpl
+#SSH_MISSING_HOST_KEY_POLICY=RejectPolicy
+
+
+##################################################
+#
+# ETCE Wrappers are dynamically loadable Python
+# modules that can be called to execute individual
+# ETCE test steps. The WRAPPER_DIRECTORY names the
+# location.
+#
+# Many ETCE Wrappers save the PID of processes
+# they spawn to a file in the LOCK_FILE_DIRECTORY.
+# 
+# ETCE uses the WORK_DIRECTORY as the destination
+# of most of the files it generates:
+#
+#    lxcroot: LXC configuration files are written
+#             to this subdirectory when using the
+#             etce-lxc script (optional)
+#
+#    current_test: The configuration files of
+#                  current running test
+#
+#    data: The output directory for artifacts
+#          collected from the current test.
+#
+##################################################
+#LOCK_FILE_DIRECTORY=/run/lock
 #WORK_DIRECTORY=/tmp/etce
-#WRAPPER_PATH=/opt/etcewrappers
+#WRAPPER_DIRECTORY=/opt/etcewrappers
+
+
+##################################################
+#
+# ETCE organizes test configuration files into
+# Test Directories. Within each Test Directory
+# subdirectories are named for the host where
+# the contained configuration is used. Host
+# subdirectories can be generated from template
+# directories containing configuration files
+# with values that are filled in for each host.
+# ETCE identifies template directories by
+# the TEMPLATE_DIRECTORY_SUFFIX - for example
+# "rfpipe.tpl".
+#
+# Template directories are specified by the test.xml
+# file found in each ETCE test directory. The directory
+# XML element has an optional hostname_format attribute
+# that can be used to specify the name of each generated
+# host subdirectory, usually differentiated by the
+# reserved etce_index value. The DEFAULT_ETCE_HOSTNAME_FORMAT
+# parameter specifies the default value when the
+# hostname_format value is not present.
+# 
+# When generating configuration files from templates
+# ETCE relies on overlay template values specified
+# in the overlay section (below) and in the Test
+# Directory test.xml file. ETCE also permits overlay
+# values to be specified by environment variables.
+# Use ENV_OVERLAYS_ALLOW to name template variable
+# names that ETCE will permit as overlays.
+#
+##################################################
+#DEFAULT_ETCE_HOSTNAME_FORMAT=node-${'%03d' % etce_index}
+#TEMPLATE_DIRECTORY_SUFFIX=tpl
+#ENV_OVERLAYS_ALLOW=
+
 
 [overlays]
+##################################################
+#
+# Use the overlays section to specify configuration
+# file values that tend to be the same across tests
+# but differ on a site by site basis. Network interface
+# names are a typical example.
+#
+##################################################
 emane_ota_device=ota0
 emane_eventservice_device=ctl0

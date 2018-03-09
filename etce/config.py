@@ -46,10 +46,11 @@ class ConfigDictionary(object):
                          'VERBOSE':'off',
                          'SSH_USER':os.path.basename(os.path.expanduser('~')),
                          'SSH_PORT':'22',
+                         'SSH_MISSING_HOST_KEY_POLICY':'RejectPolicy',
                          'DEFAULT_ETCE_HOSTNAME_FORMAT':"node-${'%03d' % etce_index}",
                          'TEMPLATE_DIRECTORY_SUFFIX':'tpl',
                          'WORK_DIRECTORY':'/tmp/etce',
-                         'WRAPPER_PATH':'/opt/etcewrappers',
+                         'WRAPPER_DIRECTORY':'/opt/etcewrappers',
                          'LOCK_FILE_DIRECTORY':'/run/lock',
                          'ENV_OVERLAYS_ALLOW':''
                      },
@@ -99,8 +100,8 @@ class ConfigDictionary(object):
                     self.parser.set(section, name, val)
 
         # allow for environment override of the two path variables
-        if 'WRAPPER_PATH' in os.environ:
-            self.parser.set('etce', 'WRAPPER_PATH', os.environ['WRAPPER_PATH'])
+        if 'WRAPPER_DIRECTORY' in os.environ:
+            self.parser.set('etce', 'WRAPPER_DIRECTORY', os.environ['WRAPPER_DIRECTORY'])
 
     def get(self, section, key, default=None):
         if self.parser.has_option(section, key):

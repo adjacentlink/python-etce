@@ -43,7 +43,7 @@ class WrapperLoader(object):
 
     def wrapperpaths(self):
         return self._config.get('etce',
-                                'WRAPPER_PATH').split(':')
+                                'WRAPPER_DIRECTORY').split(':')
 
 
     def loadwrappers(self, wrapperpath):
