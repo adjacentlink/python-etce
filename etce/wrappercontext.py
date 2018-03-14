@@ -43,14 +43,14 @@ class WrapperContext(ArgRegistrar):
            file names the wrapper uses for configuration and
            output/logging.
 
-        2. Methods to register the arguments and overlays the
+        2. Methods to register the arguments the
            wrapper accepts for modifying execution.
 
         3. Methods to run, daemonize or stop the application
            associated with the wrapper.
    
-        The context passes name/value pairs to the wrapper in two
-        members, "args" and "overlays".
+        The context passes name/value pairs to the wrapper in the
+        "args" member.
 
         The arguments that wrappers register with the context are
         passed in the "args" member. These are values that are
@@ -70,14 +70,6 @@ class WrapperContext(ArgRegistrar):
            testname
            wrappername
 
-        Overlay values are passed to wrappers from the
-        etce.conf file on the host where the wrapper runs. 
-        Overlays are intended to be values that vary 
-        across testbeds but not tests. Network interface
-        names are a typical example. Overlays are mainly used
-        for setting values in ETCE template files, but they
-        are passed to wrappers in the context's "overlays"
-        member as well.
     '''
     def __init__(self, impl):
         self._impl = impl
@@ -85,10 +77,6 @@ class WrapperContext(ArgRegistrar):
 
     def register_argument(self, argname, defaultval, description):
         self._impl.register_argument(argname, defaultval, description)
-
-
-    def register_overlay(self, overlayname, defaultval, description):
-        self._impl.register_overlay(overlayname, defaultval, description)
 
 
     def register_infile_name(self, name):
@@ -111,11 +99,6 @@ class WrapperContext(ArgRegistrar):
     @property
     def args(self):
         return self._impl.args
-
-
-    @property
-    def overlays(self):
-        return self._impl.overlays
 
 
     def daemonize(self,

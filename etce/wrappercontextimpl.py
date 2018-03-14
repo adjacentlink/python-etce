@@ -85,9 +85,6 @@ class WrapperContextImpl(ArgRegistrar):
         # these are the reserved args that cannot be overwritten
         self._reserved_args = set(self._args)
 
-        # overlays
-        self._overlays = {}
-
         # fill in the arguments registered by the wrapper
         wrapperinstance.register(self)
         
@@ -113,11 +110,6 @@ class WrapperContextImpl(ArgRegistrar):
             self._args[argname] = defaultval
 
 
-    def register_overlay(self, overlayname, defaultval, description):
-        self._overlays[overlayname] = \
-            self._config.get('overlays', overlayname, defaultval)
-
-
     def register_infile_name(self, name):
         self._args['infile'] = self._testdir.getfile(name)
 
@@ -139,11 +131,6 @@ class WrapperContextImpl(ArgRegistrar):
     @property
     def args(self):
         return ArgProxy(self._args)
-
-
-    @property
-    def overlays(self):
-        return ArgProxy(self._overlays)
 
 
     def daemonize(self,

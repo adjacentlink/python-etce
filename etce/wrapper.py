@@ -32,25 +32,54 @@
 
 
 class Wrapper:
+    '''
+    The common base class for all ETCE Wrappers.
+    '''
     def register(self, registrar):
+        ''' 
+        Optional method for registering:
+
+         1. The name of the input file whose presence triggers the wrapper
+            to run the wrapped application.
+
+         2. The name of any output file created by the wrapper. This is a 
+            convenience method allowing the context builds an absolute 
+            filename to the common directory where test artifacts are stored.
+
+         3. Arguments accepted by the wrapper for customizing execution - 
+            typically a subset of the wrapped application's command line
+            arguments. The exposed arguments can be set at runtime.
+        '''
         pass
 
 
     def prerun(self, ctx):
-        # default, do nothing
-        # sublcasses not required to override
+        '''
+        Optional method, called just before *run* to test or enforce wrapper 
+        preconditions (if any) for running. The wrapper should throw an 
+        PreconditionError when a precondition fails. 
+        '''
         pass
         
         
     def run(self, ctx):
+        '''
+        Required method called to start the wrapped application.
+        '''
         raise NotImplementedError('Wrapper.run')
 
 
     def postrun(self, ctx):
-        # default, do nothing
-        # subclasses not required to override
+        '''
+        Optional method, called just after *run* to test or enforce wrapper
+        postconditions (if any) for running. The wrapper should throw an 
+        PostconditionError when a postcondition fails. 
+        '''
         pass
 
 
     def stop(self, ctx):
+        '''
+        Required method called to stop the wrapped application.
+        '''
         raise NotImplementedError('Wrapper.stop')

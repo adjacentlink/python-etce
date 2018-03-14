@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,45 +30,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-
-from etce.wrapperloader import WrapperLoader
-from etce.argregistrar import ArgRegistrar
-
-
-class WrapperInfoPrinter(ArgRegistrar):
-    def __init__(self, wrapperpath, description):
-        self._wrapperpath = wrapperpath
-        self._description = description
-        self._args = []
-        self._infile_name = None
-        self._outfile_name = None
-
-    # register a test argument
-    def register_argument(self, argname, defaultval, description):
-        self._args.append((argname, defaultval, description))
-
-    # register the file prefix expected for input files
-    def register_infile_name(self, name):
-        self._infile_name = name
-
-    # register the output file outfile_name produced
-    def register_outfile_name(self, name):
-        self._outfile_name = name
-
-    def __str__(self):
-        s = ''
-        s += 'path:\n'
-        s += '\t%s\n' % self._wrapperpath
-        s += 'description:\n'
-        s += '\t%s\n' % str(self._description)
-        s += 'input file name:\n'
-        s += '\t%s\n' % str(self._infile_name)
-        s += 'output file name:\n'
-        s += '\t%s\n' % str(self._outfile_name)
-        if len(self._args) > 0:
-            s += 'arguments:\n'
-            for argname,defaultval,description in sorted(self._args):
-                s += '\t%s\n' % argname
-                s += '\t\t%s\n' % description
-                s += '\t\tdefault: %s\n' % str(defaultval)
-        return s
+class PreconditionError(Exception):
+    def __init__(self, message):
+        Exception.__init__(self, message)
