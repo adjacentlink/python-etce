@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,15 +31,24 @@
 #
 
 class ArgRegistrar(object):
-    # register a test argument
     def register_argument(self, argname, defaultval, description):
+        ''' 
+        Register an application argument. 
+        '''
         raise NotImplementedError('ArgRegistrar.register_argument')
-    # register an argument
-    def register_overlay(self, overlayname, defaultval, description):
-        raise NotImplementedError('ArgRegistrar.register_overlay')
-    # register the input file name
+
+
     def register_infile_name(self, name):
+        ''' 
+        Register the name of the input file that triggers
+        application execution. 
+        '''
         raise NotImplementedError('ArgRegistrar.register_infile_name')
-    # register the output file name
+
+
     def register_outfile_name(self, name):
+        '''
+        Register the name of an output file produced by the application.
+        Most typically a log file.
+        '''
         raise NotImplementedError('ArgRegistrar.register_outfile_name')

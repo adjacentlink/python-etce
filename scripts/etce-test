@@ -223,18 +223,18 @@ def add_run_arguments(parser):
                         action='store',
                         help='''A user tag to prepend to the name of
                         each test result directory.''')
-    parser.add_argument('testroot',
-                        metavar='TESTROOT',
-                        nargs='*',
-                        action='store',
-                        help='''The root of a directory containing one 
-                        or more ETCE test directories. The contained tests
-                        are run.''')
     parser.add_argument('hostfile',
                         metavar='HOSTFILE',
                         action='store',
                         help='''The ETCE Host file containing the 
                         node names that will perform the tests.''')
+    parser.add_argument('testroot',
+                        metavar='TESTROOT',
+                        nargs='+',
+                        action='store',
+                        help='''The root of a directory containing one 
+                        or more ETCE test directories. The contained tests
+                        are run.''')
 
 
 def run_test(args):
