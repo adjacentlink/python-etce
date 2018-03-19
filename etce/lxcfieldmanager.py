@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2013-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -160,16 +160,18 @@ def main():
                         type=int,
                         default=None,
                         help='''If the LXCPLANFILE contains remote host(s),
-                        connect to the hosts via the specified port. 
-                        This defaults to etce.conf "SSH_PORT" value.''')
+                        connect to the hosts via the specified port. If not
+                        specified, ETCE will look for the host's "Port" value
+                        in the ~/.ssh/config file. If not found, uses the default
+                        ssh port value, 22.''')
     parser.add_argument('--user',
                         action='store',
                         default=None,
                         help='''If the LXCPLANFILE contains remote host(s),
-                        connect to the hosts as the specified user. This defaults 
-                        to the value of "SSH_USER" specified in the [etce]
-                        section of the etce.conf file, if specified. If
-                        not, the current user is used.''')
+                        connect to the hosts as the specified user. If not
+                        specified, ETCE will look for the host's "User" value
+                        in the ~/.ssh/config file. If not found, uses the
+                        current user''')
     
     subparsers = parser.add_subparsers()
 

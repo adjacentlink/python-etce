@@ -199,19 +199,23 @@ def add_run_arguments(parser):
                         "after" is ignored and TESTROOT must only contain
                         one test. Useful for debugging. default: run all 
                         steps.''')
-    parser.add_argument('--user',
-                        action='store',
-                        default=None,
-                        help='''Execute the command as user. This defaults to 
-                        the value of "SSH_USER" specified in the [etce]
-                        section of the etceconf file, if specified. If
-                        not, the current user is used.''')
     parser.add_argument('--port',
                         action='store',
                         type=int,
                         default=None,
-                        help='''Connect to remote field via specified port. 
-                        This defaults to of etce.conf "SSH_PORT" value.''')
+                        help='''If the LXCPLANFILE contains remote host(s),
+                        connect to the hosts via the specified port. If not
+                        specified, ETCE will look for the host's "Port" value
+                        in the ~/.ssh/config file. If not found, uses the default
+                        ssh port value, 22.''')
+    parser.add_argument('--user',
+                        action='store',
+                        default=None,
+                        help='''If the LXCPLANFILE contains remote host(s),
+                        connect to the hosts as the specified user. If not
+                        specified, ETCE will look for the host's "User" value
+                        in the ~/.ssh/config file. If not found, uses the
+                        current user''')
     parser.add_argument('-v',
                         '--verbose', 
                         action='store_true', 

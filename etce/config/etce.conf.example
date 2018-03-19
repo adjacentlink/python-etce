@@ -20,28 +20,6 @@
 [etce]
 ##################################################
 #
-# SSH parameters specify the default user and port to use
-# to connect to field members. Default for SSH_USER is
-# to use the current user.
-#
-# ETCE uses the Paramiko library for handling SSH connections.
-# The SSH_MISSING_HOST_KEY_POLICY names the policy to
-# use when a field host key is not found in the user's known_hosts
-# file. The values are the names of Paramiko classes that handle
-# the policy behavior - one of:
-#
-#     RejectPolicy (default): fail and quit
-#     WarningPolicy: issue a warning and connect
-#     AutoAddPolicy: automatically add the unknown key (not recommended)
-#
-##################################################
-#SSH_USER=
-#SSH_PORT=22
-#SSH_MISSING_HOST_KEY_POLICY=RejectPolicy
-
-
-##################################################
-#
 # ETCE Wrappers are dynamically loadable Python
 # modules that can be called to execute individual
 # ETCE test steps. The WRAPPER_DIRECTORY names the

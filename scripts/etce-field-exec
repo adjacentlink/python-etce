@@ -75,7 +75,7 @@ description: Dynamically loads and runs the Python method:
              where modulename specifies a Python module found in the
              "etce" package. 
 
-             etce-exec.ssh is not intended to be called directly. It
+             etce-field-exec is not intended to be called directly. It
              is invoked by other etce applications over an SSH connection on
              field nodes to perform work.
 '''

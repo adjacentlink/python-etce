@@ -44,9 +44,6 @@ class ConfigDictionary(object):
                  defaults = {
                      'etce': {
                          'VERBOSE':'off',
-                         'SSH_USER':os.path.basename(os.path.expanduser('~')),
-                         'SSH_PORT':'22',
-                         'SSH_MISSING_HOST_KEY_POLICY':'RejectPolicy',
                          'DEFAULT_ETCE_HOSTNAME_FORMAT':"node-${'%03d' % etce_index}",
                          'TEMPLATE_DIRECTORY_SUFFIX':'tpl',
                          'WORK_DIRECTORY':'/tmp/etce',

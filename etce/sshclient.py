@@ -31,7 +31,7 @@
 #
 
 
-from collections import namedtuple
+from collections import namedtuple,defaultdict
 import errno
 import getpass
 import os
@@ -246,27 +246,45 @@ class SSHClient(etce.fieldclient.FieldClient):
 
         port = kwargs.get('port', None)
 
-        key_filenames = kwargs.get('key_filename', [])
+        key_filenames = kwargs.get('key_filename', None)
 
         self._envfile = kwargs.get('envfile', None)
 
         self._config = ConfigDictionary()
+
+        ssh_config_file = os.path.expanduser('~/.ssh/config')
+
+        ssh_config = defaultdict(lambda: None)
         
-        if user is None:
-            user = self._config.get('etce', 'SSH_USER')
-
-        if port is None:
-            port = int(self._config.get('etce', 'SSH_PORT'))
-
-        missing_key_policy = self._config.get('etce', 'SSH_MISSING_HOST_KEY_POLICY')
-
-        policy_class = paramiko.client.__dict__[missing_key_policy]
+        if os.path.exists(ssh_config_file):            
+            ssh_config = paramiko.SSHConfig()
+            ssh_config.parse(open(ssh_config_file))
         
         for host in hosts:
+            host_config = ssh_config.lookup(host)
+            host_user = os.path.expanduser('~')
+            host_port = 22
+            host_key_filenames = []
+            
+            if user:
+                host_user = user
+            elif host_config:
+                host_user = host_config.get('user', host_user)
+
+            if port:
+                host_port = port
+            elif host_config:
+                host_port = host_config.get('port', host_port)
+
+            if key_filenames:
+                host_key_filenames = key_filenames
+            elif host_config:
+                host_key_filenames = host_config.get('identityfile', host_key_filenames)
+                
             try:
                 client = paramiko.SSHClient()
 
-                client.set_missing_host_key_policy(policy_class())
+                client.set_missing_host_key_policy(paramiko.client.RejectPolicy())
 
                 client.load_system_host_keys()
 
@@ -274,16 +292,16 @@ class SSHClient(etce.fieldclient.FieldClient):
 
                 try:
                     self._connection_dict[host].connect(hostname=host,
-                                                        username=user,
-                                                        port=int(port),
-                                                        key_filename=key_filenames,
+                                                        username=host_user,
+                                                        port=int(host_port),
+                                                        key_filename=host_key_filenames,
                                                         allow_agent=False)
                 except paramiko.ssh_exception.AuthenticationException as e:
                     if key_filenames:
                         client.connect(hostname=host,
-                                       username=user,
-                                       port=int(port),
-                                       key_filename=key_filenames,
+                                       username=host_user,
+                                       port=int(host_port),
+                                       key_filename=host_key_filenames,
                                        allow_agent=False,
                                        password=getpass.getpass('Passphrase for %s: ' % key_filenames[0]))
                     else:
@@ -408,7 +426,7 @@ class SSHClient(etce.fieldclient.FieldClient):
 
         if self._envfile is not None:
             fullcommandstr += '. %s; ' % self._envfile
-        fullcommandstr += 'etce-exec.ssh '
+        fullcommandstr += 'etce-field-exec '
 
         if not workingdir is None:
             fullcommandstr += '--cwd %s ' % workingdir
@@ -528,7 +546,7 @@ class SSHClient(etce.fieldclient.FieldClient):
             try:
                 tf = tarfile.open(ltf, 'r:gz')
                 tf.extractall(localdstdir)
-                command = 'etce-exec.ssh platform rmfile %s' % tfile
+                command = 'etce-field-exec platform rmfile %s' % tfile
                 if self._envfile is not None:
                     command = '. %s; %s' % (self._envfile, command)
                 # also set up a thread to remove the tarfile on remotes
