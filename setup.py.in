@@ -43,7 +43,7 @@ setup(description='Extendable Test Control Environment',
       package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
       scripts=[ 'scripts/etce-hello',
                 'scripts/etce-field-exec',
-                'scripts/etce-listnodes',
+                'scripts/etce-list-hosts',
                 'scripts/etce-lxc',
                 'scripts/etce-test',
                 'scripts/etce-wrapper' ])

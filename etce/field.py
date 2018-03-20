@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -241,12 +241,12 @@ In this case there are 4 roots
     import argparse
 
     parser = argparse.ArgumentParser( \
-                prog='etce-listnodes',
+                prog='etce-list-hosts',
                 description=usagestr,
                 formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('--nodepos', 
-                        default='leaves',
+    parser.add_argument('--position', 
+                        default='all',
                         help='''List the nodes at the specified tree,
                         position, one of { leaves, roots, all }.
                         Default: leaves.''')
@@ -260,17 +260,17 @@ In this case there are 4 roots
 
     f = Field(args.hostfile)
 
-    if args.nodepos.lower() == 'all':
+    if args.position.lower() == 'all':
         for node in f.allnodes():
             print node
-    elif args.nodepos.lower() == 'roots':
+    elif args.position.lower() == 'roots':
         for node in f.roots():
             print node
-    elif args.nodepos.lower() == 'leaves':
+    elif args.position.lower() == 'leaves':
         for node in f.leaves():
             print node
     else:
-        print 'Unknown nodepos: %s' % args.nodepos
+        print 'Unknown position: %s' % args.position
         exit(1)
 
 
