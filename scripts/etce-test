@@ -33,7 +33,6 @@
 
 import argparse
 import datetime
-import json
 import os
 import shutil
 import signal
@@ -68,30 +67,6 @@ def tstamp():
 
 def buildtestname(testprefix, testname):
     return '%s-%s-%s' % (testprefix, testname, tstamp()) 
-
-
-def combine_store(localtestresultsdatadir, namevaldict):
-    backingfilename = os.path.join(localtestresultsdatadir, 'etce.store')
-    
-    store_files = []
-
-    for dirname,dirnames,filenames in os.walk(localtestresultsdatadir):
-        for filename in filenames:
-            if filename == 'etce.store':
-                store_files.append(os.path.join(localtestresultsdatadir, dirname, filename))
-
-    store = {}
-
-    for store_file in store_files:
-        with open(store_file) as sfd:
-            store.update(json.load(sfd))
-        os.remove(store_file)
-
-    store.update(namevaldict)
-
-    with open(backingfilename, 'w+') as fd:
-        json.dump(store, fd)
-
 
 
 def add_run_arguments(parser):
@@ -242,6 +217,8 @@ def add_run_arguments(parser):
 
 
 def run_test(args):
+    config = ConfigDictionary()
+
     for testroot in args.testroot:
         if not os.path.isdir(testroot):
             print >>sys.stderr,'Cannot find directory "%s". Quitting.' % testroot
@@ -256,6 +233,13 @@ def run_test(args):
             print >>sys.stderr, 'envfile argument must be an absolute path. Quitting'
             exit(1)
 
+    workdir = config.get('etce', 'WORK_DIRECTORY')
+    if not os.path.exists(workdir):
+        print >>sys.stderr, \
+            'ETCE WORK_DIRECTORY "%s" not found. ' \
+            'Please create it before starting.' % workdir
+        exit(1)
+            
     field = Field(args.hostfile)
 
     platform = Platform()
@@ -325,8 +309,6 @@ def run_test(args):
     resultsubdirs = []
 
     try:
-        config = ConfigDictionary()
-
         testdivider = '='*15
 
         stepdivider = '-'*10
@@ -514,15 +496,6 @@ def run_test(args):
                                    filesystemnodes)
                 
                     resultsubdirs.append(localtestresultsdir)
-
-                    # store test info and combine it with node store info
-                    localtestresultsdatadir = os.path.join(localtestresultsdir, 'data')
-
-                    namevaldict = {'starttime':starttime}
-
-                    namevaldict.update(test.info())
-                    
-                    combine_store(localtestresultsdatadir, namevaldict)
 
                     # kill any processes with pids stored in left-over lockfiles
                     # before finishing the test

@@ -33,7 +33,6 @@
 
 from collections import namedtuple,defaultdict
 import errno
-import getpass
 import os
 import json
 import paramiko
@@ -262,7 +261,7 @@ class SSHClient(etce.fieldclient.FieldClient):
         
         for host in hosts:
             host_config = ssh_config.lookup(host)
-            host_user = os.path.expanduser('~')
+            host_user = os.path.basename(os.path.expanduser('~'))
             host_port = 22
             host_key_filenames = []
             
@@ -290,22 +289,11 @@ class SSHClient(etce.fieldclient.FieldClient):
 
                 self._connection_dict[host] = client
 
-                try:
-                    self._connection_dict[host].connect(hostname=host,
-                                                        username=host_user,
-                                                        port=int(host_port),
-                                                        key_filename=host_key_filenames,
-                                                        allow_agent=False)
-                except paramiko.ssh_exception.AuthenticationException as e:
-                    if key_filenames:
-                        client.connect(hostname=host,
-                                       username=host_user,
-                                       port=int(host_port),
-                                       key_filename=host_key_filenames,
-                                       allow_agent=False,
-                                       password=getpass.getpass('Passphrase for %s: ' % key_filenames[0]))
-                    else:
-                        raise e
+                self._connection_dict[host].connect(hostname=host,
+                                                    username=host_user,
+                                                    port=int(host_port),
+                                                    key_filename=host_key_filenames,
+                                                    allow_agent=True)
 
             except socket.gaierror as ge:
                 message = '%s "%s". Quitting.' % (ge.strerror, host)

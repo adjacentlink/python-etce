@@ -49,9 +49,17 @@ def startfield(args):
 
     plandoc = LXCPlanFileDoc(args.lxcplanfile)
 
+    config = ConfigDictionary()
+    
+    workdir = config.get('etce', 'WORK_DIRECTORY')
+
+    if not os.path.exists(workdir):
+        raise LXCError('ETCE WORK_DIRECTORY "%s" not found. ' \
+                       'Please create it before starting.' % workdir)
+        
     # lockfile
     lockfilename = \
-        os.path.join(ConfigDictionary().get('etce', 'LOCK_FILE_DIRECTORY'),
+        os.path.join(config.get('etce', 'LOCK_FILE_DIRECTORY'),
                      'etce.lxc.lock')
 
     if os.path.isfile(lockfilename):

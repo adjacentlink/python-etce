@@ -93,7 +93,10 @@ class WrapperContextImpl(ArgRegistrar):
 
         self._wrapperstore = WrapperStore(storefile)
 
+        self._wrapperstore.update({'etce':{'starttime': self._trialargs['starttime']}},
+                                  self._args['nodename'])
 
+        
     def register_argument(self, argname, defaultval, description):
         if argname in self._reserved_args:
             raise ValueError('Wrapper "%s" attempting to register a ' \

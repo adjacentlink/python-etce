@@ -36,7 +36,6 @@ from etce.testdirectory import TestDirectory
 from etce.platform import Platform
 from etce.config import ConfigDictionary
 from etce.publisher import Publisher
-from etce.wrapperstore import WrapperStore
 
 
 class TestPrepper(object):
