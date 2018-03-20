@@ -44,7 +44,7 @@
 ##################################################
 #LOCK_FILE_DIRECTORY=/run/lock
 #WORK_DIRECTORY=/tmp/etce
-#WRAPPER_DIRECTORY=/opt/etcewrappers
+#WRAPPER_DIRECTORY=/opt/etce/wrappers
 
 
 ##################################################

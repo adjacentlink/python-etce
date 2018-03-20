@@ -47,7 +47,7 @@ class ConfigDictionary(object):
                          'DEFAULT_ETCE_HOSTNAME_FORMAT':"node-${'%03d' % etce_index}",
                          'TEMPLATE_DIRECTORY_SUFFIX':'tpl',
                          'WORK_DIRECTORY':'/tmp/etce',
-                         'WRAPPER_DIRECTORY':'/opt/etcewrappers',
+                         'WRAPPER_DIRECTORY':'/opt/etce/wrappers',
                          'LOCK_FILE_DIRECTORY':'/run/lock',
                          'ENV_OVERLAYS_ALLOW':''
                      },
