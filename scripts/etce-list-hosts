@@ -31,4 +31,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-python -m etce.field $@
+python -m etce.field "$@"

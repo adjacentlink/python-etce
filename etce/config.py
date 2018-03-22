@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import os.path
+import os
 import ConfigParser
 
 
@@ -57,7 +57,9 @@ class ConfigDictionary(object):
         self.parser = ConfigParser.ConfigParser()
         self.parser.optionxform = str # leave case
 
-        configfiles = ['/etc/etce/%s.conf' % configfilename,
+        config_dir = os.getenv('ETCECONFIGDIR','/etc/etce')
+
+        configfiles = [os.path.join(config_dir,'%s.conf' % configfilename),
                        os.path.join(os.path.expanduser('~'), '.%s.conf' % configfilename) ]
 
         

@@ -31,4 +31,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-python -m etce.lxcfieldmanager $@
+python -m etce.lxcfieldmanager "$@"

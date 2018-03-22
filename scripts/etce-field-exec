@@ -154,7 +154,7 @@ if method:
         else:
             if verbose:
                 print "(%s,%s,%s)" % \
-                    (args.modulename, args.methodname, ' '.join(args[2:]))
+                    (args.modulename, args.methodname, ' '.join(args.methodargs))
 
             typedargs = [ etce.utils.configstrtoval(arg) for arg in args.methodargs ]
 

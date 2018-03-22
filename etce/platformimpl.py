@@ -34,7 +34,6 @@ import os
 import re
 import shlex
 import shutil
-import socket
 import subprocess
 
 
@@ -44,8 +43,7 @@ class PlatformImpl:
 
 
     def hostname(self):
-        return socket.gethostbyaddr(socket.gethostname())[0]
-
+        return os.getenv('HOSTNAME')
 
     # a unique numeric id extracted from hostname
     def hostid(self):

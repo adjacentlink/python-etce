@@ -31,7 +31,7 @@
 #
 
 
-from collections import namedtuple,defaultdict
+from collections import namedtuple
 import errno
 import os
 import json
@@ -253,14 +253,16 @@ class SSHClient(etce.fieldclient.FieldClient):
 
         ssh_config_file = os.path.expanduser('~/.ssh/config')
 
-        ssh_config = defaultdict(lambda: None)
-        
+        ssh_config = None
+
         if os.path.exists(ssh_config_file):            
             ssh_config = paramiko.SSHConfig()
             ssh_config.parse(open(ssh_config_file))
         
         for host in hosts:
-            host_config = ssh_config.lookup(host)
+            host_config = None
+            if ssh_config:
+                host_config = ssh_config.lookup(host)
             host_user = os.path.basename(os.path.expanduser('~'))
             host_port = 22
             host_key_filenames = []
@@ -421,9 +423,10 @@ class SSHClient(etce.fieldclient.FieldClient):
 
         fullcommandstr += commandstr
         for host in hosts:
+            host_fullcommandstr = 'export HOSTNAME=%s; ' % host + fullcommandstr
             if host in self._connection_dict:
                 self._execute_threads.append(ExecuteThread(self._connection_dict[host],
-                                                           fullcommandstr,
+                                                           host_fullcommandstr,
                                                            host))
 
         # start the threads
