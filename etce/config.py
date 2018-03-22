@@ -59,8 +59,7 @@ class ConfigDictionary(object):
 
         config_dir = os.getenv('ETCECONFIGDIR','/etc/etce')
 
-        configfiles = [os.path.join(config_dir,'%s.conf' % configfilename),
-                       os.path.join(os.path.expanduser('~'), '.%s.conf' % configfilename) ]
+        configfiles = [ os.path.join(config_dir,'%s.conf' % configfilename) ]
 
         
         # read function should not cause error if any of the named files
