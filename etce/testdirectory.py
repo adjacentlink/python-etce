@@ -248,7 +248,7 @@ class TestDirectory(object):
     def _find_overlay_names(self):
         overlays = set([])
 
-        search_dirs = [self._basedir]
+        search_dirs = [self._rootdir]
 
         if not self._merged:
             # push the basedirectory if this directory is not already merged
