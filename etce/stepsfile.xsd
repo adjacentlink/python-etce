@@ -33,6 +33,12 @@
 
 <xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'>
 
+  <xs:simpleType name="decorator">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="sudo"/>
+    </xs:restriction>
+  </xs:simpleType>
+
   <xs:element name="arg">
     <xs:complexType>
       <xs:attribute name="name" type="xs:string"/>
@@ -64,6 +70,7 @@
                                 maxOccurs="unbounded"/>
                   </xs:sequence>
                   <xs:attribute name="wrapper" type="xs:string"/>
+                  <xs:attribute name="decorator" type="decorator" use="optional"/>
                 </xs:complexType>
               </xs:element>
               <xs:element name="stop">

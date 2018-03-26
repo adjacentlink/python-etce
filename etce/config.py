@@ -39,21 +39,24 @@ def getconfig():
 
 
 class ConfigDictionary(object):
+    default_working_directory = '/tmp/etce'
+
+    defaults = {
+        'etce': {
+            'VERBOSE':'off',
+            'DEFAULT_ETCE_HOSTNAME_FORMAT':"node-${'%03d' % etce_index}",
+            'TEMPLATE_DIRECTORY_SUFFIX':'tpl',
+            'WORK_DIRECTORY':default_working_directory,
+            'WRAPPER_DIRECTORY':'/opt/etce/wrappers',
+            'ENV_OVERLAYS_ALLOW':''
+        },
+        'overlays': {
+        },
+    }
+
     def __init__(self,
                  configfilename='etce',
-                 defaults = {
-                     'etce': {
-                         'VERBOSE':'off',
-                         'DEFAULT_ETCE_HOSTNAME_FORMAT':"node-${'%03d' % etce_index}",
-                         'TEMPLATE_DIRECTORY_SUFFIX':'tpl',
-                         'WORK_DIRECTORY':'/tmp/etce',
-                         'WRAPPER_DIRECTORY':'/opt/etce/wrappers',
-                         'LOCK_FILE_DIRECTORY':'/run/lock',
-                         'ENV_OVERLAYS_ALLOW':''
-                     },
-                     'overlays': {
-                     },
-                 }):
+                 defaults = defaults):
         self.parser = ConfigParser.ConfigParser()
         self.parser.optionxform = str # leave case
 

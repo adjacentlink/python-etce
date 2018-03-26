@@ -41,7 +41,11 @@ class Kill(object):
 
         my_pidfile_prefix = 'etce.%s' % p.hostname()
 
-        lockfiledir = ConfigDictionary().get('etce', 'LOCK_FILE_DIRECTORY')
+        lockfiledir = os.path.join(ConfigDictionary().get('etce', 'WORK_DIRECTORY'),
+                                   'lock')
+
+        if not os.path.isdir(lockfiledir):
+            return
 
         for pidfile in os.listdir(lockfiledir):
             if pidfile.startswith(my_pidfile_prefix):

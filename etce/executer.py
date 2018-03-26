@@ -43,6 +43,7 @@ from etce.platform import Platform
 from etce.wrappercontext import WrapperContext
 from etce.wrappercontextimpl import WrapperContextImpl
 from etce.wrapperloader import WrapperLoader
+from etce.wrapperdecorator import WrapperDecorator
 
 
 class Executer(object):
@@ -80,9 +81,9 @@ class Executer(object):
 
             wldr = WrapperLoader()
             
-            for wrappername,methodname,testargs in wrappers:
+            for wrapperentry,methodname,testargs in wrappers:
                 wrapperinstance = \
-                    wldr.loadwrapper(wrappername,
+                    wldr.loadwrapper(wrapperentry.name,
                                      self._stepsfiledoc.getpackageprefixes())
                 
                 # ensure each wrapper is called with the testdirectory as
@@ -90,12 +91,23 @@ class Executer(object):
                 # instance of the wrapper context
                 os.chdir(hostdir)
 
-                ctx = WrapperContext(WrapperContextImpl(wrappername,
-                                                        wrapperinstance,
-                                                        trialargs,
-                                                        testargs,
-                                                        self._config,
-                                                        self._test))
+                ctx = None
+
+                if wrapperentry.decorator:
+                    ctx = WrapperContext(WrapperDecorator(wrapperentry.decorator,
+                                                          WrapperContextImpl(wrapperentry.name,
+                                                                             wrapperinstance,
+                                                                             trialargs,
+                                                                             testargs,
+                                                                             self._config,
+                                                                             self._test)))
+                else:
+                    ctx = WrapperContext(WrapperContextImpl(wrapperentry.name,
+                                                            wrapperinstance,
+                                                            trialargs,
+                                                            testargs,
+                                                            self._config,
+                                                            self._test))
 
                 if methodname == 'run':
                     # run calls prerun, run, postrun to encourage

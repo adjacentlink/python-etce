@@ -61,7 +61,7 @@ class WrapperContextImpl(ArgRegistrar):
         self._platform = Platform()
         self._wrappername = wrappername
         self._default_pidfilename = '%s/etce.%s.%s.pid' \
-                                    % (self._config.get('etce', 'LOCK_FILE_DIRECTORY'),
+                                    % (os.path.join(self._config.get('etce', 'WORK_DIRECTORY'), 'lock'),
                                        self.platform.hostname(),
                                        self._wrappername)
 

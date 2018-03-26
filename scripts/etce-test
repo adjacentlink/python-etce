@@ -148,13 +148,14 @@ def add_run_arguments(parser):
                         choices=['before','after','both','none'],
                         default='both',
                         help='''Many ETCE Wrappers save process PIDs to
-                        lockfiles saved in a location specified by the 
-                        LOCK_FILE_DIRECTORY value in etce.conf. etce-test
-                        will attempt to clean-up processes on field members
-                        between tests by killing any process where a lock
-                        file is found. Use the kill command to specify when
-                        etce-test should attempt clean-up, "before", "after"
-                        "both" (before and after) or "none". Default: both.''')
+                        lockfiles saved to the "lock" subdirectory of the
+                        etce.conf WORK_DIRECTORY. etce-test will attempt
+                        to clean-up processes on field members between
+                        tests by killing any process where a lock file is
+                        found. Use the kill command to specify when
+                        etce-test should attempt clean-up, "before",
+                        "after", "both" (before and after) or "none". 
+                        Default: both.''')
     parser.add_argument('--outdir',
                         action='store',
                         default=default_data_directory,
@@ -503,9 +504,10 @@ def run_test(args):
                         client.execute('kill kill', allnodes)
 
                     if args.deletecompleted:
-                        print 'removing %s from testnodes' % remoteresultssubdir
-                        client.execute('platform rmdir %s' %
-                                       remoteresultssubdir, filesystemnodes)
+                        print 'removing data/%s from testnodes' % testdir
+                        client.execute('platform rmdir %s' % testdir,
+                                       hosts=filesystemnodes,
+                                       workingdir='data')
 
                     print stepdivider
 

@@ -25,9 +25,6 @@
 # ETCE test steps. The WRAPPER_DIRECTORY names the
 # location.
 #
-# Many ETCE Wrappers save the PID of processes
-# they spawn to a file in the LOCK_FILE_DIRECTORY.
-# 
 # ETCE uses the WORK_DIRECTORY as the destination
 # of most of the files it generates:
 #
@@ -42,7 +39,6 @@
 #          collected from the current test.
 #
 ##################################################
-#LOCK_FILE_DIRECTORY=/run/lock
 #WORK_DIRECTORY=/tmp/etce
 #WRAPPER_DIRECTORY=/opt/etce/wrappers
 

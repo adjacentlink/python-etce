@@ -42,6 +42,8 @@ class TestPrepper(object):
     def run(self, starttime, templatesubdir, trialsubdir):
         etcedir = ConfigDictionary().get('etce', 'WORK_DIRECTORY')
 
+        lockdir = os.path.join(etcedir, 'lock')
+
         templatedir = os.path.join(etcedir, templatesubdir)
 
         testdefdir = os.path.join(etcedir, 'current_test')
@@ -57,6 +59,8 @@ class TestPrepper(object):
                           logdir=trialdir,
                           runtime_overlays=runtime_overlays,
                           overwrite_existing_publishdir=True)
+
+        self._checkdir(lockdir)
 
         self._checkdir(trialdir)
 

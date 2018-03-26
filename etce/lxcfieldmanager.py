@@ -50,16 +50,16 @@ def startfield(args):
     plandoc = LXCPlanFileDoc(args.lxcplanfile)
 
     config = ConfigDictionary()
-    
+
     workdir = config.get('etce', 'WORK_DIRECTORY')
 
     if not os.path.exists(workdir):
         raise LXCError('ETCE WORK_DIRECTORY "%s" not found. ' \
                        'Please create it before starting.' % workdir)
-        
+
     # lockfile
     lockfilename = \
-        os.path.join(config.get('etce', 'LOCK_FILE_DIRECTORY'),
+        os.path.join(plandoc.lxc_root_directory(this_hostname),
                      'etce.lxc.lock')
 
     if os.path.isfile(lockfilename):
@@ -67,7 +67,7 @@ def startfield(args):
               'Run "etce-lxc stop" first.' % \
               plandoc.lxc_root_directory(this_hostname)
         raise LXCError(err)
-            
+
     startlxcs(plandoc,
               args.writehosts,
               args.forcelxcroot,
@@ -111,9 +111,9 @@ def startfield(args):
 
 
 def stopfield(args):
-    lockfiledir = ConfigDictionary().get('etce', 'LOCK_FILE_DIRECTORY')
+    workdir = ConfigDictionary().get('etce', 'WORK_DIRECTORY')
 
-    lockfilename = os.path.join(lockfiledir, 'etce.lxc.lock')
+    lockfilename = os.path.join(workdir, 'lxcroot', 'etce.lxc.lock')
 
     if not os.path.exists(lockfilename) or not os.path.isfile(lockfilename):
         raise LXCError('Lockfile "%s" not found. Quitting.' % lockfilename)

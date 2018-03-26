@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
 #
 
 import copy
-from collections import defaultdict
+from collections import defaultdict,namedtuple
 
 import etce.utils
 import etce.xmldoc
@@ -40,6 +40,8 @@ from lxml import etree
 
 
 class StepsFileDoc(etce.xmldoc.XMLDoc):
+    WrapperEntry = namedtuple('WrapperEntry', ['name', 'decorator'])
+
     def __init__(self, stepsfile):
         etce.xmldoc.XMLDoc.__init__(self,
                                     'stepsfile.xsd')
@@ -99,7 +101,7 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
         return tuple(self._packageprefixes)
 
 
-    def _parsesteps(self, stepsfile): 
+    def _parsesteps(self, stepsfile):
         stepselem = self.parse(stepsfile)
 
         packageprefixes = [ None ]
@@ -130,9 +132,11 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
                 if child.tag is etree.Comment:
                     continue
 
-                stepwrappers.append((child.attrib['wrapper'],
-                                     child.tag,
-                                     argdict))
+                stepwrappers.append(
+                    (StepsFileDoc.WrapperEntry(name = child.attrib['wrapper'],
+                                               decorator = child.attrib.get('decorator', None)),
+                     child.tag,
+                     argdict))
 
             if stepname in steplist:
                 errstr = \

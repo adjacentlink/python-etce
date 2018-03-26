@@ -74,5 +74,5 @@ class PlatformImpl:
 
     def rmdir(self, subdir):
         if subdir in os.listdir(os.getcwd()):
-            print 'removing etce subdirectory "%s"' % subdir
+            print 'removing subdirectory "%s" from "%s"' % (subdir, os.getcwd())
             shutil.rmtree(subdir)
