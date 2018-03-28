@@ -32,6 +32,7 @@
 
 import os.path
 import string
+import sys
 
 from collections import OrderedDict
 
@@ -257,6 +258,10 @@ In this case there are 4 roots
                         directories are collected.''')
 
     args = parser.parse_args()
+
+    if not os.path.isfile(args.hostfile):
+        print >>sys.stderr,'HOSTFILE "%s" does not exist. Quitting.' % args.hostfile
+        exit(1)
 
     f = Field(args.hostfile)
 
