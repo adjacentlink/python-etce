@@ -77,14 +77,19 @@ class WrapperLoader(object):
 
         for packagename in packageprefixfilter:
             wrapper = self._load_module(wrappername,packagename)
+            
             if wrapper is not None:
                 basename = wrapper.__name__.split('/')[-1]
+                
                 candidateclassname = basename.upper()
                 
                 classinstance = None
+                
                 for key in wrapper.__dict__:
                     if key.upper() == candidateclassname:
+                        
                         candidateclass = wrapper.__dict__[key]
+                        
                         if callable(candidateclass):
                             return candidateclass()
 
@@ -94,12 +99,16 @@ class WrapperLoader(object):
 
     def _load_module(self, wrappername, packageprefix):
         wrapper = None
+        
         if packageprefix:
             wrappername = packageprefix + '.' + wrappername
+            
         etcewrapper = wrappername.replace('.', os.sep)
+        
         try:
             f,pathname,description = \
                 imp.find_module(etcewrapper, self.wrapperpaths())
+            
             wrapper = imp.load_module(etcewrapper,f,pathname,description)
         except:
             pass
