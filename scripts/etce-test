@@ -138,6 +138,14 @@ def add_run_arguments(parser):
                         script setup|teardown testdirectory logdirectory [userarg]*
 
                         default: None.''')
+    parser.add_argument('--nocollect',
+                        action='store_true', 
+                        default=False,
+                        help='''On test completion, skip the collection
+                        step that retrieves test data from the field nodes
+                        to the localhost. This may be appropriate when
+                        all field nodes share the local host file system. 
+                        Default: collect.''')
     parser.add_argument('--numtrials', 
                         action='store', 
                         default=1,
@@ -161,7 +169,7 @@ def add_run_arguments(parser):
                         default=default_data_directory,
                         help='''Local output directory for test artifacts - 
                         default: %s.''' % default_data_directory)
-    parser.add_argument('--quitonerror', 
+    parser.add_argument('--quitonerror',
                         action='store_true', 
                         default=False,
                         help='''Quit when an error occurs. Default behavior
@@ -193,7 +201,7 @@ def add_run_arguments(parser):
                         in the ~/.ssh/config file. If not found, uses the
                         current user''')
     parser.add_argument('-v',
-                        '--verbose', 
+                        '--verbose',
                         action='store_true', 
                         default=False,
                         help='''Print verbose error information when
@@ -488,13 +496,16 @@ def run_test(args):
 
                     print stepdivider
 
-                    print 'Collecting "%s" results.' % test.name()
+                    if args.nocollect:
+                        print 'Skipping results collection to localhost (args.nocollect=True).'
+                    else:
+                        print 'Collecting "%s" results.' % test.name()
 
-                    trialsubdirs = os.path.join(remoteresultssubdir, 'data')
+                        trialsubdirs = os.path.join(remoteresultssubdir, 'data')
 
-                    client.collect(trialsubdirs,
-                                   localtestresultsdir,
-                                   filesystemnodes)
+                        client.collect(trialsubdirs,
+                                       localtestresultsdir,
+                                       filesystemnodes)
                 
                     resultsubdirs.append(localtestresultsdir)
 
