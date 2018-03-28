@@ -2,8 +2,8 @@
 #
 # ETCE exposes a handful of configuration parameters
 # for customization. /etc/etce/etce.conf is the
-# is the default file location. Users may override
-# the etce.conf directory location by setting the
+# default file location. Users may override the
+# etce.conf directory location by setting the
 # EMANECONFIGDIR environment variable.
 #
 # The values shown here are the configuration value
@@ -64,16 +64,16 @@
 # the TEMPLATE_DIRECTORY_SUFFIX - for example
 # "rfpipe.tpl".
 #
-# The Test Directory test.xml specifies the names
-# of template files or directories included
+# The Test Directory test.xml file specifies 
+# any template files or directories included
 # in the test definition. The template file
 # and directory elements in test.xml both accept
 # an optional "hostname_format" attribute that
 # describes the way host name subdirectories are 
 # generated in the published test definition -
-# usually differentiated by the reserved etce_index
+# usually differentiated by the reserved "etce_index"
 # value. The DEFAULT_ETCE_HOSTNAME_FORMAT parameter
-# the default value hostname_format value.
+# defines the value hostname_format value.
 # 
 # When generating configuration files from templates,
 # ETCE relies on overlay template values specified
@@ -81,7 +81,8 @@
 # Directory test.xml file. ETCE also permits overlay
 # values to be specified by environment variables.
 # Use ENV_OVERLAYS_ALLOW to name template variable
-# names that ETCE will permit as overlays.
+# names that ETCE will accept from environment
+# variables.
 #
 ##################################################
 #DEFAULT_ETCE_HOSTNAME_FORMAT=node-${'%03d' % etce_index}
