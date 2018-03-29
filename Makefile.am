@@ -1,3 +1,5 @@
+ACLOCAL_AMFLAGS = -I m4
+
 all-local: setup.py
 	python setup.py build
 

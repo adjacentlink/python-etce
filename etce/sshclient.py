@@ -245,7 +245,7 @@ class SSHClient(etce.fieldclient.FieldClient):
 
         port = kwargs.get('port', None)
 
-        key_filenames = kwargs.get('key_filename', None)
+        key_filenames = None
 
         self._envfile = kwargs.get('envfile', None)
 

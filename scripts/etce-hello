@@ -68,12 +68,6 @@ parser.add_argument('--envfile',
                     help='''Envirorment file to invoke on remove nodes
                     before running the specified command.
                     default: None.''')
-parser.add_argument('--key_filename',
-                    action='store',
-                    nargs='+',
-                    default=None,
-                    help='''Connect to the HOSTFILE host(s),
-                    using the specified private key file.''')
 parser.add_argument('--port',
                     action='store',
                     type=int,
@@ -108,8 +102,7 @@ hosts = Field(args.hostfile).leaves()
 client = ClientBuilder().build(hosts,
                                user=args.user,
                                port=args.port,
-                               envfile=args.envfile,
-                               key_filename=args.key_filename)
+                               envfile=args.envfile)
 
 try:
    ret = client.execute('hello hello', hosts)

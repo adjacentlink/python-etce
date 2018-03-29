@@ -86,8 +86,7 @@ def startfield(args):
             client = ClientBuilder().build(\
                         other_hosts,
                         user=args.user,
-                        port=args.port,
-                        key_filename=args.key_filename)
+                        port=args.port)
 
             # push the file and execute
             client.put(args.lxcplanfile, '.', other_hosts, doclobber=True)
@@ -130,8 +129,7 @@ def stopfield(args):
             try:
                 client = ClientBuilder().build(other_hosts,
                                                user=args.user,
-                                               port=args.port,
-                                               key_filename=args.key_filename)
+                                               port=args.port)
 
                 # push the file and execute
                 client.put(lockfilename, '.', other_hosts, doclobber=True)
@@ -154,15 +152,8 @@ def stopfield(args):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog='etce-lxc')
 
-    parser.add_argument('--key_filename',
-                        action='store',
-                        nargs='+',
-                        default=None,
-                        help='''If the LXCPLANFILE contains remote host(s),
-                        connect to the hosts using the specified private
-                        key file.''')
     parser.add_argument('--port',
                         action='store',
                         type=int,
@@ -192,7 +183,7 @@ def main():
                               action='store_true',
                               default=False,
                               help='''Create the container configurations but do not start
-                              the container.''')
+                              the containers.''')
     parser_start.add_argument('--forcelxcroot',
                               action='store_true',
                               default=False,
