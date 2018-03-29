@@ -15,4 +15,5 @@ make rpm
 
 ./autogen && ./configure
 make deb
-sudo dpkg -i deb_dist/python-etce*deb
+sudo dpkg -i python-etce_*all.deb
+sudo apt-get install -f
