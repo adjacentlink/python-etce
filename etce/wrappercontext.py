@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,69 +35,143 @@ from etce.argregistrar import ArgRegistrar
 
 
 class WrapperContext(ArgRegistrar):
-    ''' WrapperContext defines the interface of the context
-        object passed to ETCE wrappers during tests. It
-        provides the following:
+    """
+    WrapperContext aims to help eliminate repetitive, boilerplate
+    Wrapper code and standardize Wrapper workflow. Specifically, 
+    WrapperContext:
 
-        1. Methods to register the input and output 
-           file names the wrapper uses for configuration and
-           output/logging.
+    * Standardizes the way Wrapper arguments are specified, searched
+      and presented to Wrappers.
 
-        2. Methods to register the arguments the
-           wrapper accepts for modifying execution.
+    * Standardizes the way input and output files are searched and
+      presented to Wrappers.
 
-        3. Methods to run, daemonize or stop the application
-           associated with the wrapper.
-   
-        The context passes name/value pairs to the wrapper in the
-        "args" member.
+    * Provides helper methods for running/daemonizing and stopping wrapped 
+      applications.
 
-        The arguments that wrappers register with the context are
-        passed in the "args" member. These are values that are
-        generally useful to change on a test by test basis - 
-        log levels are a typical example. Arg values are set
-        in the test steps.xml or the optional config.xml file.
+    * Provides a uniform way for Wrappers to store meta information.
 
-        The args member also passes in a small number of fixed 
-        ETCE defined values that cannot be overwritten:
+    * Provides access to an ETCE Platform object that provides helper
+      methods for performing low level operations.
 
-           default_pidfilename
-           logdirectory
-           nodename
-           nodeid
-           starttime
-           stepname
-           testname
-           wrappername
+    A WrapperContext object is passed to most Wrapper methods as their
+    "ctx" argument.
+    """
 
-    '''
     def __init__(self, impl):
         self._impl = impl
 
 
     def register_argument(self, argname, defaultval, description):
+        """
+        Register an input argument used by the wrapper. Wrapper
+        arguments are generally a subset of the wrapped application's
+        command line arguments, especially arguments that are useful
+        to change on a trial by trial basis. Log levels are a typical
+        example.
+
+        Argument values are passed to the wrapper as ctx.args.ARGNAME,
+        with defaultval used if the argument is not set
+        externally. Users set wrapper argument values in the Test
+        Directory steps.xml file or in an optional configuration file
+        passed into the etce-test run command.
+
+        Besides user registered arguments, ETCE reserves a small
+        set of arguments, also passed in through ctx.args, that
+        cannot be overwritten by the user - 
+
+           default_pidfilename: 
+              Absolute (default) pidfile name. Many Wrappers write
+              they PID of the wrapped application they launch to a
+              file with this name. Pidfiles are placed in the `lock`
+              subdirectory of the etce.conf WORK_DIRECTORY.
+
+           logdirectory: 
+              the absolute path to the output directory.  The
+              logdirectory is a scoped path name that includes the
+              name of the current test, a date time stamp and the name
+              of the host where the Wrapper is running. Wrappers must
+              use this path for any output files they produce that are
+              to be collected with the test results.
+
+           nodename: 
+              the hostname where the current wrapper is executing
+
+           nodeid: 
+              if nodename contains an integer value, it is passed
+              as an int in this member, otherwise None
+
+           starttime: 
+              the current test's T=0 scenario time in format 
+              YYYY-MM-DDTHH:MM:SS
+
+           stepname: 
+              the current step name as defined in the steps.xml file
+
+           testname: 
+              the current test name as defined in the test.xml file
+
+           wrappername: 
+              this wrapper's name
+        """
         self._impl.register_argument(argname, defaultval, description)
 
 
     def register_infile_name(self, name):
+        """
+        Register the input file name used by the wrapper. 
+
+        When a Wrapper registers in input file name, the context
+        searches for a matching file name in the hosts's configuration
+        directory and, if found, passes the absolute name to the
+        wrapper in the ctx.args.infile member. ctx.args.infile is set
+        to None if no matching file is found.
+
+        Most wrappers use the presence of their input file as a
+        trigger to run their wrapped application.
+        """
         self._impl.register_infile_name(name)
 
 
     def register_outfile_name(self, name):
+        """
+        Register the output file name used by the Wrapper. 
+
+        Wrapper conventionally register a log file as thier output
+        file. This method is a convenience method that passes back the
+        absolute name of the output file the wrapper should use in the
+        ctx.arg.outfile member.
+        """
         self._impl.register_outfile_name(name)
 
 
     def store(self, namevaldict):
+        """
+        Store the name/value pairs passed in via the dictionary
+        argument to the JSON format `etce.store` file for the
+        current host. Values are automatically subdivided in the storage
+        file by wrapper name to avoid collision.
+        """
         self._impl.store(namevaldict)
 
 
     @property
     def platform(self):
+        """
+        An etce.platform.Platform object.
+        """
         return self._impl.platform
 
 
     @property
     def args(self):
+        """
+        The *args* member contains the values of the Wrapper's
+        registered arguments as args.ARGNAME, the registered
+        input and output filenames as args.infile and args.outfile,
+        and the reserved arguments listed above (args.logdirectory,
+        for example).
+        """
         return self._impl.args
 
 
@@ -109,7 +183,46 @@ class WrapperContext(ArgRegistrar):
                   genpidfile=True,
                   pidincrement=0,
                   starttime=None):
+        """
+        Run a command as a daemon process.
 
+        commandstr:
+           The full command string to run.
+
+        stdout:
+           An optional file name to capture standard output.
+
+        stderr:
+           An optional file name to capture standard error.
+
+        pidfilename:
+           An alternative file name to use to write the daemonized
+           processes' PID. default_pidfilename is used if not specified.
+           Only used when genpidfile is True.
+
+        genpidfile:
+           Do generate a PID file (True: default) or not (False).
+       
+        pidincrement:
+           Some commands fork and exec further subprocesses in a
+           manner where the original parent process is not the long
+           running process whose PID is useful to capture.  Sometimes
+           the relationship between the long-running exec'd PID and
+           the parent PID is a fixed increment. Specifying a value for
+           pidincrement causes the context to store the parent PID +
+           pidincrement in the PID file. Note, this mechanism has
+           limited use though where tests are run over a long enough
+           period to cause the range of exec'd PID numbers to wrap. In
+           this case the difference between the parent PID and
+           long-running exec'd PID will not reliably be fixed as the
+           kernel skips PIDs when they are in use.
+
+        starttime:
+           An optional YYYY-MM-DDTHH:MM::SS string. After forking,
+           daemonize will sleep until the provides time before
+           exec'ing the command. The command is exec'd immediately
+           if not specified.
+        """
         self._impl.daemonize(commandstr,
                              stdout,
                              stderr,
@@ -126,7 +239,45 @@ class WrapperContext(ArgRegistrar):
             pidfilename=None,
             genpidfile=True,
             pidincrement=0):
+        """
+        Run a command.
 
+        commandstr:
+           The full command string to run.
+
+        stdout:
+           An optional file name to capture standard output.
+
+        stderr:
+           An optional file name to capture standard error.
+
+        pidfilename:
+           An alternative file name to use to write the commands
+           PID. default_pidfilename is used if not specified.  Only
+           used when genpidfile is True.
+
+        genpidfile:
+           Do generate a PID file (True: default) or not (False).
+       
+        pidincrement:
+           Some commands fork and exec further subprocesses in a
+           manner where the original parent process is not the long
+           running process whose PID is useful to capture.  Sometimes
+           the relationship between the long-running exec'd PID and
+           the parent PID is a fixed increment. Specifying a value for
+           pidincrement causes the context to store the parent PID +
+           pidincrement in the PID file. Note, this mechanism has
+           limited use though where tests are run over a long enough
+           period to cause the range of exec'd PID numbers to wrap. In
+           this case the difference between the parent PID and
+           long-running exec'd PID will not reliably be fixed as the
+           kernel skips PIDs when they are in use.
+
+        starttime:
+           An optional YYYY-MM-DDTHH:MM::SS string. The run call
+           blocks and sleeps until the specified time before running
+           the command.
+        """
         self._impl.run(commandstr,
                        stdout,
                        stderr,
@@ -136,4 +287,11 @@ class WrapperContext(ArgRegistrar):
 
 
     def stop(self, pidfilename=None):
+        """
+        Stop the process associated with the PID in the specified file.
+
+        This function sends SIGQUIT to the process associated with the
+        PID contained in pidfilename and then removes the file. If
+        pidfilename is not specified, default_pidfilename is used.
+        """
         self._impl.stop(pidfilename)

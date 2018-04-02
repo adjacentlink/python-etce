@@ -72,12 +72,11 @@ class TestDirectory(object):
             os.path.join(self._rootdir,
                          TestDirectory.CONFIGFILENAME))
 
-        # a hostfile gets added into the test directory
-        # when moved to remote host.
+        # add the hostfile to the test directory
+        # before copying it to hostfile's root nodes
         hostfile = os.path.join(self._rootdir, 
                                 TestDirectory.HOSTFILENAME)
 
-        # set of verified nodes is empty if the hostfile doesn't
         self._verified_nodes = []
         if os.path.exists(hostfile) or os.path.isfile(hostfile):
             self._verified_nodes = self._verify_nodes_in_hostfile(hostfile)
@@ -134,7 +133,7 @@ class TestDirectory(object):
 
 
     def determine_nodenames(self):
-        # Determine the nodenames defined by the test files and templates by
+        # Determine the nodenames defined by the test files and templates:
         #
         # 1. read the base directory and test directory and take any
         #    subdirectory that does not end with .TEMPLATE_DIRECTORY_SUFFIX to

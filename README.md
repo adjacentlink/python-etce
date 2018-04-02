@@ -6,8 +6,8 @@ framework for efficiently writing and running
 [EMANE](https://github.com/adjacentlink/emane) emulations. It's goal
 is to automate and organize the mechanics of emulation:
 
-* Controlling applications across distributed hosts
-* Generating emulation definitions correctly, concisely and in a uniform format
+* Controlling applications across distributed hosts Generating
+* emulation definitions correctly, concisely and in a uniform format
 * Collecting and organizing test outputs
 
 
