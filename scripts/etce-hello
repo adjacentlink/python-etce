@@ -74,8 +74,7 @@ hosts = Field(args.hostfile).allnodes()
 
 client = ClientBuilder().build(hosts,
                                user=args.user,
-                               port=args.port,
-                               envfile=args.envfile)
+                               port=args.port)
 
 try:
    ret = client.execute('hello hello', hosts)

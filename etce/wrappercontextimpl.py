@@ -229,7 +229,7 @@ class WrapperContextImpl(ArgRegistrar):
         sp.wait()
 
 
-    def stop(self, pidfilename=None):
+    def stop(self, pidfilename=None, decorator=''):
         # use default pidfilename if None specified
         if pidfilename is None:
             pidfilename = self._default_pidfilename
@@ -240,7 +240,10 @@ class WrapperContextImpl(ArgRegistrar):
         if pid:
             try:
                 print 'killing pid %d found in %s' % (pid, pidfilename)
-                os.kill(pid, signal.SIGQUIT)
+                command = '%s kill -QUIT %d' % pid
+                sp = subprocess.Popen(command)
+                sp.wait()
+                #os.kill(pid, signal.SIGQUIT)
             except OSError as e:
                 # orphaned pidfile - process already dead
                 pass 

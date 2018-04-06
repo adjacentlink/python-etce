@@ -98,4 +98,4 @@ class WrapperDecorator(object):
 
 
     def stop(self, pidfilename=None):
-        self._impl.stop(pidfilename)
+        self._impl.stop(pidfilename, decorator=self._decorator_command)

@@ -34,9 +34,10 @@ import os.path
 import etce.loader
 
 
-''' Return an instance of the FieldClient implementation
-    coded in modulename 
-'''
+"""
+Return an instance of the FieldClient implementation
+coded in modulename 
+"""
 
 
 class NoClientConnectionException(Exception):
