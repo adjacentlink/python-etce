@@ -6,9 +6,10 @@ framework for efficiently writing and running
 [EMANE](https://github.com/adjacentlink/emane) emulations. It's goal
 is to automate and organize the mechanics of emulation:
 
-* Controlling applications across distributed hosts Generating
-* emulation definitions correctly, concisely and in a uniform format
-* Collecting and organizing test outputs
+* Establish a concise and uniform format for defining emulations
+* Control emulation applications across distributed hosts
+* Provide a clear method for bringing new applications under automated control
+* Collect and organize test outputs
 
 
 Visit the ETCE Wiki for detailed information:
