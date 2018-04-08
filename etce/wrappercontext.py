@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-
+import signal
 from etce.argregistrar import ArgRegistrar
 
 
@@ -286,12 +286,13 @@ class WrapperContext(ArgRegistrar):
                        pidincrement)
 
 
-    def stop(self, pidfilename=None):
+    def stop(self, pidfilename=None, signal=signal.SIGQUIT):
         """
         Stop the process associated with the PID in the specified file.
 
-        This function sends SIGQUIT to the process associated with the
-        PID contained in pidfilename and then removes the file. If
-        pidfilename is not specified, default_pidfilename is used.
+        This function sends the specified signal to the process associated
+        associated with the PID contained in pidfilename and then removes 
+        the file. If pidfilename is not specified, default_pidfilename 
+        is used.
         """
-        self._impl.stop(pidfilename)
+        self._impl.stop(pidfilename, signal)
