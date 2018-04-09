@@ -30,6 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+import signal
 
 class WrapperDecorator(object):
     def __init__(self, decorator_command, impl):
@@ -97,5 +98,5 @@ class WrapperDecorator(object):
         return self._impl.args
 
 
-    def stop(self, pidfilename=None):
-        self._impl.stop(pidfilename)
+    def stop(self, pidfilename=None, signal=signal.SIGQUIT):
+        self._impl.stop(pidfilename, signal, decorator=self._decorator_command)

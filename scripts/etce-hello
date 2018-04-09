@@ -33,63 +33,36 @@
 
 import argparse
 import os
-import pwd
 import sys
 
 from etce.field import Field
 from etce.clientbuilder import ClientBuilder
 
 
-usagestr = '''
-description: runs the python function
+description = """
+A utility for checking connectivity to the hosts
+in the provided HOSTFILE. Queries all of the HOSTFILE
+hosts for a short distro description.
+"""
 
-             modulename.methodname(methodarg1, methodarg2, ...).
+parser = argparse.ArgumentParser(description=description,
+                                 prog='etce-hello')
 
-             on the specified field. modulename is a module found in 
-             the python etce package subdirectory tree in the field 
-             members' python library path. 
-             
-             Packages are searched in order
-             from most refined to least refined based on the OS
-             of the host. For example, if the host is running fedora 16,
-             x86_64, the module search path sequence will be:
-
-             PYTHONPATH/etce/fedora/v16/x86_64
-             PYTHONPATH/etce/fedora/v16
-             PYTHONPATH/etce/fedora/
-             PYTHONPATH/etce
-'''
-
-parser = argparse.ArgumentParser(prog='etcehello')
-
-parser.add_argument('--envfile',
-                    action='store',
-                    default=None,
-                    help='''Envirorment file to invoke on remove nodes
-                    before running the specified command.
-                    default: None.''')
 parser.add_argument('--port',
                     action='store',
                     type=int,
                     default=None,
-                    help='''If the LXCPLANFILE contains remote host(s),
-                    connect to the hosts via the specified port. If not
-                    specified, ETCE will look for the host's "Port" value
-                    in the ~/.ssh/config file. If not found, uses the default
-                    ssh port value, 22.''')
+                    help='''Connect to hosts using the specified port number.
+                    Default: 22''')
 parser.add_argument('--user',
                     action='store',
                     default=None,
-                    help='''If the LXCPLANFILE contains remote host(s),
-                    connect to the hosts as the specified user. If not
-                    specified, ETCE will look for the host's "User" value
-                    in the ~/.ssh/config file. If not found, uses the
-                    current user''')
+                    help='''Connect to hosts as the specified user.
+                    Default it the current user.''')
 parser.add_argument('hostfile',
                     metavar='HOSTFILE',
-                    help='''The ETCE Host file containing the 
-                    node names from which the remote source 
-                    directories are collected.''')
+                    help='''The ETCE Hostfile containing the hosts
+                    to connect to.''')
 
 args = parser.parse_args()
 
@@ -97,18 +70,22 @@ if not os.path.exists(args.hostfile) or not os.path.isfile(args.hostfile):
    print >>sys.stderr, 'Cannot find fieldfile "%s". Quitting' % args.hostfile
    exit(1)
    
-hosts = Field(args.hostfile).leaves()
+hosts = Field(args.hostfile).allnodes()
 
 client = ClientBuilder().build(hosts,
                                user=args.user,
-                               port=args.port,
-                               envfile=args.envfile)
+                               port=args.port)
 
 try:
    ret = client.execute('hello hello', hosts)
 
+   responses = []
+
    for k in ret:
-      print '[%s] return: %s' % (k, ret[k].retval['result'])
+      responses.append((k, ret[k].retval['result']))
+
+   for k,retval in  sorted(responses):
+      print '[%s] return: %s' % (k, retval)
 
 finally:
    client.close()

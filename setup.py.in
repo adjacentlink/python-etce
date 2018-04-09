@@ -45,6 +45,7 @@ setup(description='Extendable Test Control Environment',
                 'scripts/etce-field-exec',
                 'scripts/etce-list-hosts',
                 'scripts/etce-lxc',
+                'scripts/etce-kill',
                 'scripts/etce-test',
                 'scripts/etce-wrapper' ])
 

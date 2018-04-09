@@ -14,12 +14,17 @@ clean-local: setup.py
 	-rm -f setup.py
 	-rm -f MANIFEST
 	-rm -f stdeb.cfg
+	-rm -f installed.txt
 	-rm -rf `find . -name "*\.pyc"`
 	-rm -rf `find . -name "*~"`
 
 
 install: setup.py
-	python setup.py install --prefix=@prefix@
+	python setup.py install --record=installed.txt --prefix=@prefix@
+
+
+uninstall:
+	xargs --arg-file installed.txt rm
 
 
 spec: setup.py
