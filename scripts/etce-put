@@ -1,0 +1,123 @@
+#!/usr/bin/env python 
+#
+# Copyright (c) 2013-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+# * Neither the name of Adjacent Link LLC nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+import sys
+import argparse
+
+from etce.field import Field
+from etce.clientbuilder import ClientBuilder
+from etce.etceexecuteexception import ETCEExecuteException
+
+usagestr = '''
+description: One to many copy function. Copies localsrc (file or directory) 
+             to remotedst on hosts specified in hostfile. localsrc may be 
+             specified as an absolute or relative path. remotedst names a 
+             subdirectory that is placed under the directory named by
+             the etce.conf WORK_DIRECTORY value on the remote nodes. localsrc
+             is only copied to the root nodes of the two-level hostfile
+             tree structure.
+
+Examples:    For hostfile:
+             -----------------
+             server1 {
+               node-1
+               node-2
+             }
+
+             server2
+             -----------------
+
+             And WORK_DIRECTORY=/var/tmp/etce on both server1 and server2:
+
+             1. etceput foo.txt . hostfile
+                Copies file foo.txt to /tmp/etce/foo.txt on server1 and 
+                server2.
+
+             2. etceput foo/bar bah hostfile
+                Recursively copies the directory rooted at foo/bar to
+                /tmp/etce/bah/bar on server1 and server2
+'''
+
+def main():
+    parser = argparse.ArgumentParser(description=usagestr,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    parser.add_argument('--envfile',
+                        action='store',
+                        default=None,
+                        help='''Environment file to invoke on remove nodes
+                        before running the specified command.
+                        default: Nonee.''')
+    parser.add_argument('localsrc',
+                        metavar='LOCALSRC',
+                        action='store',
+                        default=None,
+                        help='''The remote source directory to move
+                        to the local destination.''')
+    parser.add_argument('remotedst',
+                        metavar='REMOTEDST',
+                        action='store',
+                        default=None,
+                        help='''The local destination directory
+                        to collect the remote source files to.''')
+    parser.add_argument('hostfile',
+                        metavar='HOSTFILE',
+                        action='store',
+                        default=None,
+                        help='''The ETCE Host file containing the 
+                        node names from which the remote source 
+                        directories are collected.''')
+
+    args = parser.parse_args()
+
+    client = None
+    try:
+        field = Field(args.hostfile)
+        client = ClientBuilder().build(field.roots(),
+                                       envfile=args.envfile)
+        ret = client.put(args.localsrc, 
+                         args.remotedst, 
+                         field.roots())
+    except RuntimeError as e:
+        print e.message
+    except ValueError as e:
+        print e.message
+    except ETCEExecuteException as e:
+        print e.message
+    finally:
+        if not client is None:
+            client.close()
+
+
+if __name__=='__main__':
+    main()

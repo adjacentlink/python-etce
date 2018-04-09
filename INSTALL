@@ -1,0 +1,24 @@
+# RPM Install
+
+./autogen && ./configure
+make rpm
+sudo yum install dist/python-etce-*.noarch.rpm
+
+or
+
+sudo dnf install dist/python-etce-*.noarch.rpm
+
+
+# DEB Install
+
+./autogen && ./configure
+make deb
+sudo dpkg -i python-etce_*all.deb
+sudo apt-get install -f
+
+
+# File Install
+
+./autogen && ./configure
+make
+sudo make install

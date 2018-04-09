@@ -1,0 +1,258 @@
+#!/usr/bin/env python 
+#
+# Copyright (c) 2015-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+# * Neither the name of Adjacent Link LLC nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+import os
+import sys
+
+import etce.utils
+from etce.config import ConfigDictionary
+from etce.configfiledoc import ConfigFileDoc
+from etce.timeutils import getstrtimenow,time_offset
+from etce.pseudotestdirectory import PseudoTestDirectory,PseuedoTestDirectoryError
+from etce.wrapperloader import WrapperLoader
+from etce.wrapperinfo import WrapperInfoPrinter
+from etce.wrappercontext import WrapperContext
+from etce.wrappercontextimpl import WrapperContextImpl
+
+
+def print_path(args):
+    for wpath in WrapperLoader().wrapperpaths():
+        print wpath
+        print
+
+
+def list_wrappers(args):
+    wl = WrapperLoader()
+    wpaths = wl.wrapperpaths()
+
+    for wpath in wpaths:
+        wrappers = wl.loadwrappers(wpath)
+        if args.prefix in wrappers:
+            if args.verbose:
+                wprinter = WrapperInfoPrinter(wrappers[args.prefix][0],
+                                              wrappers[args.prefix][1].__doc__)
+                wrappers[args.prefix][1].register(wprinter)
+                print '-' * len(args.prefix)
+                print args.prefix
+                print '-' * len(args.prefix)
+                print str(wprinter)
+            else:
+                print args.prefix
+        else:
+            for k,v in sorted(wrappers.items()):
+                if not k.startswith(args.prefix):
+                    continue
+                if args.verbose:
+                    wprinter = WrapperInfoPrinter(v[0],v[1].__doc__)
+                    v[1].register(wprinter)
+                    print '-' * len(k)
+                    print k
+                    print '-' * len(k)
+                    print str(wprinter)
+                else:
+                    print k
+
+
+def run_wrapper(args):
+    wl = WrapperLoader()
+
+    wpaths = [ p for p in args.wrapperpaths.split(':')
+               if p ]
+
+    if not wpaths:
+        wpaths = wl.wrapperpaths()
+
+    for wpath in wpaths:
+        wrappers = wl.loadwrappers(wpath)
+
+        if args.wrappername in wrappers:
+            wutpath,wut = wrappers[args.wrappername]
+
+            nodename = args.nodename
+
+            if not nodename:
+                nodename = os.path.basename(args.configpath)
+            
+            trialargs = {
+                'logdirectory':args.logpath,
+                'starttime':time_offset(getstrtimenow(), args.delaysecs),
+                'stepname':'wrappertest',
+                'dryrun':args.dryrun
+            }
+
+            wrapperargs = {}
+            for arg in args.args:
+                name,val = arg.split(':')
+                wrapperargs[name] = etce.utils.configstrtoval(val)
+
+            configfiledoc = ConfigFileDoc(args.configfile)
+
+            cwd = os.getcwd()
+            
+            try:
+                os.chdir(args.configpath)
+
+                ctx = WrapperContext(
+                    WrapperContextImpl(args.wrappername,
+                                       wut,
+                                       trialargs,
+                                       wrapperargs,
+                                       ConfigDictionary(),
+                                       PseudoTestDirectory(configfiledoc, nodename)))
+
+                print
+                
+                wut.register(ctx)
+                
+                wut.prerun(ctx)
+                
+                wut.run(ctx)
+
+                print
+            except PseuedoTestDirectoryError as ptde:
+                print ptde.message
+            finally:
+                os.chdir(cwd)
+
+        else:
+            print >>sys.stderr,'Failed to locate wrapper "%s".' % args.wrappername
+
+
+def main():
+    import argparse
+    
+    parser = argparse.ArgumentParser()
+
+    subparsers = parser.add_subparsers()
+
+    parser_path = subparsers.add_parser('path', 
+                                        help='List the configured wrapper paths.')
+
+    parser_path.set_defaults(func=print_path)
+
+    parser_list = subparsers.add_parser('list', 
+                                        help='List the wrappers found in the configured wrapper path.')
+
+    parser_list.add_argument('-v',
+                             '--verbose',
+                             action='store_true',
+                             default=False,
+                             help='''Print verbose information about discovered
+                             wrappers.''')
+
+    parser_list.add_argument('prefix',
+                             metavar='PREFIX',
+                             nargs='?',
+                             default='',
+                             help='''Limit output to tests that start with the specified
+                             prefix.''')
+
+
+    parser_list.set_defaults(func=list_wrappers)
+
+
+    parser_run = subparsers.add_parser('run', 
+                                       help='Load a wrapper and execute its prerun and start commands.')
+
+    parser_run.add_argument('--configfile',
+                            default='',
+                            help='''An ETCE configuration file (conforming to configfile.xsd,
+                            for setting wrapper arguments.''')
+                                 
+    parser_run.add_argument('--delaysecs',
+                            default=1,
+                            type=int,
+                            help='''The start time value passed to the wrapper (the
+                            time that corresponds to test "time 0") is computed by adding
+                            the specified delay to the current time. default: 1.''')
+    
+    parser_run.add_argument('--dryrun',
+                            default=False,
+                            action='store_true',
+                            help='''If the wrapper calls the context run or daemonize call
+                            to start an application, print the passed command and exit only.''')
+                            
+    parser_run.add_argument('--logpath',
+                            metavar='LOGPATH',
+                            default=os.getcwd(),
+                            help='''The directory where wrapper logfile are written.
+                            default: current working difectory.''')
+
+    parser_run.add_argument('--nodename',
+                            metavar='NODENAME',
+                            default=None,
+                            help='''ETCE test directory layout orgainzes configuration files
+                            by subdirectories named for the host that will use them. This layout
+                            may not be present running the wrapper directoy. Use this argument
+                            to specify the nodename passed to the wrapper in the wrapper context. 
+                            If not specified, the CONFIGPATH directory name will be passed as the
+                            nodename.''')
+
+    parser_run.add_argument('--overlays',
+                            metavar='OVERLAYTAG:OVERLAYVALUE',
+                            help='''Overlay values to pass in the wrapper via the context "overlays"
+                            member.''')
+
+    parser_run.add_argument('--wrapperpaths',
+                            default=':'.join(WrapperLoader().wrapperpaths()),
+                            help='''A ":" separated list of paths to the wrapper class.
+                            default: "%s".''' % ':'.join(WrapperLoader().wrapperpaths()))
+
+    parser_run.add_argument('wrappername',
+                            metavar='WRAPPERNAME',
+                            help='''The name of the wrapper to load.''')
+
+    parser_run.add_argument('configpath',
+                            metavar='CONFIGPATH',
+                            help='''A path to the directory containing configuration
+                            files for the wrapper. Here, as in test execution, the
+                            current working directory is switched to CONFIGPATH
+                            before loading and running the wrapper.''')
+
+    parser_run.add_argument('args',
+                            metavar='ARGNAME:ARGVALUE',
+                            nargs='*',
+                            help='''Wrapper arguments to pass to the wrapper via the
+                            context "args" member.''')
+
+    parser_run.set_defaults(func=run_wrapper)
+
+    args = parser.parse_args()
+
+    args.func(args)
+
+
+
+if __name__=='__main__':
+    main()
+

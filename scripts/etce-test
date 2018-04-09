@@ -1,0 +1,653 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+# * Neither the name of Adjacent Link LLC nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+import argparse
+import datetime
+import os
+import shutil
+import signal
+import sys
+import traceback
+
+import etce.timeutils
+import etce.utils
+from etce.apprunner import AppRunner
+from etce.config import ConfigDictionary
+from etce.etceexecuteexception import ETCEExecuteException
+from etce.fieldconnectionerror import FieldConnectionError
+from etce.field import Field
+from etce.clientbuilder import ClientBuilder
+from etce.platform import Platform
+from etce.publisher import add_publish_arguments,publish_test,Publisher
+from etce.testcollection import add_list_arguments,list_tests,TestCollection,TestCollectionError
+from etce.testdirectory import TestDirectory
+from etce.stepsfiledoc import StepsFileDoc
+from etce.xmldocerror import XMLDocError
+
+
+def tstamp():
+    tnow = datetime.datetime.now()
+    return '%04d%02d%02dT%02d%02d%02d' % (tnow.year,
+                                          tnow.month,
+                                          tnow.day,
+                                          tnow.hour,
+                                          tnow.minute,
+                                          tnow.second)
+
+
+def buildtestname(testprefix, testname):
+    return '%s-%s-%s' % (testprefix, testname, tstamp()) 
+
+
+def add_run_arguments(parser):
+    default_work_directory = ConfigDictionary().get('etce', 'WORK_DIRECTORY')
+    
+    default_data_directory = os.path.join(default_work_directory, 'data')
+
+    parser.add_argument('--basedirectory',
+                        default=None,
+                        help='''Specify a path to a test base 
+                        directory, overridding the (optional) value
+                        defined in the test test.xml file. The value
+                        may be an absolute path or a relative path 
+                        to the current working directory. 
+                        default: None''')
+    parser.add_argument('--configfile', 
+                        action='store', 
+                        default=None,
+                        help='''Optional config file containing runtime
+                        wrapper arguments. default: None.''')
+    parser.add_argument('--delaysecs',
+                        type=int,
+                        default=40,
+                        help='''Number of seconds to delay between end of one, 
+                        test and beginning of next. default: 40.''')
+    parser.add_argument('--deletecompleted',
+                        action='store_true',
+                        default=False,
+                        help='''Delete completed test directories on test nodes 
+                        after they are completed and collected to the 
+                        control node. Helps for collecting large data 
+                        sets for test nodes that have limited disk 
+                        space. default: False.''')
+    #parser.add_argument('--entryhookfile',
+    #                    action='store',
+    #                    default=None,
+    #                    help='''An ETCE Steps file defining steps to run
+    #                    at the beginnig of every test. Overrides the
+    #                    etce.conf ENTRYHOOKFILE value. default: None.''')
+    parser.add_argument('--envfile',
+                        action='store',
+                        default=None,
+                        help='''Environment file to invoke on remove nodes
+                        before running the specified command. Must be 
+                        specified as an absolute file.
+                        default: None.''')
+    #parser.add_argument('--exithookfile',
+    #                    action='store',
+    #                    default=None,
+    #                    help='''An ETCE Steps file defining steps to run
+    #                    at the end of every test. Overrides the
+    #                    etce.conf EXITHOOKFILE value. default: None.''')
+    parser.add_argument('--filtersteps',
+                        action='store',
+                        default=None,
+                        help='''Specify a set of strings delimited by ":".
+                        Step names that match any of the specified
+                        strings are skipped. Strings match if they match by
+                        prefix. default: None.''')
+    parser.add_argument('--hookscript',
+                        action='store',
+                        default=None,
+                        help='''Use the hookscript argument to specify a script 
+                        that will be called before an after each trial. The
+                        value of this argument is: script[:userarg]*. The named
+                        script is called before and after at each test iteration
+                        as:
+
+                        script setup|teardown testdirectory logdirectory [userarg]*
+
+                        default: None.''')
+    parser.add_argument('--nocollect',
+                        action='store_true', 
+                        default=False,
+                        help='''On test completion, skip the collection
+                        step that retrieves test data from the field nodes
+                        to the localhost. This may be appropriate when
+                        all field nodes share the local host file system. 
+                        Default: collect.''')
+    parser.add_argument('--numtrials', 
+                        action='store', 
+                        default=1,
+                        type=int,
+                        help='number of trials to run for each test')
+    parser.add_argument('--kill', 
+                        action='store',
+                        choices=['before','after','both','none'],
+                        default='both',
+                        help='''Many ETCE Wrappers save process PIDs to
+                        lockfiles saved to the "lock" subdirectory of the
+                        etce.conf WORK_DIRECTORY. etce-test will attempt
+                        to clean-up processes on field members between
+                        tests by killing any process where a lock file is
+                        found. Use the kill command to specify when
+                        etce-test should attempt clean-up, "before",
+                        "after", "both" (before and after) or "none". 
+                        Default: both.''')
+    parser.add_argument('--outdir',
+                        action='store',
+                        default=default_data_directory,
+                        help='''Local output directory for test artifacts - 
+                        default: %s.''' % default_data_directory)
+    parser.add_argument('--quitonerror',
+                        action='store_true', 
+                        default=False,
+                        help='''Quit when an error occurs. Default behavior
+                        is to continue to the next test, skipping any 
+                        remaining trials of the errant test''')
+    parser.add_argument('--runtostep',
+                        default=None,
+                        help='''Only run the steps file steps up to and 
+                        including the named step. When set, the numtrials 
+                        argument is ignored (set to 1), the kill argument
+                        "after" is ignored and TESTROOT must only contain
+                        one test. Useful for debugging. default: run all 
+                        steps.''')
+    parser.add_argument('--port',
+                        action='store',
+                        type=int,
+                        default=None,
+                        help='''If the LXCPLANFILE contains remote host(s),
+                        connect to the hosts via the specified port. If not
+                        specified, ETCE will look for the host's "Port" value
+                        in the ~/.ssh/config file. If not found, uses the default
+                        ssh port value, 22.''')
+    parser.add_argument('--user',
+                        action='store',
+                        default=None,
+                        help='''If the LXCPLANFILE contains remote host(s),
+                        connect to the hosts as the specified user. If not
+                        specified, ETCE will look for the host's "User" value
+                        in the ~/.ssh/config file. If not found, uses the
+                        current user''')
+    parser.add_argument('-v',
+                        '--verbose',
+                        action='store_true', 
+                        default=False,
+                        help='''Print verbose error information when
+                        available.''')
+    parser.add_argument('testprefix',
+                        metavar='TESTPREFIX',
+                        action='store',
+                        help='''A user tag to prepend to the name of
+                        each test result directory.''')
+    parser.add_argument('hostfile',
+                        metavar='HOSTFILE',
+                        action='store',
+                        help='''The ETCE Host file containing the 
+                        node names that will perform the tests.''')
+    parser.add_argument('testroot',
+                        metavar='TESTROOT',
+                        nargs='+',
+                        action='store',
+                        help='''The root of a directory containing one 
+                        or more ETCE test directories. The contained tests
+                        are run.''')
+
+
+def run_test(args):
+    config = ConfigDictionary()
+
+    for testroot in args.testroot:
+        if not os.path.isdir(testroot):
+            print >>sys.stderr,'Cannot find directory "%s". Quitting.' % testroot
+            exit(1)
+
+    if not os.path.isfile(args.hostfile):
+        print >>sys.stderr,'Cannot find hostfile "%s". Quitting.' % args.hostfile
+        exit(1)
+
+    if args.envfile:
+        if not args.envfile[0] == os.path.sep:
+            print >>sys.stderr, 'envfile argument must be an absolute path. Quitting'
+            exit(1)
+
+    workdir = config.get('etce', 'WORK_DIRECTORY')
+    if not os.path.exists(workdir):
+        print >>sys.stderr, \
+            'ETCE WORK_DIRECTORY "%s" not found. ' \
+            'Please create it before starting.' % workdir
+        exit(1)
+            
+    field = Field(args.hostfile)
+
+    platform = Platform()
+
+    # if basedirectory is a relative path, make it absolute with respect
+    # to the current working directory
+    if args.basedirectory and not args.basedirectory[0] == os.path.sep:
+        args.basedirectory = os.path.join(os.getcwd(), args.basedirectory)
+    
+    # compose the test collection from test roots
+    try:
+        tests = TestCollection()
+        for testroot in args.testroot:
+            tests.adddirectory(testroot, args.basedirectory)
+    except XMLDocError as xmle:
+        print >>sys.stderr,xmle.message
+        exit(1)
+
+    if not tests:
+        print >>sys.stderr,'No tests found in any of the specied ' \
+            'TESTROOT(s). Make sure your test directories include a ' \
+            'test.xml file.'
+        exit(1)
+    else:
+        print tests
+        
+    if args.runtostep:
+        if args.numtrials > 1 or len(tests) > 1:
+            print >>sys.stderr,'Cannot mix --runtostep option with ' \
+                '--itererations > 1 or with testroot containing more ' \
+                'than one test'
+            exit(1)
+
+        if args.kill == 'after':
+            args.kill = 'none'
+            print >>sys.stderr,'Ignoring kill argument "after" used ' \
+                'in conjunction with runtostep. Using "none" instead.'
+            print >>sys.stderr  
+        elif args.kill == 'both':
+            args.kill = 'before'
+            print >>sys.stderr,'Ignoring kill argument "both" used ' \
+                'in conjunction with runtostep. Using "before" instead.'
+            print >>sys.stderr
+
+    try:
+        worknodes = tests.participant_nodes(field.leaves())
+    except TestCollectionError as tce:
+        print >>sys.stderr,tce.message
+        print >>sys.stderr
+        exit(1)
+
+    # root nodes host the filesystem for all of the virtual nodes attached
+    filesystemnodes = list(field.roots())
+
+    allnodes = list(set(worknodes + filesystemnodes))
+
+    client = None
+
+    def sigint_handler(signum, frame):
+        if signum == signal.SIGINT:
+            if client:
+                print 'keyboard interrupt'
+                client.interrupt()
+
+    signal.signal(signal.SIGINT, sigint_handler)
+
+    resultsubdirs = []
+
+    try:
+        testdivider = '='*15
+
+        stepdivider = '-'*10
+        
+        filtersteps = []
+        if args.filtersteps:
+            filtersteps = args.filtersteps.split(':')
+
+        hookfiles = []
+        
+        entryhookfile = None
+        #entryhookfile = config.get('etcetest', 'ENTRYHOOKFILE', args.entryhookfile)
+        entryhooksteps = []
+        if entryhookfile:
+            if not os.path.isfile(entryhookfile):
+                message = 'entryhookfile "%s" does not exist. Quitting.' \
+                          % entryhookfile
+                print >>sys.stderr,message
+                exit(1)
+            hookfiles.append(entryhookfile)
+            entryhooksteps = \
+                StepsFileDoc(entryhookfile).getsteps(None, 
+                                                     args.runtostep, 
+                                                     filtersteps)
+
+        exithookfile = None
+        #exithookfile = config.get('etcetest', 'ENTRYHOOKFILE', args.exithookfile)
+        exithooksteps = []
+        if exithookfile:
+            if not os.path.isfile(exithookfile):
+                message = 'exithookfile "%s" does not exist. Quitting.' \
+                          % exithookfile
+                print >>sys.stderr,message
+                exit(1)
+            hookfiles.append(exithookfile)
+            exithooksteps = \
+                StepsFileDoc(exithookfile).getsteps(None, 
+                                                    args.runtostep, 
+                                                    filtersteps)
+
+        hookscript_format = None
+
+        if args.hookscript:
+            tokens = args.hookscript.split(':')
+            script = tokens[0]
+            hookscript_format = tokens[0] + ' %s %s %s ' + ' '.join(tokens[1:])
+
+        keyboard_interrupt = False
+
+        for test in tests:
+            try:
+                # run test trials
+                for i in range(args.numtrials):
+                    print testdivider
+
+                    print 'BEGIN "%s" trial %d' % (test.name(), i+1)
+
+                    testdir = buildtestname(args.testprefix, test.name())
+
+                    localtestresultsdir = os.path.join(args.outdir,
+                                                       testdir)
+
+                    localtesttemplatedir = os.path.join(localtestresultsdir, 'template')
+
+                    remoteresultssubdir = os.path.join('data', testdir)
+
+                    # prepare test template directory - copy it to fixed
+                    # location and add config file and hostsfile
+                    extrafiles = [(args.hostfile, 
+                                   TestDirectory.HOSTFILENAME)]
+
+                    if args.configfile is not None:
+                        extrafiles.append((args.configfile,
+                                           TestDirectory.CONFIGFILENAME))
+
+                    publisher = Publisher(test.location())
+
+                    publisher.merge_with_base(mergedir=localtesttemplatedir,
+                                              extrafiles=extrafiles,
+                                              absbasedir_override=args.basedirectory)
+
+                    if hookscript_format:
+                        print stepdivider
+
+                        hookscript_command = hookscript_format % \
+                                             ('setup',
+                                              localtesttemplatedir,
+                                              localtestresultsdir)
+                        
+                        print 'setup hookscript:',hookscript_command
+                        
+                        print 'returns: %d' % \
+                            AppRunner(hookscript_command, stdout=sys.stdout, stderr=sys.stderr).retvalue()
+
+                        print
+                        
+                        client = ClientBuilder().build(allnodes,
+                                                       user=args.user,
+                                                       port=args.port,
+                                                       envfile=args.envfile)
+
+                    # create connection to all nodes
+                    elif client is None:
+                        client = ClientBuilder().build(allnodes,
+                                           user=args.user,
+                                           port=args.port,
+                                           envfile=args.envfile)
+
+                    stepsfiledoc = \
+                        StepsFileDoc(os.path.join(localtesttemplatedir,
+                                                  test.stepsfile()))
+
+                    steps = \
+                        stepsfiledoc.getsteps(None, 
+                                              args.runtostep, 
+                                              filtersteps)
+
+                    # put the template directory to the rootnodes
+                    client.put(localtesttemplatedir,
+                               remoteresultssubdir,
+                               filesystemnodes, 
+                               doclobber=True)
+
+                    # compute trialdir
+                    trialdir = os.path.join(remoteresultssubdir,
+                                            'data')
+
+                    trialstart = datetime.datetime.now()
+
+                    timestamp = trialstart.isoformat()
+
+                    # lop off microsecs
+                    timestamp = timestamp[0:timestamp.rfind('.')] 
+
+                    # compute start time based on time synced field time
+                    starttime = etce.timeutils.time_offset( \
+                        etce.timeutils.field_time_now(client, worknodes), 
+                        args.delaysecs,
+                        quantizesecs=10)
+
+                    print 'Trial Start Time: %s' % starttime
+
+                    print stepdivider
+
+                    # kill any processes with pids stored in left-over lockfiles
+                    # before starting the test
+                    if args.kill == 'before' or args.kill == 'both':
+                        client.execute('kill kill', allnodes)
+
+                    remotetemplatedir = os.path.join(remoteresultssubdir, 'template') 
+
+                    # call testprepper to publish test definition and
+                    # create logdir on the root nodes
+                    command = 'testprepper run %s %s %s' % \
+                              (starttime, remotetemplatedir, trialdir)
+                    print command
+                    client.execute(command, filesystemnodes)
+
+                    for stepname in steps:
+                        command = 'executer step %s %s %s' % \
+                            (stepname, starttime, trialdir)
+
+                        print stepdivider
+
+                        print 'step: %s %s %s' % (stepname, starttime, trialdir)
+
+                        try:
+                            client.execute(command, worknodes, 'current_test')
+                        except KeyboardInterrupt as kbint:
+                            keyboard_interrupt = True
+
+                    trialend = datetime.datetime.now()
+
+                    print 'trial time: %07d' % \
+                        (trialend - trialstart).seconds
+
+                    print stepdivider
+
+                    if args.nocollect:
+                        print 'Skipping results collection to localhost (args.nocollect=True).'
+                    else:
+                        print 'Collecting "%s" results.' % test.name()
+
+                        trialsubdirs = os.path.join(remoteresultssubdir, 'data')
+
+                        client.collect(trialsubdirs,
+                                       localtestresultsdir,
+                                       filesystemnodes)
+                
+                    resultsubdirs.append(localtestresultsdir)
+
+                    # kill any processes with pids stored in left-over lockfiles
+                    # before finishing the test
+                    if args.kill == 'after' or args.kill == 'both':
+                        client.execute('kill kill', allnodes)
+
+                    if args.deletecompleted:
+                        print 'removing data/%s from testnodes' % testdir
+                        client.execute('platform rmdir %s' % testdir,
+                                       hosts=filesystemnodes,
+                                       workingdir='data')
+
+                    print stepdivider
+
+                    if hookscript_format:
+                        client = None and client.close()
+
+                        hookscript_command = hookscript_format % \
+                                             ('teardown',
+                                              localtesttemplatedir,
+                                              localtestresultsdir)
+                        
+                        print 'teardown hookscript:',hookscript_command
+
+                        print 'returns: %d' % \
+                            AppRunner(hookscript_command, stdout=sys.stdout, stderr=sys.stderr).retvalue()
+
+                        print
+                        print stepdivider
+
+                    print 'END "%s" trial %d' % (test.name(),i+1)
+
+                    # raise a cached KeyboardInterrupt on completion
+                    # to close
+                    if keyboard_interrupt:
+                        raise KeyboardInterrupt()
+                    
+            except ETCEExecuteException as e:
+                print >>sys.stderr
+                print >>sys.stderr,'Failed test "%s" with exception:' \
+                    % test.name()
+                print >>sys.stderr,e
+
+                if args.verbose:
+                    print >>sys.stderr,e.traceback
+
+                if args.quitonerror:
+                    print 'Quitting.'
+                    break
+                else:
+                    print 'Continuing to next test.'
+
+    except KeyboardInterrupt:
+        print 'Quitting on interrupt.'
+    except FieldConnectionError as fce:
+        print >>sys.stderr
+        print >>sys.stderr,fce.message
+        print >>sys.stderr
+    except Exception as e:
+        print >>sys.stderr
+        print >>sys.stderr,str(e)
+        print >>sys.stderr
+        if args.verbose:
+            print traceback.format_exc()
+        
+    finally:
+        if client:
+            client.close()
+
+        if resultsubdirs and len(resultsubdirs) > 0:
+            print testdivider
+
+            print 'Result Directories:'
+
+            for resultsubdir in sorted(resultsubdirs):
+                print '\t%s' % resultsubdir
+            
+
+
+
+def main():
+    parser = argparse.ArgumentParser()
+
+    subparsers = parser.add_subparsers()
+
+    # run
+    parser_run = \
+        subparsers.add_parser('run', 
+                              help='Run tests.',
+                              description='''Run the tests found under
+                              the TESTROOT directory on the hosts named
+                              in the HOSTFILE.''')
+    
+    add_run_arguments(parser_run)
+
+    parser_run.set_defaults(func=run_test)
+
+    # publish
+    parser_publish = \
+        subparsers.add_parser('publish', 
+                              help='''Publish a test, filling in template
+                              values.''',
+                              description='''Publish the specified 
+                              TESTDIRECTORY filling in overlay values.
+                              Overlay values are specified:
+                              1) in the [overlays] section of the etce.conf
+                              file, 2) in the test test.xml file,
+                              3) in the optional OVERLAYFILE argument - with 
+                              later values taking precedence. Overlay names
+                              listed in the IGNOREFILE are left in the 
+                              generated files. The resulting test is written
+                              to OUTDIRECTORY.''')
+
+    add_publish_arguments(parser_publish)
+
+    parser_publish.set_defaults(func=publish_test)
+
+    # list
+    parser_list = \
+        subparsers.add_parser('list', 
+                              help='List test details.',
+                              description='''Print information about the ETCE 
+                              test directories found under TESTROOTDIR. The 
+                              optional pattern argument limits output to 
+                              tests with names matching the pattern.''')
+
+    add_list_arguments(parser_list)
+
+    parser_list.set_defaults(func=list_tests)
+
+    args = parser.parse_args()
+
+    try:
+        args.func(args)
+    except NameError as ne:
+        print >>sys.stderr
+        print >>sys.stderr, ne.message
+        print >>sys.stderr
+        exit(1)
+
+
+if __name__ == '__main__':
+    main()

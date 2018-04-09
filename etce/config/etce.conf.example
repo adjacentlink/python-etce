@@ -1,0 +1,103 @@
+##################################################
+#
+# ETCE exposes a handful of configuration parameters
+# for customization. /etc/etce/etce.conf is the
+# default file location. Users may override the
+# etce.conf directory location by setting the
+# EMANECONFIGDIR environment variable.
+#
+# The values shown here are the configuration value
+# defaults.
+#
+# ETCE configuration values are placed in the "etce"
+# section. The "overlays" section is used to specify
+# site specific values that will be can be
+# substituted for test file template variables. 
+#
+##################################################
+
+[etce]
+##################################################
+#
+# ETCE Wrappers are dynamically loadable Python
+# modules that can be called to execute individual
+# ETCE test steps. The WRAPPER_DIRECTORY takes
+# a colon separated set of directory names
+# that are searched, in order, for Wrappers.
+#
+# ETCE uses the WORK_DIRECTORY as the destination
+# of most of the files it generates. It organizes
+# files into these subdirectories:
+#
+#   current_test:
+#      The configuration files of current running
+#      test
+#
+#    data:
+#      The output directory for artifacts
+#      collected from the current test.
+#
+#    lock:
+#      Lock files created by Wrappers to keep
+#      track of the PID number of a currently
+#      running wrapped application instance.
+#
+#    lxcroot:
+#      The etce-lxc application writes LXC
+#      configuration files here.
+#
+##################################################
+#WORK_DIRECTORY=/tmp/etce
+#WRAPPER_DIRECTORY=/opt/etce/wrappers
+
+
+##################################################
+#
+# ETCE organizes test configuration files into
+# Test Directories. Within each Test Directory
+# subdirectories are named for the host where
+# the contained configuration is used. Host
+# subdirectories can be generated from template
+# directories containing configuration files
+# with values that are filled in for each host.
+# ETCE identifies template directories by
+# the TEMPLATE_DIRECTORY_SUFFIX - for example
+# "rfpipe.tpl".
+#
+# The Test Directory test.xml file specifies 
+# any template files or directories included
+# in the test definition. The template file
+# and directory elements in test.xml both accept
+# an optional "hostname_format" attribute that
+# describes the way host name subdirectories are 
+# generated in the published test definition -
+# usually differentiated by the reserved "etce_index"
+# value. The DEFAULT_ETCE_HOSTNAME_FORMAT parameter
+# defines the value hostname_format value.
+# 
+# When generating configuration files from templates,
+# ETCE relies on overlay template values specified
+# in the overlays section (below) and in the Test
+# Directory test.xml file. ETCE also permits overlay
+# values to be specified by environment variables.
+# Use ENV_OVERLAYS_ALLOW to name template variable
+# names that ETCE will accept from environment
+# variables.
+#
+##################################################
+#DEFAULT_ETCE_HOSTNAME_FORMAT=node-${'%03d' % etce_index}
+#TEMPLATE_DIRECTORY_SUFFIX=tpl
+#ENV_OVERLAYS_ALLOW=
+
+
+[overlays]
+##################################################
+#
+# Use the overlays section to specify configuration
+# file values that tend to be the same across tests
+# but differ on a site by site basis. Network interface
+# names are a typical example.
+#
+##################################################
+emane_ota_device=ota0
+emane_eventservice_device=ctl0

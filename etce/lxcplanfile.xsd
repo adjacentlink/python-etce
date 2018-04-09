@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+ Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in
+   the documentation and/or other materials provided with the
+   distribution.
+ * Neither the name of Adjacent Link LLC nor the names of its
+   contributors may be used to endorse or promote products derived
+   from this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:simpleType name="nodeSet">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="(\d+(-\d+)?)(,(\d+(-\d+)?))*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:element name="initscript">
+    <xs:complexType>
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="filename" type="xs:string" use="required"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="parameter">
+    <xs:complexType>
+      <xs:attribute name="name" type="xs:string"/>
+      <xs:attribute name="value" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="parameters">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="overlay">
+    <xs:complexType>
+      <xs:attribute name="name" type="xs:string"/>
+      <xs:attribute name="value" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="overlaylist">
+    <xs:complexType>
+      <xs:attribute name="name" type="xs:string"/>
+      <xs:attribute name="separator" type="xs:string" use="optional"/>
+      <xs:attribute name="values" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="container">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="overlays" minOccurs="0" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element ref="overlay" minOccurs="0" maxOccurs="unbounded"/>
+              <xs:element ref="overlaylist" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element ref="parameters" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="interfaces" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="initscript" minOccurs="0" maxOccurs="1"/>
+      </xs:sequence>
+      <xs:attribute name="lxc_name" type="xs:string" use="required"/>
+      <xs:attribute name="lxc_indices" type="nodeSet" use="optional"/>
+      <xs:attribute name="template" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="interfaces">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="interface" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+            <xs:attribute name="bridge" type="xs:string" use="required"/>
+            <xs:attribute name="hosts_entry_ipv4" type="xs:string" use="optional"/>
+            <xs:attribute name="hosts_entry_ipv6" type="xs:string" use="optional"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>                        
+
+  <xs:element name="lxcplan">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="containertemplates" minOccurs="0" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="containertemplate" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element ref="parameters" minOccurs="0" maxOccurs="1"/>
+                    <xs:element ref="interfaces" minOccurs="0" maxOccurs="1"/>
+                    <xs:element ref="initscript" minOccurs="0" maxOccurs="1"/>
+                  </xs:sequence>
+                  <xs:attribute name="name" type="xs:string" use="required"/>
+                  <xs:attribute name="parent" type="xs:string" use="optional"/>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="hosts" minOccurs="1" maxOccurs="1">
+          <xs:complexType>
+	          <xs:sequence>
+              <xs:element name="host" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="kernelparameters" minOccurs="0" maxOccurs="1">
+                       <xs:complexType>
+                        <xs:sequence>
+                          <xs:element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name="bridges" minOccurs="0" maxOccurs="1">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="bridge" minOccurs="0" maxOccurs="unbounded">
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element name="ipaddress" minOccurs="0" maxOccurs="1">
+                                  <xs:complexType>
+                                    <xs:sequence>
+                                      <xs:element name="ipv4" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                                      <xs:element name="ipv6" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                                    </xs:sequence>
+                                  </xs:complexType>
+                                </xs:element>
+                                <xs:element name="addif" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+                              </xs:sequence>
+                              <xs:attribute name="name" type="xs:string" use="required"/>
+                              <xs:attribute name="persistent" type="xs:boolean" use="required"/>
+                            </xs:complexType>
+                          </xs:element>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name="containers" minOccurs="1" maxOccurs="1">
+                      <xs:complexType>
+                        <xs:sequence minOccurs="0" maxOccurs="unbounded">
+                          <xs:element ref="container" minOccurs="0" maxOccurs="1"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                  <xs:attribute name="hostname" type="xs:string" use="required"/>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

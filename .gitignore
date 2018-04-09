@@ -1,0 +1,32 @@
+# autotools
+setup.py
+stdeb.cfg
+Makefile
+Makefile.in
+aclocal.m4
+autom4te.cache
+compile
+config.guess
+config.log
+config.status
+config.sub
+configure
+install-sh
+libtool
+ltmain.sh
+libtool.m4
+lt~obsolete.m4
+ltoptions.m4
+ltsugar.m4
+ltversion.m4
+missing
+
+# build
+build
+dist
+*.pyc
+python-etce-*.tar.gz
+python_etce.egg-info
+
+# debs
+deb_dist
