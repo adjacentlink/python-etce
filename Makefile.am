@@ -45,5 +45,5 @@ endif
 
 if HAVE_DEB
 deb:    setup.py stdeb.cfg
-	export DEB_BUILD_OPTION=nocheck && python setup.py --command-packages=stdeb.command bdist_deb
+	export DEB_BUILD_OPTIONS=nocheck && python setup.py --command-packages=stdeb.command bdist_deb
 endif
