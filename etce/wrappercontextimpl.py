@@ -60,6 +60,7 @@ class WrapperContextImpl(ArgRegistrar):
         self._testdir = testdir
         self._platform = Platform()
         self._wrappername = wrappername
+        self._sudo = False
         self._default_pidfilename = '%s/etce.%s.%s.pid' \
                                     % (os.path.join(self._config.get('etce', 'WORK_DIRECTORY'), 'lock'),
                                        self.platform.hostname(),
@@ -121,6 +122,10 @@ class WrapperContextImpl(ArgRegistrar):
         self._args['outfile'] = os.path.join(self._trialargs['logdirectory'], name)
 
 
+    def run_with_sudo(self):
+        self._sudo = True
+
+
     def store(self, namevaldict):
         self._wrapperstore.update({self._args['wrappername']:namevaldict},
                                   self._args['nodename'])
@@ -144,6 +149,10 @@ class WrapperContextImpl(ArgRegistrar):
                   genpidfile=True,
                   pidincrement=0,
                   starttime=None):
+
+        # run with sudo if wrapper requested it
+        if self._sudo:
+            commandstr = 'sudo ' + commandstr
 
         # print the commandstr and return on a dryrun         
         if self._trialargs['dryrun']:
@@ -191,6 +200,10 @@ class WrapperContextImpl(ArgRegistrar):
             genpidfile=True,
             pidincrement=0):
 
+        # run with sudo if wrapper requested it
+        if self._sudo:
+            commandstr = 'sudo ' + commandstr
+
         # print the commandstr and return on a dryrun         
         if self._trialargs['dryrun']:
             print commandstr
@@ -199,8 +212,6 @@ class WrapperContextImpl(ArgRegistrar):
         self.stop(pidfilename)
 
         print commandstr
-
-        command = shlex.split(commandstr)
 
         stdoutfd = None
         stderrfd = None
@@ -218,7 +229,7 @@ class WrapperContextImpl(ArgRegistrar):
             pidfilename = self._default_pidfilename
 
         # create the Popen subprocess
-        sp = subprocess.Popen(command, stdout=stdoutfd, stderr=stderrfd)
+        sp = subprocess.Popen(shlex.split(commandstr), stdout=stdoutfd, stderr=stderrfd)
 
         # write the pid to pidfilename
         if genpidfile:
@@ -229,23 +240,10 @@ class WrapperContextImpl(ArgRegistrar):
         sp.wait()
 
 
-    def stop(self, pidfilename=None, signal=signal.SIGQUIT, decorator=''):
+    def stop(self, pidfilename=None, signal=signal.SIGQUIT, sudo=True):
         # use default pidfilename if None specified
         if pidfilename is None:
             pidfilename = self._default_pidfilename
 
-        pid = self._platform.readpid(pidfilename)
-
         # if found a pid, kill the process and remove the file
-        if pid:
-            try:
-                print 'killing pid %d found in %s' % (pid, pidfilename)
-                command = '%s kill -%d %d' % (pid, signal)
-                sp = subprocess.Popen(command)
-                sp.wait()
-                #os.kill(pid, signal.SIGQUIT)
-            except OSError as e:
-                # orphaned pidfile - process already dead
-                pass 
-            finally:
-                os.remove(pidfilename)
+        self._platform.kill(pidfilename, signal, sudo)

@@ -145,6 +145,15 @@ class WrapperContext(ArgRegistrar):
         self._impl.register_outfile_name(name)
 
 
+    def run_with_sudo(self):
+        """
+        Register that the application should be run with sudo because
+        elevated privileges are required.
+        """
+
+        self._impl.run_with_sudo()
+
+
     def store(self, namevaldict):
         """
         Store the name/value pairs passed in via the dictionary
@@ -286,7 +295,7 @@ class WrapperContext(ArgRegistrar):
                        pidincrement)
 
 
-    def stop(self, pidfilename=None, signal=signal.SIGQUIT):
+    def stop(self, pidfilename=None, signal=signal.SIGQUIT, sudo=True):
         """
         Stop the process associated with the PID in the specified file.
 
@@ -295,4 +304,4 @@ class WrapperContext(ArgRegistrar):
         the file. If pidfilename is not specified, default_pidfilename 
         is used.
         """
-        self._impl.stop(pidfilename, signal)
+        self._impl.stop(pidfilename, signal, sudo)

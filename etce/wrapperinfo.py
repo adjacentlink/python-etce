@@ -42,6 +42,7 @@ class WrapperInfoPrinter(ArgRegistrar):
         self._args = []
         self._infile_name = None
         self._outfile_name = None
+        self._sudo = False
 
     # register a test argument
     def register_argument(self, argname, defaultval, description):
@@ -55,6 +56,10 @@ class WrapperInfoPrinter(ArgRegistrar):
     def register_outfile_name(self, name):
         self._outfile_name = name
 
+    # register the output file outfile_name produced
+    def run_with_sudo(self):
+        self._sudo = True
+
     def __str__(self):
         s = ''
         s += 'path:\n'
@@ -65,6 +70,8 @@ class WrapperInfoPrinter(ArgRegistrar):
         s += '\t%s\n' % str(self._infile_name)
         s += 'output file name:\n'
         s += '\t%s\n' % str(self._outfile_name)
+        s += 'run with sudo:\n'
+        s += '\t%s\n' % str(self._sudo)
         if len(self._args) > 0:
             s += 'arguments:\n'
             for argname,defaultval,description in sorted(self._args):

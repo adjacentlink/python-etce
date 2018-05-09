@@ -32,23 +32,32 @@
 
 class ArgRegistrar(object):
     def register_argument(self, argname, defaultval, description):
-        ''' 
+        """ 
         Register an application argument. 
-        '''
+        """
         raise NotImplementedError('ArgRegistrar.register_argument')
 
 
     def register_infile_name(self, name):
-        ''' 
+        """ 
         Register the name of the input file that triggers
         application execution. 
-        '''
+        """
         raise NotImplementedError('ArgRegistrar.register_infile_name')
 
 
     def register_outfile_name(self, name):
-        '''
+        """
         Register the name of an output file produced by the application.
         Most typically a log file.
-        '''
+        """
         raise NotImplementedError('ArgRegistrar.register_outfile_name')
+
+
+    def run_with_sudo(self):
+        """
+        Register that the application should be run with sudo because
+        elevated privileges are required.
+        """
+        raise NotImplementedError('ArgRegistrar.run_sudo')
+    

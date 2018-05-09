@@ -134,7 +134,7 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
 
                 stepwrappers.append(
                     (StepsFileDoc.WrapperEntry(name = child.attrib['wrapper'],
-                                               decorator = child.attrib.get('decorator', None)),
+                                               decorator = None),
                      child.tag,
                      argdict))
 

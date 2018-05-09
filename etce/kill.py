@@ -31,12 +31,13 @@
 #
 
 import os
+import signal
 from etce.platform import Platform
 from etce.config import ConfigDictionary
 
 
 class Kill(object):
-    def kill(self):
+    def kill(self, signal=signal.SIGQUIT, sudo=True):
         p = Platform()
 
         my_pidfile_prefix = 'etce.%s' % p.hostname()
@@ -51,7 +52,7 @@ class Kill(object):
             if pidfile.startswith(my_pidfile_prefix):
                 fullpidfile = os.path.join(lockfiledir, pidfile)
                 
-                pid = p.kill(fullpidfile)
+                pid = p.kill(fullpidfile, signal, sudo)
 
                 if pid:
                     print 'killed process "%d" from pidfile "%s"' \

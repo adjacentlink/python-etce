@@ -33,8 +33,10 @@
 import datetime
 import os
 import re
+import shlex
 import signal
 import socket
+import subprocess
 import sys
 
 import etce.platformimpl
@@ -241,29 +243,35 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         return pid
 
 
-    def kill(self, pidfile, signal):
+    def kill(self, pidfile, signal, sudo):
         pid = self.readpid(pidfile)
 
         # if found a pid, kill the process and remove the file
         if pid:
+            print 'killing pid %d found in %s' % (pid, pidfile)
+            commandstr = 'kill -%d %d' % (signal, pid)
+            if sudo:
+                commandstr = 'sudo ' + commandstr
+
             try:
-                os.kill(pid, signal)
-            except OSError as e:
-                # orphaned pidfile - process already dead
-                pass 
+                sp = subprocess.Popen(shlex.split(commandstr))
+                sp.wait()
             finally:
                 os.remove(pidfile)
 
         return pid
 
 
-    def killall(self, applicationname, signal):
+    def killall(self, applicationname, signal, sudo):
         try:
             command = \
                 "kill -%d $(ps -eo pid,command | " \
                 "awk '/%s[%s] /{print $1}') > /dev/null 2>&1" \
                 % (signal, applicationname[:-1],applicationname[-1])
 
+            if sudo:
+                command = 'sudo ' + command
+            
             os.system(command)
 
         except:

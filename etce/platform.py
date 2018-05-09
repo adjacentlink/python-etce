@@ -157,11 +157,11 @@ class Platform:
     def readpid(self, pidfile):
         return self._impl.readpid(pidfile)
 
-    def kill(self, pidfile, signal=signal.SIGQUIT):
-        return self._impl.kill(pidfile, signal)
+    def kill(self, pidfile, signal=signal.SIGQUIT, sudo=True):
+        return self._impl.kill(pidfile, signal, sudo)
 
-    def killall(self, applicationname, signal=signal.SIGQUIT):
-        self._impl.killall(applicationname, signal)
+    def killall(self, applicationname, signal=signal.SIGQUIT, sudo=True):
+        self._impl.killall(applicationname, signal, sudo)
 
     def rmdir(self, subdir):
         self._impl.rmdir(subdir)

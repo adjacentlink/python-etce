@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2017,2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from mako.exceptions import SyntaxException
 from mako.template import Template
 from mako.runtime import Context
 from StringIO import StringIO
+
+
+class TemplateError(Exception):
+    def __init__(self, message):
+        Exception.__init__(self, message)
 
 
 class CaptureContext(Context):
@@ -59,24 +65,29 @@ def get_file_overlays(templatefile):
 
 
 def format_file(srcfile, dstfile, overlays):
-    template = Template(filename=srcfile, strict_undefined=True)
-
     with open(dstfile, 'w') as outf:
         try:
+            template = Template(filename=srcfile, strict_undefined=True)
+
             outf.write(template.render(**overlays))
         except NameError as ne:
             message = '%s for template file "%s". Quitting.' % \
                       (ne.message, srcfile)
-            raise NameError(message)
+            raise TemplateError(message)
+        except SyntaxException as se:
+            raise TemplateError(se.message)
 
 
 def format_string(template_string, overlays):
-    template = Template(template_string, strict_undefined=True)
-
     try:
+        template = Template(template_string, strict_undefined=True)
+
         return template.render(**overlays)
     except NameError as ne:
         message = \
             '%s for template string "%s". Available overlays are {%s}. Quitting.' % \
             (ne.message, template_string, ','.join(overlays.keys()))
-        raise NameError(message)
+        raise TemplateError(message)
+    except SyntaxException as se:
+        message = 'Syntax error while trying to scan template string "%s". Quitting.' % template_string
+        raise TemplateError(message)

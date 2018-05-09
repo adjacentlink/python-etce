@@ -264,7 +264,14 @@ def run_test(args):
         for testroot in args.testroot:
             tests.adddirectory(testroot, args.basedirectory)
     except XMLDocError as xmle:
+        print
         print >>sys.stderr,xmle.message
+        print
+        exit(1)
+    except etce.templateutils.TemplateError as tmpe:
+        print
+        print >>sys.stderr,tmpe.message
+        print
         exit(1)
 
     if not tests:
@@ -465,7 +472,7 @@ def run_test(args):
                     # kill any processes with pids stored in left-over lockfiles
                     # before starting the test
                     if args.kill == 'before' or args.kill == 'both':
-                        client.execute('kill kill', allnodes)
+                        client.execute('kill kill %d True' % signal.SIGQUIT, allnodes)
 
                     remotetemplatedir = os.path.join(remoteresultssubdir, 'template') 
 
@@ -512,7 +519,7 @@ def run_test(args):
                     # kill any processes with pids stored in left-over lockfiles
                     # before finishing the test
                     if args.kill == 'after' or args.kill == 'both':
-                        client.execute('kill kill', allnodes)
+                        client.execute('kill kill %d True' % signal.SIGQUIT, allnodes)
 
                     if args.deletecompleted:
                         print 'removing data/%s from testnodes' % testdir
