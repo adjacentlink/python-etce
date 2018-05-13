@@ -36,7 +36,7 @@ import errno
 import os
 import json
 import paramiko
-import paramiko.client
+from paramiko.client import RejectPolicy,WarningPolicy,AutoAddPolicy
 import re
 import select
 import socket
@@ -245,6 +245,15 @@ class SSHClient(etce.fieldclient.FieldClient):
 
         port = kwargs.get('port', None)
 
+        policystr = kwargs.get('policy', 'reject')
+
+        policy = RejectPolicy
+
+        if policystr == 'warning':
+            policy = WarningPolicy
+        elif policystr == 'autoadd':
+            policy = AutoAddPolicy
+
         key_filenames = None
 
         self._envfile = kwargs.get('envfile', None)
@@ -285,7 +294,7 @@ class SSHClient(etce.fieldclient.FieldClient):
             try:
                 client = paramiko.SSHClient()
 
-                client.set_missing_host_key_policy(paramiko.client.RejectPolicy())
+                client.set_missing_host_key_policy(policy())
 
                 client.load_system_host_keys()
 

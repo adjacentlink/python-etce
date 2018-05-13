@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2017,2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@ class Kill(object):
     def kill(self, signal=signal.SIGQUIT, sudo=True):
         p = Platform()
 
-        my_pidfile_prefix = 'etce.%s' % p.hostname()
+        my_pidfile_toks = ('etce', p.hostname())
 
         lockfiledir = os.path.join(ConfigDictionary().get('etce', 'WORK_DIRECTORY'),
                                    'lock')
@@ -48,8 +48,15 @@ class Kill(object):
         if not os.path.isdir(lockfiledir):
             return
 
-        for pidfile in os.listdir(lockfiledir):
-            if pidfile.startswith(my_pidfile_prefix):
+        pidfiles = os.listdir(lockfiledir)
+
+        for pidfile in pidfiles:
+            toks = pidfile.split('.')
+
+            if len(toks) < 2:
+                continue
+
+            if my_pidfile_toks == (toks[0], toks[1]):
                 fullpidfile = os.path.join(lockfiledir, pidfile)
                 
                 pid = p.kill(fullpidfile, signal, sudo)

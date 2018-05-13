@@ -33,6 +33,7 @@
 
 import argparse
 import os
+import signal
 import sys
 
 from etce.field import Field
@@ -47,12 +48,30 @@ on the hosts in HOSTFILE.
 parser = argparse.ArgumentParser(prog='etce-kill', description=description)
 
 
+parser.add_argument('--policy',
+                    action='store',
+                    choices=['reject','warning','autoadd'],
+                    default='reject',
+                    help='''Specify the policy to use when a target
+                    host is not listed in the local "known_hosts" file.
+                    Default: reject''')
 parser.add_argument('--port',
                     action='store',
                     type=int,
                     default=None,
                     help='''Connect to hosts using the specified port number.
                     Default: 22''')
+parser.add_argument('--signal',
+                    action='store',
+                    type=int,
+                    default=signal.SIGQUIT,
+                    help='''The signal number to use to kill.
+                    Default: %d''' % signal.SIGQUIT)
+parser.add_argument('--nosudo',
+                    action='store_true', 
+                    default=False,
+                    help='''If specified, do not run the kill command
+                    with "sudo" on the target hosts. Default: run with sudo''')
 parser.add_argument('--user',
                     action='store',
                     default=None,
@@ -73,9 +92,10 @@ hosts = Field(args.hostfile).allnodes()
 
 client = ClientBuilder().build(hosts,
                                user=args.user,
-                               port=args.port)
+                               port=args.port,
+                               policy=args.policy)
 
 try:
-   client.execute('kill kill', hosts)
+   client.execute('kill kill %d %s' % (args.signal, str(not args.nosudo)), hosts)
 finally:
    client.close()

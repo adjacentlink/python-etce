@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -233,7 +233,6 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
                     print >>sys.stderr,type(e)
                     print >>sys.stderr,'Pidfile "%s" does not contain a valid PID. Skipping.' % \
                         pidfile
-                    os.remove(pidfile)
                     pid = None
             else:
                 # error - pidfile is not a regular fle
@@ -247,16 +246,17 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         pid = self.readpid(pidfile)
 
         # if found a pid, kill the process and remove the file
-        if pid:
-            print 'killing pid %d found in %s' % (pid, pidfile)
-            commandstr = 'kill -%d %d' % (signal, pid)
-            if sudo:
-                commandstr = 'sudo ' + commandstr
+        try:
+            if pid:
+                print 'killing pid %d found in %s' % (pid, pidfile)
+                commandstr = 'kill -%d %d' % (signal, pid)
+                if sudo:
+                    commandstr = 'sudo ' + commandstr
 
-            try:
                 sp = subprocess.Popen(shlex.split(commandstr))
                 sp.wait()
-            finally:
+        finally:
+            if os.path.exists(pidfile):
                 os.remove(pidfile)
 
         return pid

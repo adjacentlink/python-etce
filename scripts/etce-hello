@@ -59,6 +59,13 @@ parser.add_argument('--user',
                     default=None,
                     help='''Connect to hosts as the specified user.
                     Default it the current user.''')
+parser.add_argument('--policy',
+                    action='store',
+                    choices=['reject','warning','autoadd'],
+                    default='reject',
+                    help='''Specify the policy to use when a target
+                    host is not listed in the local "known_hosts" file.
+                    Default: reject''')
 parser.add_argument('hostfile',
                     metavar='HOSTFILE',
                     help='''The ETCE Hostfile containing the hosts
@@ -74,10 +81,11 @@ hosts = Field(args.hostfile).allnodes()
 
 client = ClientBuilder().build(hosts,
                                user=args.user,
-                               port=args.port)
+                               port=args.port,
+                               policy=args.policy)
 
 try:
-   ret = client.execute('hello hello', hosts)
+   ret = client.execute('hello hello', hosts, workingdir='/tmp')
 
    responses = []
 
