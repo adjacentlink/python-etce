@@ -215,8 +215,9 @@ def main():
     try:
         args.func(args)
     except LXCError as e:
+        print
         print e
-
+        print
 
 if __name__=='__main__':
     main()

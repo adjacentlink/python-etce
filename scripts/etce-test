@@ -183,6 +183,13 @@ def add_run_arguments(parser):
                         "after" is ignored and TESTROOT must only contain
                         one test. Useful for debugging. default: run all 
                         steps.''')
+    parser.add_argument('--policy',
+                        action='store',
+                        choices=['reject','warning','autoadd'],
+                        default='reject',
+                        help='''Specify the policy to use when a target
+                        host is not listed in the local "known_hosts" file.
+                        Default: reject''')
     parser.add_argument('--port',
                         action='store',
                         type=int,
@@ -264,7 +271,14 @@ def run_test(args):
         for testroot in args.testroot:
             tests.adddirectory(testroot, args.basedirectory)
     except XMLDocError as xmle:
+        print
         print >>sys.stderr,xmle.message
+        print
+        exit(1)
+    except etce.templateutils.TemplateError as tmpe:
+        print
+        print >>sys.stderr,tmpe.message
+        print
         exit(1)
 
     if not tests:
@@ -417,14 +431,16 @@ def run_test(args):
                         client = ClientBuilder().build(allnodes,
                                                        user=args.user,
                                                        port=args.port,
+                                                       policy=args.policy,
                                                        envfile=args.envfile)
 
                     # create connection to all nodes
                     elif client is None:
                         client = ClientBuilder().build(allnodes,
-                                           user=args.user,
-                                           port=args.port,
-                                           envfile=args.envfile)
+                                                       user=args.user,
+                                                       port=args.port,
+                                                       policy=args.policy,
+                                                       envfile=args.envfile)
 
                     stepsfiledoc = \
                         StepsFileDoc(os.path.join(localtesttemplatedir,
@@ -465,7 +481,7 @@ def run_test(args):
                     # kill any processes with pids stored in left-over lockfiles
                     # before starting the test
                     if args.kill == 'before' or args.kill == 'both':
-                        client.execute('kill kill', allnodes)
+                        client.execute('kill kill %d True' % signal.SIGQUIT, allnodes)
 
                     remotetemplatedir = os.path.join(remoteresultssubdir, 'template') 
 
@@ -512,7 +528,7 @@ def run_test(args):
                     # kill any processes with pids stored in left-over lockfiles
                     # before finishing the test
                     if args.kill == 'after' or args.kill == 'both':
-                        client.execute('kill kill', allnodes)
+                        client.execute('kill kill %d True' % signal.SIGQUIT, allnodes)
 
                     if args.deletecompleted:
                         print 'removing data/%s from testnodes' % testdir
