@@ -1,5 +1,13 @@
 ACLOCAL_AMFLAGS = -I m4
 
+EXTRA_DIST= \
+ autogen.sh \
+ etce \
+ scripts \
+ test \
+ Copyright \
+ README.md
+
 all-local: setup.py
 	python setup.py build
 
@@ -29,10 +37,6 @@ uninstall:
 
 spec: setup.py
 	python setup.py bdist_rpm --spec-only
-
-
-sdist:
-	python setup.py sdist
 
 
 if HAVE_RPMBUILD
