@@ -152,10 +152,10 @@ os.chdir(workingdir)
 if verbose:
     print 'etce: Running from %s' % workingdir
 
-method = etce.loader.load_etce_method(args.modulename, args.methodname)
+try:
+    method = etce.loader.load_etce_method(args.modulename, args.methodname)
 
-if method:                      
-    try:
+    if method:
         if len(args.methodargs) == 2:
             if verbose:
                 print "(%s,%s)" % (args.modulename, args.methodname)
@@ -168,11 +168,12 @@ if method:
             typedargs = [ etce.utils.configstrtoval(arg) for arg in args.methodargs ]
 
             ret = method(*typedargs)
-    except Exception, e:
-        sendreturnandexit(True, str(e))
 
-else:
-    sendreturnandexit(True, 'Module(%s) or method(%s) not found.' \
-                      % (args.modulename, args.methodname))
+    else:
+        sendreturnandexit(True, 'Module(%s) or method(%s) not found.' \
+                          % (args.modulename, args.methodname))
 
-sendreturnandexit(False, ret)
+    sendreturnandexit(False, ret)
+
+except Exception, e:
+    sendreturnandexit(True, str(e))
