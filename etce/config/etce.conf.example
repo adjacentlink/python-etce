@@ -84,10 +84,19 @@
 # names that ETCE will accept from environment
 # variables.
 #
+# ETCE Wrappers that launch applications
+# requiring elevated privilege can ask ETCE to run
+# requested commands with sudo. This mechanism is
+# aimed at creating a non-root user that
+# can run emulations - still under investigation.
+# Set IGNORE_RUN_WITH_SUDO=yes (the default) to
+# globally ignore wrapper sudo requests.
+#
 ##################################################
 #DEFAULT_ETCE_HOSTNAME_FORMAT=node-${'%03d' % etce_index}
 #TEMPLATE_DIRECTORY_SUFFIX=tpl
 #ENV_OVERLAYS_ALLOW=
+#IGNORE_RUN_WITH_SUDO=yes
 
 
 [overlays]

@@ -123,6 +123,9 @@ class WrapperContextImpl(ArgRegistrar):
 
 
     def run_with_sudo(self):
+        # ignore run with sudo requests when configured to do so
+        if self._config.get('etce', 'IGNORE_RUN_WITH_SUDO').lower() == 'yes':
+            return
         self._sudo = True
 
 
