@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,12 +52,12 @@ class AppRunner(Thread):
         self._process = subprocess.Popen(self._args,
                                          stdout=self._stdout_arg,
                                          stderr=self._stderr_arg)
-        self._stdout = self._process.stdout
+        self._stdout_arg = self._process.stdout
         self._event.set()
 
 
     def stdout(self):
-        return self._stdout
+        return self._stdout_arg
 
 
     def retvalue(self):
