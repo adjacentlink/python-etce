@@ -57,6 +57,10 @@ class PseudoTestDirectory(object):
 
 
     def nodeid(self):
+        # This convenience function that searches
+        # the nodename for an integer and returns
+        # its value. 'None' is return when the nodename
+        # does not contain an integer.
         regex = re.compile(r'(\d+)')
 
         match = regex.search(self._nodename)
@@ -64,11 +68,7 @@ class PseudoTestDirectory(object):
         if match:
             return int(match.group(1))
         else:
-            message = 'The wrapper tried to access a numeric ' \
-                      'node ID, but the nodename "%s" does not ' \
-                      'contain any numeral from which it can be ' \
-                      'derived.' % self._nodename
-            raise PseuedoTestDirectoryError(message)
+            return None
 
 
     def getfile(self, name):
