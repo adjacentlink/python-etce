@@ -39,15 +39,7 @@
     </xs:restriction>
   </xs:simpleType>
 
-  <xs:element name="initscript">
-    <xs:complexType>
-        <xs:simpleContent>
-            <xs:extension base="xs:string">
-                <xs:attribute name="filename" type="xs:string" use="required"/>
-            </xs:extension>
-        </xs:simpleContent>
-    </xs:complexType>
-  </xs:element>
+  <xs:element name="initscript" type="xs:string"/>
 
   <xs:element name="parameter">
     <xs:complexType>
@@ -139,7 +131,7 @@
         </xs:element>
         <xs:element name="hosts" minOccurs="1" maxOccurs="1">
           <xs:complexType>
-	          <xs:sequence>
+            <xs:sequence>
               <xs:element name="host" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                   <xs:sequence>
