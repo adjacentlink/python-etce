@@ -253,11 +253,11 @@ class WrapperContextImpl(ArgRegistrar):
 
 
     def _build_commandstr(self, command, argstr, extra_paths):
-        all_paths = os.environ['PATH'] + extra_paths
+        all_paths = os.environ['PATH'].split(':') + list(extra_paths)
 
         existing_paths = filter(os.path.isdir, all_paths)
 
-        found_paths = filter(lambda d: command in d, existing_paths)
+        found_paths = filter(lambda d: command in os.listdir(d), existing_paths)
 
         if not found_paths:
             raise WrapperError('Cannot find command "%s" in system paths {%s}. Quitting.' \
@@ -270,4 +270,3 @@ class WrapperContextImpl(ArgRegistrar):
             commandstr = 'sudo ' + commandstr
 
         return commandstr
-
