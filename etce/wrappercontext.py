@@ -185,18 +185,23 @@ class WrapperContext(ArgRegistrar):
 
 
     def daemonize(self,
-                  commandstr,
+                  command,
+                  argstr,
                   stdout=None,
                   stderr=None,
                   pidfilename=None,
                   genpidfile=True,
                   pidincrement=0,
-                  starttime=None):
+                  starttime=None,
+                  extra_paths=[]):
         """
         Run a command as a daemon process.
 
-        commandstr:
-           The full command string to run.
+        command:
+           The name of the application to run.
+
+        argstr:
+           The string of arguments to provide to the application.
 
         stdout:
            An optional file name to capture standard output.
@@ -231,28 +236,41 @@ class WrapperContext(ArgRegistrar):
            daemonize will sleep until the provides time before
            exec'ing the command. The command is exec'd immediately
            if not specified.
+
+        extra_paths:
+           Optional list of directories to use for the application path.
+           These are appended to the environment PATH values. This
+           can be helpful for running an application with sudo where
+           the permitted paths are narrowed.
         """
-        self._impl.daemonize(commandstr,
+        self._impl.daemonize(command,
+                             argstr,
                              stdout,
                              stderr,
                              pidfilename,
                              genpidfile,
                              pidincrement,
-                             starttime)
+                             starttime,
+                             extra_paths)
 
 
     def run(self,
-            commandstr,
+            command,
+            argstr,
             stdout=None,
             stderr=None,
             pidfilename=None,
             genpidfile=True,
-            pidincrement=0):
+            pidincrement=0,
+            extra_paths=[]):
         """
         Run a command.
 
-        commandstr:
-           The full command string to run.
+        command:
+           The name of the application to run.
+
+        argstr:
+           The string of arguments to provide to the application.
 
         stdout:
            An optional file name to capture standard output.
@@ -286,13 +304,21 @@ class WrapperContext(ArgRegistrar):
            An optional YYYY-MM-DDTHH:MM::SS string. The run call
            blocks and sleeps until the specified time before running
            the command.
+
+        extra_paths:
+           Optional list of directories to use for the application path.
+           These are appended to the environment PATH values. This
+           can be helpful for running an application with sudo where
+           the permitted paths are narrowed.
         """
-        self._impl.run(commandstr,
+        self._impl.run(command,
+                       argstr,
                        stdout,
                        stderr,
                        pidfilename,
                        genpidfile,
-                       pidincrement)
+                       pidincrement,
+                       extra_paths)
 
 
     def stop(self, pidfilename=None, signal=signal.SIGQUIT, sudo=True):
