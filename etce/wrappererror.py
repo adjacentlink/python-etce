@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,35 +30,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import shlex
-import subprocess
-import syslog
-from threading import Thread, Event
-
-
-class AppRunner(Thread):
-    def __init__(self, commandstr, stdout=subprocess.PIPE, stderr=subprocess.STDOUT):
-        self._stdout_arg = stdout
-        self._stderr_arg = stderr
-        self._args = shlex.split(commandstr)
-
-        Thread.__init__(self, name=self._args[0])
-        self._event = Event()
-        self.start()
-        self._event.wait()
-
-
-    def run(self):
-        self._process = subprocess.Popen(self._args,
-                                         stdout=self._stdout_arg,
-                                         stderr=self._stderr_arg)
-        self._stdout_arg = self._process.stdout
-        self._event.set()
-
-
-    def stdout(self):
-        return self._stdout_arg
-
-
-    def retvalue(self):
-        return self._process.wait()
+class WrapperError(Exception):
+    def __init__(self, message):
+        Exception.__init__(self, message)

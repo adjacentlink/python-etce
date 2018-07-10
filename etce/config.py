@@ -48,7 +48,8 @@ class ConfigDictionary(object):
             'TEMPLATE_DIRECTORY_SUFFIX':'tpl',
             'WORK_DIRECTORY':default_working_directory,
             'WRAPPER_DIRECTORY':'/opt/etce/wrappers',
-            'ENV_OVERLAYS_ALLOW':''
+            'ENV_OVERLAYS_ALLOW':'',
+            'IGNORE_RUN_WITH_SUDO':'yes'
         },
         'overlays': {
         },
@@ -64,7 +65,6 @@ class ConfigDictionary(object):
 
         configfiles = [ os.path.join(config_dir,'%s.conf' % configfilename) ]
 
-        
         # read function should not cause error if any of the named files
         # don't exist. Duplicate values are overlayed by values found
         # later in the list.
@@ -103,6 +103,7 @@ class ConfigDictionary(object):
         # allow for environment override of the two path variables
         if 'WRAPPER_DIRECTORY' in os.environ:
             self.parser.set('etce', 'WRAPPER_DIRECTORY', os.environ['WRAPPER_DIRECTORY'])
+
 
     def get(self, section, key, default=None):
         if self.parser.has_option(section, key):

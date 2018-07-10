@@ -216,8 +216,7 @@ class ContainerTemplate(object):
                 iparams[iname] = ival
 
         for initscriptelem in containertemplateelem.findall('./initscript'):
-            initscript = \
-                (initscriptelem.attrib['filename'], initscriptelem.text)
+            initscript = ('init.sh', initscriptelem.text)
 
         return (params,
                 interfaces,
@@ -467,8 +466,7 @@ class Container(object):
             initscript = containertemplate.initscript
 
         for initscriptelem in containerelem.findall('./initscript'):
-            initscript = (initscriptelem.attrib['filename'], 
-                          initscriptelem.text)
+            initscript = ('init.sh', initscriptelem.text)
 
         if initscript[1]:
             lines = []

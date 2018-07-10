@@ -36,12 +36,13 @@ from etce.argregistrar import ArgRegistrar
 
 
 class WrapperInfoPrinter(ArgRegistrar):
-    def __init__(self, wrapperpath, description):
+    def __init__(self, wrapperpath, description, ignore_sudo):
         self._wrapperpath = wrapperpath
         self._description = description
         self._args = []
         self._infile_name = None
         self._outfile_name = None
+        self._ignore_sudo = ignore_sudo
         self._sudo = False
 
     # register a test argument
@@ -70,8 +71,9 @@ class WrapperInfoPrinter(ArgRegistrar):
         s += '\t%s\n' % str(self._infile_name)
         s += 'output file name:\n'
         s += '\t%s\n' % str(self._outfile_name)
-        s += 'run with sudo:\n'
-        s += '\t%s\n' % str(self._sudo)
+        if not self._ignore_sudo:
+            s += 'run with sudo:\n'
+            s += '\t%s\n' % str(self._sudo)
         if len(self._args) > 0:
             s += 'arguments:\n'
             for argname,defaultval,description in sorted(self._args):

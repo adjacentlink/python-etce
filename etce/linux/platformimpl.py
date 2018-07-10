@@ -185,7 +185,9 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         pids = []
 
         for pidtpl in allpids:
-            if pidtpl[1] == command:
+            # use the application name, not the full path to
+            # match running processes
+            if os.path.basename(pidtpl[1]) == command:
                 pids.append(pidtpl[0])
 
         return pids

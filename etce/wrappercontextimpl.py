@@ -41,6 +41,7 @@ import etce.timeutils
 from etce.argproxy import ArgProxy
 from etce.argregistrar import ArgRegistrar
 from etce.platform import Platform
+from etce.wrappererror import WrapperError
 from etce.wrapperstore import WrapperStore
 from etce.config import ConfigDictionary
 
@@ -123,6 +124,9 @@ class WrapperContextImpl(ArgRegistrar):
 
 
     def run_with_sudo(self):
+        # ignore run with sudo requests when configured to do so
+        if self._config.get('etce', 'IGNORE_RUN_WITH_SUDO').lower() == 'yes':
+            return
         self._sudo = True
 
 
@@ -142,17 +146,17 @@ class WrapperContextImpl(ArgRegistrar):
 
 
     def daemonize(self,
-                  commandstr,
+                  command,
+                  argstr,
                   stdout=None,
                   stderr=None,
                   pidfilename=None,
                   genpidfile=True,
                   pidincrement=0,
-                  starttime=None):
+                  starttime=None,
+                  extra_paths=[]):
 
-        # run with sudo if wrapper requested it
-        if self._sudo:
-            commandstr = 'sudo ' + commandstr
+        commandstr = self._build_commandstr(command, argstr, extra_paths)
 
         # print the commandstr and return on a dryrun         
         if self._trialargs['dryrun']:
@@ -163,8 +167,7 @@ class WrapperContextImpl(ArgRegistrar):
         self.stop(pidfilename)
 
         # run the command
-        pid,subprocess = \
-                         etce.utils.daemonize_command(commandstr,
+        pid,subprocess = etce.utils.daemonize_command(commandstr,
                                                       stdout,
                                                       stderr,
                                                       starttime)
@@ -193,17 +196,17 @@ class WrapperContextImpl(ArgRegistrar):
 
 
     def run(self,
-            commandstr,
+            command,
+            argstr,
             stdout=None,
             stderr=None,
             pidfilename=None,
             genpidfile=True,
-            pidincrement=0):
+            pidincrement=0,
+            extra_paths=[]):
 
-        # run with sudo if wrapper requested it
-        if self._sudo:
-            commandstr = 'sudo ' + commandstr
-
+        commandstr = self._build_commandstr(command, argstr, extra_paths)
+        
         # print the commandstr and return on a dryrun         
         if self._trialargs['dryrun']:
             print commandstr
@@ -247,3 +250,23 @@ class WrapperContextImpl(ArgRegistrar):
 
         # if found a pid, kill the process and remove the file
         self._platform.kill(pidfilename, signal, sudo)
+
+
+    def _build_commandstr(self, command, argstr, extra_paths):
+        all_paths = os.environ['PATH'].split(':') + list(extra_paths)
+
+        existing_paths = filter(os.path.isdir, all_paths)
+
+        found_paths = filter(lambda d: command in os.listdir(d), existing_paths)
+
+        if not found_paths:
+            raise WrapperError('Cannot find command "%s" in system paths {%s}. Quitting.' \
+                               % (command, ','.join(all_paths)))
+            
+        commandstr = ' '.join([os.path.join(found_paths[0], command), argstr])
+
+        # run with sudo if wrapper requested it
+        if self._sudo:
+            commandstr = 'sudo ' + commandstr
+
+        return commandstr

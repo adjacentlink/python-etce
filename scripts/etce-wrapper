@@ -52,6 +52,9 @@ def print_path(args):
 
 
 def list_wrappers(args):
+    ignore_sudo = \
+        ConfigDictionary().get('etce', 'IGNORE_RUN_WITH_SUDO').lower() == 'yes'
+
     wl = WrapperLoader()
     wpaths = wl.wrapperpaths()
 
@@ -60,7 +63,8 @@ def list_wrappers(args):
         if args.prefix in wrappers:
             if args.verbose:
                 wprinter = WrapperInfoPrinter(wrappers[args.prefix][0],
-                                              wrappers[args.prefix][1].__doc__)
+                                              wrappers[args.prefix][1].__doc__,
+                                              ignore_sudo)
                 wrappers[args.prefix][1].register(wprinter)
                 print '-' * len(args.prefix)
                 print args.prefix
@@ -73,7 +77,9 @@ def list_wrappers(args):
                 if not k.startswith(args.prefix):
                     continue
                 if args.verbose:
-                    wprinter = WrapperInfoPrinter(v[0],v[1].__doc__)
+                    wprinter = WrapperInfoPrinter(v[0],
+                                                  v[1].__doc__,
+                                                  ignore_sudo)
                     v[1].register(wprinter)
                     print '-' * len(k)
                     print k
