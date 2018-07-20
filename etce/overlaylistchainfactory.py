@@ -49,6 +49,8 @@ class OverlayListChainFactory(object):
 
             values = overlaylistelem.attrib['values'].split(separator)
 
+            argtype = overlaylistelem.attrib.get('type', None)
+
             # number of indices and vals must agree
             if not len(indiceslist) == len(values):
                 err = 'overlaylist error: number of indices (%d) and ' \
@@ -57,6 +59,6 @@ class OverlayListChainFactory(object):
                 raise OverlayError(err)
                 
             for index,value in zip(indiceslist,values):
-                valsmap[index][name] = configstrtoval(value.strip())
+                valsmap[index][name] = configstrtoval(value.strip(), argtype=argtype)
 
         return valsmap

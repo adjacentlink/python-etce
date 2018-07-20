@@ -286,7 +286,20 @@ def nodestr_to_nodelist(nodestr):
     return nodes
 
 
-def configstrtoval(valstr):
+def configstrtoval(valstr, argtype=None):
+    if argtype:
+        if argtype == 'string':
+            return str(valstr)
+        elif argtype == 'bool':
+            return bool(valstr)
+        elif argtype == 'int':
+            return int(valstr)
+        elif argtype == 'float':
+            return float(valstr)
+        else:
+            raise ValueError('Unknown explicit argtype "%s" for conversion of "%s". Quitting.' %
+                             (argtype, valstr))
+
     # float
     try:
         if '.' in valstr:

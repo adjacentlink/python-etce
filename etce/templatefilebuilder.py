@@ -66,7 +66,9 @@ class TemplateFileBuilder(object):
 
             oval = overlayelem.attrib['value']
 
-            self._template_local_overlays[oname] = configstrtoval(oval)
+            otype = overlayelem.attrib.get('type', None)
+
+            self._template_local_overlays[oname] = configstrtoval(oval, argtype=otype)
         
         self._template_local_overlaylists = \
             OverlayListChainFactory().make(templatefileelem.findall('./overlaylist'),
