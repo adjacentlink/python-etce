@@ -38,9 +38,69 @@ from collections import defaultdict
 
 import etce.utils
 import etce.xmldoc
+from etce.apprunner import AppRunner
 from etce.config import ConfigDictionary
 from etce.lxcerror import LXCError
 from etce.templateutils import format_string,TemplateError
+
+
+
+class ParamConverter(object):
+    '''
+    Inspect, warn and update parameter names to help migrate from LXC version 2 to 3.
+    '''
+    lxc_param_translation_2_to_3 = {
+        'lxc.utsname': 'lxc.uts.name',
+        'lxc.pts': 'lxc.pty.max',
+        'lxc.tty': 'lxc.tty.max'
+    }
+
+    lxc_network_param_suffix_translation_2_to_3 = {
+        'ipv4': 'ipv4.address',
+        'ipv6': 'ipv6.address'
+    }
+
+    def __init__(self):
+        self._lxc_major_version = int(AppRunner('lxc-execute --version').stdout().readlines()[0].split('.')[0])
+
+    def uts_param_name(self):
+        if self._lxc_major_version > 2:
+            return 'lxc.uts.name'
+        return 'lxc.utsname'
+
+    def check_version3_param_change(self, paramname):
+        if self._lxc_major_version < 3:
+            return paramname
+
+        updated_paramname = ParamConverter.lxc_param_translation_2_to_3.get(paramname, paramname)
+
+        if (updated_paramname != paramname):
+            print >>sys.stderr, \
+                'Warning: updating LXC parameter name "%s" to "%s" for detected LXC version 3' \
+                % (paramname, updated_paramname)
+
+        return updated_paramname
+
+
+    def check_version3_network_param_change(self, paramname, inum):
+        if self._lxc_major_version < 3:
+            return paramname
+
+        updated_paramname = paramname
+
+        if paramname.startswith('lxc.network'):
+            paramsuffix = '.'.join(paramname.split('.')[2:])
+
+            updated_paramname = 'lxc.net.%d.%s' % \
+                (inum,
+                 ParamConverter.lxc_network_param_suffix_translation_2_to_3.get(paramsuffix, paramsuffix))
+
+            print >>sys.stderr, \
+                'Warning: updating LXC network parameter name "%s" to "%s" for detected LXC version 3' \
+                % (paramname, updated_paramname)
+
+        return updated_paramname
+
 
 
 class Bridge(object):
@@ -232,12 +292,15 @@ class Container(object):
                  commonparams, 
                  containertemplate, 
                  bridges,
-                 hostname):
+                 hostname,
+                 parameterconverter):
         self._lxc_name = overlays['lxc_name']
 
         self._lxc_directory = overlays['lxc_directory']
 
         self._bridges = bridges
+
+        self._pc = parameterconverter
 
         self._params, \
         self._interfaces, \
@@ -486,18 +549,26 @@ class Container(object):
     def __str__(self):
         s = ''
         for k,v in self._params:
-            s += '%s=%s\n' % (k,v)
+            s += '%s=%s\n' % (self._pc.check_version3_param_change(k),v)
+        inum = 0
         for bridgename,interfaceparams in self._interfaces.items():
             s += '\n# %s interface\n' % bridgename
-            s += 'lxc.network.type=%s\n' % interfaceparams['lxc.network.type']
+
+            lxc_network_type_param = self._pc.check_version3_network_param_change('lxc.network.type', inum)
+            lxc_network_link_param = self._pc.check_version3_network_param_change('lxc.network.link', inum)
+
+            s += '%s=%s\n' % (lxc_network_type_param, interfaceparams['lxc.network.type'])
             for k,v in sorted(interfaceparams.items()):
                 if k == 'lxc.network.type':
                     continue
-                s += '%s=%s\n' % (k,v)
-            s += 'lxc.network.link=%s\n' % self._bridges[bridgename].name
+                s += '%s=%s\n' % (self._pc.check_version3_network_param_change(k, inum),v)
+            s += '%s=%s\n' % (lxc_network_link_param, self._bridges[bridgename].name)
+            inum += 1
         s += '\n# loopback interface\n'
-        s += 'lxc.network.type = empty\n'
-        s += 'lxc.network.flags = up\n'
+        lxc_network_type_param = self._pc.check_version3_network_param_change('lxc.network.type', inum)
+        lxc_network_flags_param = self._pc.check_version3_network_param_change('lxc.network.flags', inum)
+        s += '%s=empty\n' % lxc_network_type_param
+        s += '%s=up\n' % lxc_network_flags_param
 
         return s
 
@@ -557,6 +628,8 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
 
     def _parseplan(self, lxcplanfile): 
         lxcplanelem = self.parse(lxcplanfile)
+
+        paramconverter = ParamConverter()
 
         kernelparameters = {}
 
@@ -724,7 +797,8 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
                                                           params,
                                                           template,
                                                           bridges[hostname],
-                                                          hostname))
+                                                          hostname,
+                                                          paramconverter))
 
             # Roll over containers to get names of implicit bridges added
             # from the container interface bridge names and augment

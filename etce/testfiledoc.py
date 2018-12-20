@@ -170,12 +170,16 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
         self._description = rootelem.findall('./description')[0].text
 
         self._global_overlays = {}
-        
+
         for oelem in rootelem.findall("./overlays/overlay"):
             #<overlay name='FREQ1' value='2347000000'/>
             name = oelem.attrib['name']
+
             val = oelem.attrib['value']
-            self._global_overlays[name] = etce.utils.configstrtoval(val)
+
+            argtype = oelem.attrib.get('type', None)
+
+            self._global_overlays[name] = etce.utils.configstrtoval(val, argtype=argtype)
 
         self._global_overlay_csvfiles = []
 
