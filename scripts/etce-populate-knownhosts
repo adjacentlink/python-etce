@@ -1,5 +1,6 @@
+#!/bin/bash -
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,23 +31,27 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
+usage="usage: etce-populate-knownhosts.sh [-u USER] [-p SSHPORT] HOSTFILE"
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
-      scripts=[ 'scripts/etce-hello',
-                'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-kill',
-                'scripts/etce-populate-knownhosts',
-                'scripts/etce-test',
-                'scripts/etce-wrapper'])
+user='root'
 
+sshport=22
+
+while getopts ":hp:" opt; do
+    case $opt in
+        p) sshport=$OPTARG; shift; shift;;
+        h) echo ${usage} && exit 0;;
+        \?) echo "Invalid option -$OPTARG";;
+    esac
+done
+
+if [ ! $# == 1 ]; then
+  echo ${usage}
+  exit 1
+fi
+
+hostfile=$1
+
+for host in $(etce-list-hosts ${hostfile}); do
+    ssh ${user}@${host} -p ${sshport} -o HostKeyAlgorithms=ssh-rsa -o HashKnownHosts=no 'hostname';
+done

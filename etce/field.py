@@ -49,23 +49,28 @@ class Field(object):
 
         self._nodefile = nodefile
         self._validnamechars = tuple(string.ascii_letters + \
-                                         string.digits + \
-                                         '._-')
+                                     string.digits + \
+                                     '._-')
         self._tree = OrderedDict()
         self._roots = []
         self._leaves = []
-        self._parse(nodefile)
 
-        self._tree = tuple([ (root, 
-                      tuple(self._tree[root])) for root in self._roots ])
-        allnodes = []
-        for tree in self.tree():
-            allnodes.append(tree[0])
-            for leaf in tree[1]:
-                if leaf in allnodes:
-                    continue
-                allnodes.append(leaf)
-        self._allnodes = tuple(allnodes)
+        try:
+            self._parse(nodefile)
+
+            self._tree = tuple([ (root,
+                                  tuple(self._tree[root])) for root in self._roots ])
+            allnodes = []
+            for tree in self.tree():
+                allnodes.append(tree[0])
+                for leaf in tree[1]:
+                    if leaf in allnodes:
+                        continue
+                    allnodes.append(leaf)
+            self._allnodes = tuple(allnodes)
+        except Exception as e:
+            print >>sys.stderr, 'Failed to parse hostfile "%s" with error "%s". Quitting.' % (nodefile, e)
+            exit(1)
 
 
     def nodefile(self):
