@@ -144,11 +144,14 @@ class Publisher(object):
 
     def _warn_on_empty_template_directory(self, srcdirs, mergedir):
         template_directory_names = self._testdoc.template_directory_names
-        
+
+        nonexistent_template_directories = set([])
+
         empty_template_directories = set([])
 
         for template_directory_name in template_directory_names:
             empty = True
+            exists = False
 
             for srcdir in srcdirs:
                 dir_to_test = os.path.join(srcdir, template_directory_name)
@@ -156,11 +159,21 @@ class Publisher(object):
                 if not os.path.exists(dir_to_test):
                     continue
 
+                exists = True
+
                 if os.listdir(dir_to_test):
                     empty = False
 
+            if not exists:
+                nonexistent_template_directories.update([template_directory_name])
+
             if empty:
                 empty_template_directories.update([template_directory_name])
+
+        if nonexistent_template_directories:
+            errstr = 'Missing template directories {%s}. Quitting.' % \
+                     ', '.join(list(nonexistent_template_directories))
+            raise ValueError(errstr)
 
         for  empty_template_directory in empty_template_directories:
             print >>sys.stderr,'Warning: template directory "%s" is empty.' \
