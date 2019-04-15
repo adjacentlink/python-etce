@@ -107,8 +107,8 @@
                     <xs:element ref="overlaylist" minOccurs="0" maxOccurs="unbounded"/>
                   </xs:sequence>
                   <xs:attribute name="name" type="xs:string" use="required"/>
-                  <xs:attribute name="indices" type="xs:string"/>
                   <xs:attribute name="hostname_format" type="xs:string"/>
+                  <xs:attribute name="indices" type="xs:string"/>
                 </xs:complexType>
               </xs:element>
               <xs:element name="file" minOccurs="0" maxOccurs="1">
@@ -118,8 +118,8 @@
                     <xs:element ref="overlaylist" minOccurs="0" maxOccurs="unbounded"/>
                   </xs:sequence>
                   <xs:attribute name="name" type="xs:string" use="required"/>
+                  <xs:attribute name="hostname_format" type="xs:string" use="required"/>
                   <xs:attribute name="indices" type="xs:string"/>
-                  <xs:attribute name="hostname_format" type="xs:string"/>
                   <xs:attribute name="output_file_name" type="xs:string"/>
                 </xs:complexType>
               </xs:element>

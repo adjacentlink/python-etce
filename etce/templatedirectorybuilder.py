@@ -226,7 +226,13 @@ class TemplateDirectoryBuilder(object):
         template_subdir = '.'.join([self._name,
                                     ConfigDictionary().get('etce', 'TEMPLATE_DIRECTORY_SUFFIX')])
 
-        default_hostname_format = ConfigDictionary().get('etce', 'DEFAULT_ETCE_HOSTNAME_FORMAT')
+        # for template directory foo.tpl default template directory name format and
+        # TEMPLATE_HOSTNUMBER_DIGITS value N is
+        # foo-${'%0Nd' % etce_index}
+        default_hostname_format = templatedirelem.attrib.get('name') + \
+                                  "-${'%0" + \
+                                  str(ConfigDictionary().get('etce', 'TEMPLATE_HOSTNUMBER_DIGITS')) + \
+                                  "d' % etce_index}"
 
         hostname_format = templatedirelem.attrib.get('hostname_format', default_hostname_format)
 

@@ -53,27 +53,19 @@
 
 ##################################################
 #
-# ETCE organizes test configuration files into
-# Test Directories. Within each Test Directory
-# subdirectories are named for the host where
-# the contained configuration is used. Host
-# subdirectories can be generated from template
-# directories containing configuration files
-# with values that are filled in for each host.
-# ETCE identifies template directories by
-# the TEMPLATE_DIRECTORY_SUFFIX - for example
-# "rfpipe.tpl".
-#
-# The Test Directory test.xml file specifies 
-# any template files or directories included
-# in the test definition. The template file
-# and directory elements in test.xml both accept
-# an optional "hostname_format" attribute that
-# describes the way host name subdirectories are 
-# generated in the published test definition -
-# usually differentiated by the reserved "etce_index"
-# value. The DEFAULT_ETCE_HOSTNAME_FORMAT parameter
-# defines the value hostname_format value.
+# The Test Directory test.xml file may, optionally,
+# reference template directories that
+# are used to generate repeated test directory
+# subdirectories against a list of numeric
+# indices. By default, subdirectories generated
+# from a template directory are named by taking
+# the template directory name, dropping the
+# mandatory '.tpl' suffix and adding a '-' and numeric
+# suffix TEMPLATE_HOSTNUMBER_DIGITS wide and
+# filled in with the corresponding index number.
+# This built-in subdirectory name format may
+# be overridden by the 'hostname_format' attribute
+# of the directory element in the test.xml file.
 # 
 # When generating configuration files from templates,
 # ETCE relies on overlay template values specified
@@ -93,8 +85,7 @@
 # globally ignore wrapper sudo requests.
 #
 ##################################################
-#DEFAULT_ETCE_HOSTNAME_FORMAT=node-${'%03d' % etce_index}
-#TEMPLATE_DIRECTORY_SUFFIX=tpl
+#TEMPLATE_HOSTNUMBER_DIGITS=3
 #ENV_OVERLAYS_ALLOW=
 #IGNORE_RUN_WITH_SUDO=yes
 

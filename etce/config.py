@@ -44,7 +44,7 @@ class ConfigDictionary(object):
     defaults = {
         'etce': {
             'VERBOSE':'off',
-            'DEFAULT_ETCE_HOSTNAME_FORMAT':"node-${'%03d' % etce_index}",
+            'TEMPLATE_HOSTNUMBER_DIGITS':'3',
             'TEMPLATE_DIRECTORY_SUFFIX':'tpl',
             'WORK_DIRECTORY':default_working_directory,
             'WRAPPER_DIRECTORY':'/opt/etce/wrappers',
