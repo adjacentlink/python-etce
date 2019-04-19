@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,13 +33,17 @@
 
 from collections import namedtuple
 import errno
+import getpass
 import os
 import json
 import paramiko
 from paramiko.client import RejectPolicy,WarningPolicy,AutoAddPolicy
+from paramiko.rsakey import RSAKey
+from paramiko.agent import Agent
 import re
 import select
 import socket
+import sys
 import StringIO
 from threading import Thread, Lock
 import tarfile
@@ -241,11 +245,53 @@ class SSHClient(etce.fieldclient.FieldClient):
 
         self._execute_threads = []
 
+        # ssh authentication is revised (4/19/2019):
+        #
+        # As tested against paramiko 1.16, authentication is attempted in this sequence
+        #
+        # 1. If the user has not specified a keyfile (prompt argument), then first try
+        #    to authenticate through a running agent. Calling SSHClient.connect without
+        #    a pkey argument and with allow_agent = True results in the agent trying to
+        #    use the first key in the agent's cache - if a passphrase is required, the
+        #    agent generated prompt doesn't identify the key it's using. If the user
+        #    fails to provide the correct passphrase and, eventually, quits,
+        #    the agent quits w/o trying another agent cached key.
+        #    Instead of following that confusing sequence, call connect with
+        #    allow_agent=False and manually passing in the first key in the agent's
+        #    cache. Although the name of the keyfile is not accessible through
+        #    the paramiko interface, the md5 fingerprint is printed so the key
+        #    can be identified.
+        # 2. If prompt is not None skip agent authentication. If prompt is "config",
+        #    query the ~/.ssh/config file for the appropriate key to use, per host.
+        #    Otherwise, the prompt identifies the key to use - absolute filename
+        #    or simple filename expected to be found in ~/.ssh
+
         user = kwargs.get('user', None)
 
         port = kwargs.get('port', None)
 
         policystr = kwargs.get('policy', 'reject')
+
+        prompt = kwargs.get('prompt', None)
+
+        do_prompt = False
+
+        user_specified_key_file = None
+
+        if prompt:
+            do_prompt = True
+
+            if not prompt == 'config':
+                if prompt[0] == '/':
+                    user_specified_key_file = prompt
+                else:
+                    user_specified_key_file = \
+                        os.path.expanduser(os.path.join('~/.ssh', prompt))
+
+                if not os.path.exists(user_specified_key_file):
+                    raise FieldConnectionError(
+                        'prompt keyfile "%s" doesn\'t exist. Quitting.' % \
+                        user_specified_key_file)
 
         policy = RejectPolicy
 
@@ -264,7 +310,7 @@ class SSHClient(etce.fieldclient.FieldClient):
 
         ssh_config = None
 
-        if os.path.exists(ssh_config_file):            
+        if os.path.exists(ssh_config_file):
             ssh_config = paramiko.SSHConfig()
             ssh_config.parse(open(ssh_config_file))
         
@@ -286,11 +332,15 @@ class SSHClient(etce.fieldclient.FieldClient):
             elif host_config:
                 host_port = host_config.get('port', host_port)
 
-            if key_filenames:
-                host_key_filenames = key_filenames
+            if user_specified_key_file:
+                host_key_filenames = [ user_specified_key_file ]
             elif host_config:
                 host_key_filenames = host_config.get('identityfile', host_key_filenames)
-                
+
+            client = None
+
+            pkey = None
+            
             try:
                 client = paramiko.SSHClient()
 
@@ -298,24 +348,63 @@ class SSHClient(etce.fieldclient.FieldClient):
 
                 client.load_system_host_keys()
 
-                self._connection_dict[host] = client
+                if do_prompt:
+                    print >>sys.stderr,'Skipping ssh-agent authentication request (--prompt).'
+                    raise Exception
+                else:
+                    keys = Agent().get_keys()
+                    if keys:
+                        agentkey = keys[0]
+                        print >>sys.stderr,\
+                            'Attempting ssh-agent authentication ' \
+                            '(key md5 fingerprint: %s) ...' % \
+                            ':'.join(map(lambda x: '%02x' % x, map(ord, agentkey.get_fingerprint())))
 
-                self._connection_dict[host].connect(hostname=host,
+                        client.connect(hostname=host,
                                                     username=host_user,
                                                     port=int(host_port),
-                                                    key_filename=host_key_filenames,
-                                                    allow_agent=True)
+                                       pkey=agentkey,
+                                       allow_agent=False)
+
+                    self._connection_dict[host] = client
 
             except socket.gaierror as ge:
                 message = '%s "%s". Quitting.' % (ge.strerror, host)
                 raise FieldConnectionError(message)
 
             except paramiko.ssh_exception.NoValidConnectionsError as e:
-                raise FieldConnectionError('Unable to connect to host "%s". Quitting.' % host)
+                raise FieldConnectionError('Unable to connect to host "%s", ' \
+                                           'NoValidConnectionsError. Quitting.' % host)
 
             except Exception as e:
-                message = 'Unable to connect to host "%s" (%s). Quitting.' % (host, str(e))
-                raise FieldConnectionError(message)
+                if not pkey:
+                    if not do_prompt:
+                        print >>sys.stderr,'Failed to connect to host "%s" via ssh-agent.' % host
+
+                    # do not reattempt agent on subsequent hosts
+                    do_prompt = True
+
+                    for host_key_file in host_key_filenames:
+                            pkey = RSAKey.from_private_key_file(
+                                     host_key_file,
+                                     getpass.getpass('Enter passphrase for %s: ' % host_key_file))
+
+                            break # found one, skip other files
+                try:
+                    if not pkey:
+                        message = 'Unable to connect to host "%s", cannot authenticate. ' \
+                                  'Quitting.' % host,
+                        raise FieldConnectionError(message)
+
+                    client.connect(hostname=host,
+                                   username=host_user,
+                                   port=int(host_port),
+                                   pkey=pkey,
+                                   allow_agent=False)
+
+                    self._connection_dict[host] = client
+                except FieldConnectionError as fe:
+                    raise fe
 
 
     def sourceisdestination(self, host, srcfilename, dstfilename):
