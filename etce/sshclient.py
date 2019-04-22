@@ -249,11 +249,11 @@ class SSHClient(etce.fieldclient.FieldClient):
         #
         # As tested against paramiko 1.16, authentication is attempted in this sequence
         #
-        # 1. If the user has not specified a keyfile (prompt argument), then first try
+        # 1. If the user has not specified a keyfile (sshkey argument), then first try
         #    to authenticate through a running agent. Calling SSHClient.connect without
         #    a pkey argument and with allow_agent = True results in the agent trying to
         #    use the first key in the agent's cache - if a passphrase is required, the
-        #    agent generated prompt doesn't identify the key it's using. If the user
+        #    agent generated sshkey doesn't identify the key it's using. If the user
         #    fails to provide the correct passphrase and, eventually, quits,
         #    the agent quits w/o trying another agent cached key.
         #    Instead of following that confusing sequence, call connect with
@@ -261,9 +261,9 @@ class SSHClient(etce.fieldclient.FieldClient):
         #    cache. Although the name of the keyfile is not accessible through
         #    the paramiko interface, the md5 fingerprint is printed so the key
         #    can be identified.
-        # 2. If prompt is not None skip agent authentication. If prompt is "config",
+        # 2. If sshkey is not None skip agent authentication. If sshkey is "config",
         #    query the ~/.ssh/config file for the appropriate key to use, per host.
-        #    Otherwise, the prompt identifies the key to use - absolute filename
+        #    Otherwise, the sshkey identifies the key to use - absolute filename
         #    or simple filename expected to be found in ~/.ssh
 
         user = kwargs.get('user', None)
@@ -272,25 +272,25 @@ class SSHClient(etce.fieldclient.FieldClient):
 
         policystr = kwargs.get('policy', 'reject')
 
-        prompt = kwargs.get('prompt', None)
+        sshkey = kwargs.get('sshkey', None)
 
-        do_prompt = False
+        use_sshkey = False
 
         user_specified_key_file = None
 
-        if prompt:
-            do_prompt = True
+        if sshkey:
+            use_sshkey = True
 
-            if not prompt == 'config':
-                if prompt[0] == '/':
-                    user_specified_key_file = prompt
+            if not sshkey == 'config':
+                if sshkey[0] == '/':
+                    user_specified_key_file = sshkey
                 else:
                     user_specified_key_file = \
-                        os.path.expanduser(os.path.join('~/.ssh', prompt))
+                        os.path.expanduser(os.path.join('~/.ssh', sshkey))
 
                 if not os.path.exists(user_specified_key_file):
                     raise FieldConnectionError(
-                        'prompt keyfile "%s" doesn\'t exist. Quitting.' % \
+                        'sshkey keyfile "%s" doesn\'t exist. Quitting.' % \
                         user_specified_key_file)
 
         policy = RejectPolicy
@@ -313,7 +313,14 @@ class SSHClient(etce.fieldclient.FieldClient):
         if os.path.exists(ssh_config_file):
             ssh_config = paramiko.SSHConfig()
             ssh_config.parse(open(ssh_config_file))
-        
+
+        pkey = None
+
+        agentkey_authenticated = False
+
+        if use_sshkey:
+            print >>sys.stderr,'Skipping ssh-agent authentication request (--sshkey).'
+
         for host in hosts:
             host_config = None
             if ssh_config:
@@ -339,8 +346,6 @@ class SSHClient(etce.fieldclient.FieldClient):
 
             client = None
 
-            pkey = None
-            
             try:
                 client = paramiko.SSHClient()
 
@@ -348,25 +353,30 @@ class SSHClient(etce.fieldclient.FieldClient):
 
                 client.load_system_host_keys()
 
-                if do_prompt:
-                    print >>sys.stderr,'Skipping ssh-agent authentication request (--prompt).'
+                if use_sshkey:
+                    # skipping
                     raise Exception
                 else:
                     keys = Agent().get_keys()
+
                     if keys:
                         agentkey = keys[0]
-                        print >>sys.stderr,\
-                            'Attempting ssh-agent authentication ' \
-                            '(key md5 fingerprint: %s) ...' % \
-                            ':'.join(map(lambda x: '%02x' % x, map(ord, agentkey.get_fingerprint())))
+
+                        if not agentkey_authenticated:
+                            print >>sys.stderr,\
+                                'Attempting ssh-agent authentication ' \
+                                '(key md5 fingerprint: %s) ...' % \
+                                ':'.join(map(lambda x: '%02x' % x, map(ord, agentkey.get_fingerprint())))
 
                         client.connect(hostname=host,
-                                                    username=host_user,
-                                                    port=int(host_port),
+                                       username=host_user,
+                                       port=int(host_port),
                                        pkey=agentkey,
                                        allow_agent=False)
 
-                    self._connection_dict[host] = client
+                        self._connection_dict[host] = client
+
+                        agentkey_authenticated = True
 
             except socket.gaierror as ge:
                 message = '%s "%s". Quitting.' % (ge.strerror, host)
@@ -378,11 +388,11 @@ class SSHClient(etce.fieldclient.FieldClient):
 
             except Exception as e:
                 if not pkey:
-                    if not do_prompt:
+                    if not use_sshkey:
                         print >>sys.stderr,'Failed to connect to host "%s" via ssh-agent.' % host
 
                     # do not reattempt agent on subsequent hosts
-                    do_prompt = True
+                    use_sshkey = True
 
                     for host_key_file in host_key_filenames:
                             pkey = RSAKey.from_private_key_file(
