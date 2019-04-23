@@ -169,23 +169,6 @@ def add_run_arguments(parser):
                         default=default_data_directory,
                         help='''Local output directory for test artifacts - 
                         default: %s.''' % default_data_directory)
-    parser.add_argument('--sshkey',
-                        metavar='KEYFILE',
-                        nargs='?',
-                        const='config',
-                        default=None,
-                        help='''ETCE attempts SSH authentication in two ways,
-                        first through a running ssh-agent and, if that fails,
-                        by selecting one of the user's SSH key files directly.
-                        For agent authentication, the correct key must be
-                        the first in the agent's cache. Use the sshkey
-                        argument to bypass agent authentication. If the
-                        optional KEYFILE argument is provided, it names the 
-                        SSH key to use for authentication. This must
-                        either be an absolute file name or the name of
-                        a keyfile in ~/.ssh. If an argument is not provided,
-                        ETCE tries to determine the appropriate key
-                        to use by inspecting ~/.ssh/config.''')
     parser.add_argument('--quitonerror',
                         action='store_true', 
                         default=False,
@@ -216,6 +199,23 @@ def add_run_arguments(parser):
                         specified, ETCE will look for the host's "Port" value
                         in the ~/.ssh/config file. If not found, uses the default
                         ssh port value, 22.''')
+    parser.add_argument('--sshkey',
+                        metavar='KEYFILE',
+                        nargs='?',
+                        const='config',
+                        default=None,
+                        help='''ETCE attempts SSH authentication in two ways,
+                        first through a running ssh-agent and, if that fails,
+                        by selecting one of the user's SSH key files directly.
+                        For agent authentication, the correct key must be
+                        the first in the agent's cache. Use the sshkey
+                        argument to bypass agent authentication. If the
+                        optional KEYFILE argument is provided, it names the
+                        SSH key to use for authentication. This must
+                        either be an absolute file name or the name of
+                        a keyfile in ~/.ssh. If an argument is not provided,
+                        ETCE tries to determine the appropriate key
+                        to use by inspecting ~/.ssh/config.''')
     parser.add_argument('--user',
                         action='store',
                         default=None,

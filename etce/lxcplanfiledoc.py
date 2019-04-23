@@ -52,7 +52,8 @@ class ParamConverter(object):
     lxc_param_translation_2_to_3 = {
         'lxc.utsname': 'lxc.uts.name',
         'lxc.pts': 'lxc.pty.max',
-        'lxc.tty': 'lxc.tty.max'
+        'lxc.tty': 'lxc.tty.max',
+        'lxc.console': 'lxc.console.path'
     }
 
     lxc_network_param_suffix_translation_2_to_3 = {
