@@ -37,13 +37,16 @@ user='root'
 
 sshport=22
 
-while getopts ":hp:" opt; do
+while getopts "u:p:h" opt; do
     case $opt in
-        p) sshport=$OPTARG; shift; shift;;
+        p) sshport=$OPTARG;;
+        u) user=$OPTARG;;
         h) echo ${usage} && exit 0;;
-        \?) echo "Invalid option -$OPTARG";;
+        \?) exit 1;;
     esac
 done
+
+shift $((OPTIND-1))
 
 if [ ! $# == 1 ]; then
   echo ${usage}
