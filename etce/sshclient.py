@@ -544,8 +544,6 @@ class SSHClient(etce.fieldclient.FieldClient):
 
 
     def collect(self, remotesrc, localdstdir, hosts):
-        print 'Collecting files from hosts "%s" to "%s."' % (', '.join(hosts), localdstdir)
-
         if len(hosts) == 0:
             print '   Warning: no hosts.'
             return
@@ -595,47 +593,60 @@ class SSHClient(etce.fieldclient.FieldClient):
             print '   Warning: no files to transfer.'
             return
 
-        # Create GetThread for the hosts that have a tarfile to transfer
-        threads = [ GetThread(self._connection_dict[host],
-                              tfile,
-                              os.path.join('/tmp',os.path.basename(tfile)),
-                              host) for host,tfile in tarfiles.items() ]
+        # Retrieve and extract data from each remote host
+        removers = []
+        for host,tfile in tarfiles.items():
+            host_is_local = False
 
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
+            if os.path.exists(tfile):
+                # ignore file if it is already on local machine
+                host_is_local = True
 
-        # extract the tarfiles to the dst directory
-        threads = []
-        for h,tfile in tarfiles.items():
+            getter = GetThread(self._connection_dict[host],
+                               tfile,
+                               os.path.join('/tmp',os.path.basename(tfile)),
+                               host)
+
+            getter.start()
+            getter.join()
+
             ltf = os.path.join('/tmp', os.path.basename(tfile))
             if not os.path.exists(ltf) or not os.path.isfile(ltf):
                 raise RuntimeError('%s does not exist' % ltf)
+
             tf = None
             try:
-                tf = tarfile.open(ltf, 'r:gz')
-                tf.extractall(localdstdir)
                 command = 'etce-field-exec platform rmfile %s' % tfile
                 if self._envfile is not None:
                     command = '. %s; %s' % (self._envfile, command)
                 # also set up a thread to remove the tarfile on remotes
-                threads.append(ExecuteThread(self._connection_dict[host],
+                removers.append(ExecuteThread(self._connection_dict[host],
                                              command,
                                              host))
-            finally:
-                if not tf is None:
+
+                absolute_localdstdir = localdstdir
+                if not absolute_localdstdir[0] == '/':
+                    absolute_localdstdir = os.path.join(localdstdir, remotesrc)
+
+                if host_is_local and os.path.exists(absolute_localdstdir):
+                    print 'Skipping collection from local host "%s".' % host
+                else:
+                    print 'Collecting files from host "%s" to "%s".' % (host, localdstdir)
+                    tf = tarfile.open(ltf, 'r:gz')
+                    tf.extractall(localdstdir)
                     tf.close()
+
+            finally:
                 os.remove(ltf)
 
         # execute the remove threads
-        for t in threads:
+        for t in removers:
             t.start()
 
         # collect the return objects and monitor for exception
         returnobjs = {}
         exception = False
-        for t in threads:
+        for t in removers:
             t.join()
             returnobjs[t.name] = t.returnobject()
             if returnobjs[t.name].retval['isexception']:
