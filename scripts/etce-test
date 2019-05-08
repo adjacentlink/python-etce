@@ -201,21 +201,13 @@ def add_run_arguments(parser):
                         ssh port value, 22.''')
     parser.add_argument('--sshkey',
                         metavar='KEYFILE',
-                        nargs='?',
-                        const='config',
                         default=None,
-                        help='''ETCE attempts SSH authentication in two ways,
-                        first through a running ssh-agent and, if that fails,
-                        by selecting one of the user's SSH key files directly.
-                        For agent authentication, the correct key must be
-                        the first in the agent's cache. Use the sshkey
-                        argument to bypass agent authentication. If the
-                        optional KEYFILE argument is provided, it names the
-                        SSH key to use for authentication. This must
-                        either be an absolute file name or the name of
-                        a keyfile in ~/.ssh. If an argument is not provided,
-                        ETCE tries to determine the appropriate key
-                        to use by inspecting ~/.ssh/config.''')
+                        help='''The SSH key file to use for connecting to
+                        test hosts. If KEYFILE is not an absolute filename
+                        it is assumed to be a keyfile in ~/.ssh. When not
+                        specified ETCE tries to determine the appropriate
+                        key to use for each host by inspecting 
+                        ~/.ssh/config.''')
     parser.add_argument('--user',
                         action='store',
                         default=None,
@@ -402,6 +394,15 @@ def run_test(args):
             try:
                 # run test trials
                 for i in range(args.numtrials):
+                    # create connection to all nodes
+                    if client is None:
+                        client = ClientBuilder().build(allnodes,
+                                                       user=args.user,
+                                                       port=args.port,
+                                                       policy=args.policy,
+                                                       sshkey=args.sshkey,
+                                                       envfile=args.envfile)
+                    
                     print testdivider
 
                     print 'BEGIN "%s" trial %d' % (test.name(), i+1)
@@ -437,29 +438,13 @@ def run_test(args):
                                              ('setup',
                                               localtesttemplatedir,
                                               localtestresultsdir)
-                        
+
                         print 'setup hookscript:',hookscript_command
-                        
+
                         print 'returns: %d' % \
                             AppRunner(hookscript_command, stdout=sys.stdout, stderr=sys.stderr).retvalue()
 
                         print
-                        
-                        client = ClientBuilder().build(allnodes,
-                                                       user=args.user,
-                                                       port=args.port,
-                                                       policy=args.policy,
-                                                       sshkey=args.sshkey,
-                                                       envfile=args.envfile)
-
-                    # create connection to all nodes
-                    elif client is None:
-                        client = ClientBuilder().build(allnodes,
-                                                       user=args.user,
-                                                       port=args.port,
-                                                       policy=args.policy,
-                                                       sshkey=args.sshkey,
-                                                       envfile=args.envfile)
 
                     stepsfiledoc = \
                         StepsFileDoc(os.path.join(localtesttemplatedir,
@@ -541,7 +526,7 @@ def run_test(args):
                         client.collect(trialsubdirs,
                                        localtestresultsdir,
                                        filesystemnodes)
-                
+
                     resultsubdirs.append(localtestresultsdir)
 
                     # kill any processes with pids stored in left-over lockfiles
@@ -564,7 +549,7 @@ def run_test(args):
                                              ('teardown',
                                               localtesttemplatedir,
                                               localtestresultsdir)
-                        
+
                         print 'teardown hookscript:',hookscript_command
 
                         print 'returns: %d' % \
@@ -579,7 +564,7 @@ def run_test(args):
                     # to close
                     if keyboard_interrupt:
                         raise KeyboardInterrupt()
-                    
+
             except ETCEExecuteException as e:
                 print >>sys.stderr
                 print >>sys.stderr,'Failed test "%s" with exception:' \
@@ -607,7 +592,7 @@ def run_test(args):
         print >>sys.stderr
         if args.verbose:
             print traceback.format_exc()
-        
+
     finally:
         if client:
             client.close()
@@ -619,7 +604,7 @@ def run_test(args):
 
             for resultsubdir in sorted(resultsubdirs):
                 print '\t%s' % resultsubdir
-            
+
 
 
 
