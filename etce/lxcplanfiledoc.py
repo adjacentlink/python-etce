@@ -136,7 +136,7 @@ class Bridge(object):
         self._name = str(bridgeelem.attrib['name'])
 
         self._persistent = True \
-            if str(bridgeelem.attrib['persistent'].upper()) == 'TRUE' \
+            if str(bridgeelem.attrib.get('persistent','False')).upper() == 'TRUE' \
                else False
 
         self._ipv4 = None
