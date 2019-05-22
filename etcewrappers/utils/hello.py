@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2018,2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,42 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
+from etce.wrapper import Wrapper
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-populate-knownhosts',
-                'scripts/etce-test',
-                'scripts/etce-wrapper'])
 
+class Hello(Wrapper):
+    """
+    Demo wrapper that prints "Greeting Recipient!", where 'Greeting'
+    is specified by the greeting argument and 'Recipient' is specified
+    in the hello.args input file. Set the 'verbose' argument to
+    true for a longer greeting.
+    """
+    def register(self, registrar):
+        registrar.register_infile_name('hello.args')
+
+        registrar.register_outfile_name('hello.log')
+
+        registrar.register_argument('greeting',
+                                    'Hello',
+                                    'Greeting to use to address recipient.')
+
+        registrar.register_argument('verbose',
+                                    False,
+                                    'Set to true for a longer greeting.')
+
+
+    def run(self, ctx):
+        if not ctx.args.infile:
+            return
+
+        recipient = open(ctx.args.infile).readline().strip()
+
+        argstr = '%s %s!' % (ctx.args.greeting, recipient)
+
+        # add double quotes and, optionally, an extra greeting
+        if ctx.args.verbose:
+            argstr = '"%s How ya doing?"' % argstr
+        else:
+            argstr = '"%s"' % argstr 
+
+        ctx.run('echo', argstr, genpidfile=False, stdout=ctx.args.outfile)

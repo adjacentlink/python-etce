@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2016-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,46 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-populate-knownhosts',
-                'scripts/etce-test',
-                'scripts/etce-wrapper'])
+from etce.wrapper import Wrapper
+from etce.timeutils import getstrtimenow
 
+
+class Ip(Wrapper):
+    """
+    Issue ip program commands. The input files should consist
+    of any valid arguments to the ip command listed one per line.
+    Comment lines starting with '#" are permitted. For example:
+
+     route add default via 192.168.100.1
+
+    """
+
+    def register(self, registrar):
+        registrar.register_infile_name('ip.script')
+        registrar.register_outfile_name('ip.log')
+
+
+    def run(self, ctx):
+        if not ctx.args.infile:
+            return
+
+        with open(ctx.args.outfile,'a') as lfd:
+            for line in open(ctx.args.infile):
+                # skip comments
+                if line.startswith('#'):
+                    continue
+
+                # skip empty lines
+                argstr = line.strip()
+
+                if len(argstr) == 0:
+                    continue
+
+                ctx.run('ip', argstr, genpidfile=False)
+
+                lfd.write('%s: ip %s\n' % (getstrtimenow(), argstr))
+
+
+    def stop(self, ctx):
+        pass

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,40 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
+from etce.wrapper import Wrapper
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-populate-knownhosts',
-                'scripts/etce-test',
-                'scripts/etce-wrapper'])
 
+class OTestpointBroker(Wrapper):
+    """
+
+    Instantiate an otestpoint-broker instance on this node.
+
+    """
+
+    def register(self, registrar):
+        registrar.register_argument('loglevel', 3, 'log level - [0,3]')
+
+        registrar.register_infile_name('otestpoint-broker.xml')
+
+        registrar.register_outfile_name('otestpoint-broker.log')
+
+
+    def run(self, ctx):
+        if not ctx.args.infile:
+            return
+
+        argstr = '%s ' \
+                 '--daemonize ' \
+                 '--loglevel %d ' \
+                 '--logfile %s ' \
+                 '--pidfile %s ' \
+                 % (ctx.args.infile,
+                    ctx.args.loglevel,
+                    ctx.args.outfile,
+                    ctx.args.default_pidfilename)
+
+        ctx.run('otestpoint-broker', argstr, genpidfile=False)
+
+
+    def stop(self, ctx):
+        ctx.stop()

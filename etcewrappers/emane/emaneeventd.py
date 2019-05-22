@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,59 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
+import time
+from etce.wrapper import Wrapper
+from etce.postconditionerror import PostconditionError
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-populate-knownhosts',
-                'scripts/etce-test',
-                'scripts/etce-wrapper'])
 
+class EmaneEventd(Wrapper):
+    """
+    Run emaneeventd with the provided configuration file.
+    """
+
+    def register(self, registrar):
+        registrar.register_argument('loglevel', 2, 'log level - [0,4]')
+
+        registrar.register_infile_name('eventdaemon.xml')
+
+        registrar.register_outfile_name('eventdaemon.log')
+
+
+    def run(self, ctx):
+        if not ctx.args.infile:
+            return
+
+        argstr = '%s ' \
+                 '--daemonize ' \
+                 '--realtime ' \
+                 '--loglevel %d ' \
+                 '--logfile %s ' \
+                 '--pidfile %s' \
+                 % (ctx.args.infile,
+                    ctx.args.loglevel,
+                    ctx.args.outfile,
+                    ctx.args.default_pidfilename)
+
+        ctx.run('emaneeventd', argstr, genpidfile=False)
+
+
+    def postrun(self, ctx):
+        if ctx.args.infile is None:
+            return
+
+        time.sleep(1)
+        name = 'emaneeventd'
+
+        pids = ctx.platform.getpids(name)
+
+        if len(pids) == 0:
+            e = 'postrun fail: no %s running' % name
+            raise PostconditionError(e)
+
+        if len(pids) > 1:
+            e = 'postrun fail: multiple %s instances running' % name
+            raise PostconditionError(e)
+
+
+    def stop(self, ctx):
+        ctx.stop(signal=signal.SIGKILL)

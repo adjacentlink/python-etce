@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
+from etce.wrapper import Wrapper
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-populate-knownhosts',
-                'scripts/etce-test',
-                'scripts/etce-wrapper'])
 
+class Gpsd(Wrapper):
+    """
+    Run gpsd.
+    """
+
+    def register(self, registrar):
+        registrar.register_infile_name('gpsd.flag')
+
+        registrar.register_outfile_name('gpsd.log')
+
+
+    def run(self, ctx):
+        if ctx.args.infile is None:
+            return
+
+        argstr = '-P %s/gpsd.pid -G -n -b /dev/pts/1' % ctx.args.logdirectory
+
+        with open(ctx.args.outfile, 'w') as logf:
+            logf.write('gpsd %s\n' % argstr)
+
+        ctx.run('gpsd',
+                argstr,
+                stdout=ctx.args.outfile, 
+                stderr=ctx.args.outfile,
+                pidincrement=1)
+
+
+    def stop(self, ctx):
+        ctx.stop()

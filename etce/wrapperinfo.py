@@ -36,8 +36,7 @@ from etce.argregistrar import ArgRegistrar
 
 
 class WrapperInfoPrinter(ArgRegistrar):
-    def __init__(self, wrapperpath, description, ignore_sudo):
-        self._wrapperpath = wrapperpath
+    def __init__(self, description, ignore_sudo):
         self._description = description
         self._args = []
         self._infile_name = None
@@ -63,8 +62,6 @@ class WrapperInfoPrinter(ArgRegistrar):
 
     def __str__(self):
         s = ''
-        s += 'path:\n'
-        s += '\t%s\n' % self._wrapperpath
         s += 'description:\n'
         s += '\t%s\n' % str(self._description)
         s += 'input file name:\n'

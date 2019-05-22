@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,43 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
+import time
+import random
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-populate-knownhosts',
-                'scripts/etce-test',
-                'scripts/etce-wrapper'])
+from etce.wrapper import Wrapper
 
+
+class SleepWait(Wrapper):
+    """
+    Sleep and wait for a fixed or randomly selected period.
+    """
+
+    def register(self, registrar):
+        registrar.register_argument('sleepseconds',
+                           10.0,
+                           'The number of seconds to sleep/wait')
+
+        registrar.register_argument('range',
+                                    0.0,
+                                    'A range, centered at "sleepseconds" from which ' \
+                                    'a sleep time is selected. For example for ' \
+                                    'sleepseconds=10.0 and range=10.0, a sleep time ' \
+                                    'time is uniformly selected from the range ' \
+                                    '[5.0,15.0]')
+
+
+    def run(self, ctx):
+        sleepsecsmiddle = ctx.args.sleepseconds
+
+        sleeprange = ctx.args.range
+
+        sleepsecs = random.uniform(sleepsecsmiddle - (sleeprange/2.0),
+                                   sleepsecsmiddle + (sleeprange/2.0))
+
+        print 'sleepwait sleepsecs=%0.1f' % sleepsecs
+
+        time.sleep(sleepsecs)
+
+
+    def stop(self, ctx):
+        pass

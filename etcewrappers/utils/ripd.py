@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,34 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
+import os
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-populate-knownhosts',
-                'scripts/etce-test',
-                'scripts/etce-wrapper'])
+from etce.preconditionerror import PreconditionError
+from etce.wrapper import Wrapper
 
+
+class RIPd(Wrapper):
+    """
+    Run ripd with the specified ripd configuration file.
+    """
+    def register(self, registrar):
+        registrar.register_infile_name('ripd.conf')
+
+        registrar.register_argument('user', 'quagga', 'run as the specified user')
+
+
+    def run(self, ctx):
+        if not ctx.args.infile:
+            return
+
+        argstr = '-d --user %s -i %s -z /tmp/zebra-%s.sock -f %s' % \
+                 (ctx.args.user,
+                  ctx.args.default_pidfilename,
+                  ctx.args.nodename,
+                  ctx.args.infile)
+
+        ctx.run('ripd', argstr, extra_paths=['/usr/sbin', '/usr/lib/quagga'])
+
+
+    def stop(self, ctx):
+        ctx.stop()

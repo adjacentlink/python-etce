@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,45 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
+from etce.wrapper import Wrapper
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-populate-knownhosts',
-                'scripts/etce-test',
-                'scripts/etce-wrapper'])
 
+class EmaneCommand(Wrapper):
+    """
+    Run emanecommand-eel with the provided script file. The file
+    is in the format accepted by emanecommand-eel "see
+    emanecommand-eel -h".
+    """
+
+    def register(self, registrar):
+        registrar.register_infile_name('emanecommand.script')
+
+        registrar.register_outfile_name('emanecommand.log')
+
+        
+    def run(self, ctx):
+        if not ctx.args.infile:
+            return
+
+        # Usage: emanecommand-eel [OPTION].. EELINPUTFILE
+
+        # Options:
+        # -h, --help            show this help message and exit
+        # --starttime=STARTTIME
+        #                Specify test start time HH:MM:SS
+        # --logfile=LOGFILE     Write logs to file
+
+        # set initial conditions
+        hourminsec = ctx.args.starttime.split('T')[1]
+
+        argstr = '--starttime %s ' \
+                 '--logfile %s %s' % \
+                 (hourminsec, 
+                  ctx.args.outfile, 
+                  ctx.args.infile)
+
+        ctx.daemonize('emanecommand-eel', argstr)
+
+
+    def stop(self, ctx):
+        ctx.stop()

@@ -19,12 +19,6 @@
 [etce]
 ##################################################
 #
-# ETCE Wrappers are dynamically loadable Python
-# modules that can be called to execute individual
-# ETCE test steps. The WRAPPER_DIRECTORY takes
-# a colon separated set of directory names
-# that are searched, in order, for Wrappers.
-#
 # ETCE uses the WORK_DIRECTORY as the destination
 # of most of the files it generates. It organizes
 # files into these subdirectories:
@@ -48,7 +42,6 @@
 #
 ##################################################
 #WORK_DIRECTORY=/tmp/etce
-#WRAPPER_DIRECTORY=/opt/etce/wrappers
 
 
 ##################################################

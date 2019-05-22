@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,47 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-populate-knownhosts',
-                'scripts/etce-test',
-                'scripts/etce-wrapper'])
+from etce.wrapper import Wrapper
 
+
+class IGMPBridge(Wrapper):
+    """
+    Run an instance of igmpbridge. The input file should consist of, at most,
+    one line of igmpbridge command line arguments, for example:
+
+    emane0 lan0
+
+    Comment lines, beginning with '#' are permitted. 
+    """
+    def register(self, registrar):
+        registrar.register_infile_name('igmpbridge.conf')
+
+        registrar.register_outfile_name('igmpbridge.log')
+
+
+    def run(self, ctx):
+        if not ctx.args.infile:
+            return
+
+        argstr = ''
+
+        conflines = [ line.strip() for line
+                      in open(ctx.args.infile).readlines()
+                      if len(line.strip()) > 0
+                      and line[0] != '#']
+
+        # take the last non-comment line as the argument string
+        if len(conflines) > 0:
+            argstr = conflines[-1]
+
+        if not argstr:
+            open(ctx.args.outfile, 'w').write('igmpbridge: error empty argstr. Quitting.')
+        else:
+            open(ctx.args.outfile, 'w').write('igmpbridge %s' % argstr)
+
+            ctx.daemonize('igmpbridge', argstr)
+
+
+    def stop(self, ctx):
+        ctx.stop()

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,55 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
+import os
+import ConfigParser
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-populate-knownhosts',
-                'scripts/etce-test',
-                'scripts/etce-wrapper'])
+from etce.wrapper import Wrapper
+
+
+class SysCtlUtil(Wrapper):
+    """
+    Configure Linux kernel parameters.
+    The input file should have format: 
+
+      [run]
+      kernelparamname=val
+      ...
+
+      [stop]
+      kernelparamname=val
+      ...
+
+    Both "run" and "stop" sections are optional. Named
+    parameters are set to the specified value when the
+    corresponding wrapper method is called.
+    """
+
+    def register(self, registrar):
+        registrar.register_infile_name('sysctlutil.conf')
+
+
+    def run(self, ctx):
+        if not ctx.args.infile:
+            return
+
+        parser = ConfigParser.SafeConfigParser()
+        parser.read(ctx.args.infile)
+
+        if 'run' in parser.sections():
+            for name,val in parser.items('run'):
+                os.system('sysctl -w %s=%s' % (name,val))
+
+
+    def stop(self, ctx):
+        if not ctx.args.infile:
+            return
+
+        parser = ConfigParser.SafeConfigParser()
+        parser.read(ctx.args.infile)
+
+        if 'stop' in parser.sections():
+            for name,val in parser.items('stop'):
+                os.system('sysctl -w %s=%s' % (name,val))
+
 

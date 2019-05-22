@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2016-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,37 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
+from etce.wrapper import Wrapper
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-populate-knownhosts',
-                'scripts/etce-test',
-                'scripts/etce-wrapper'])
 
+class Ethtool(Wrapper):
+    """
+    Run ethtool with the command line argmuments listed
+    in the input file. ethtool is executed once per non-empty
+    input line. # comment lines permitted. For example:
+
+      # Turn of rx and tx checksumming on eth0
+      --offload eth0 rx off tx off
+
+    """
+    def register(self, registrar):
+        registrar.register_infile_name('ethtool.script')
+
+        
+    def run(self, ctx):
+        if not ctx.args.infile:
+            return
+
+
+        for line in open(ctx.args.infile):
+            # ignore anything after first '#' (comment)
+            argstr = line.split('#')[0].strip()
+
+            if len(argstr) == 0:
+                continue
+
+            ctx.run('ethtool', argstr, genpidfile=False)
+
+
+    def stop(self, ctx):
+        pass

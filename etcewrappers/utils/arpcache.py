@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2015-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,49 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-populate-knownhosts',
-                'scripts/etce-test',
-                'scripts/etce-wrapper'])
+from etce.wrapper import Wrapper
 
+
+class ARPCache(Wrapper):
+    """
+    The utils.arpcache wrapper populates the arp
+    table based on the entries in the input file. 
+    The input file takes 1 entry/line in format:
+
+    <interface> <ipaddress> <ethaddress>
+
+    For example: 
+
+    emane0 172.30.1.2 02:02:00:00:00:02
+    """
+
+    def register(self, registrar):
+        registrar.register_infile_name('arpcache.script')
+
+        registrar.register_outfile_name('arpcache.log')
+
+
+    def run(self, ctx):
+        if not ctx.args.infile:
+            return
+
+        for line in open(ctx.args.infile):
+            line = line.strip()
+
+            if len(line) == 0:
+                continue
+
+            if line[0] == '#':
+                continue
+            
+            interface,ipaddress,ethaddress = line.split()
+            # arp -i emane0 -s 172.30.1.2 02:02:00:00:00:02
+
+            argstr = '-i %s -s %s %s' % (interface, ipaddress, ethaddress)
+
+            ctx.run('arp', argstr, genpidfile=False)
+
+            
+    def stop(self, ctx):
+        pass

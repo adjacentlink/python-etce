@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2017-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,32 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
+from etce.wrapper import Wrapper
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-populate-knownhosts',
-                'scripts/etce-test',
-                'scripts/etce-wrapper'])
 
+class SMCRouted(Wrapper):
+    """
+    Run smcrouted with the specified smcrouted configuration file.
+    """
+    def register(self, registrar):
+        registrar.register_infile_name('smcrouted.script')
+
+        registrar.register_outfile_name('smcrouted.log')
+
+
+    def run(self, ctx):
+        if not ctx.args.infile:
+            return
+
+        argstr = '-P %s -f %s' % \
+                 (ctx.args.default_pidfilename, ctx.args.infile)
+
+        ctx.run('smcrouted',
+                argstr,
+                genpidfile=False,
+                stdout=ctx.args.outfile, 
+                stderr=ctx.args.outfile)
+
+
+    def stop(self, ctx):
+        ctx.stop()

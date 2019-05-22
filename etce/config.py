@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,6 @@ class ConfigDictionary(object):
             'TEMPLATE_HOSTNUMBER_DIGITS':'3',
             'TEMPLATE_DIRECTORY_SUFFIX':'tpl',
             'WORK_DIRECTORY':default_working_directory,
-            'WRAPPER_DIRECTORY':'/opt/etce/wrappers',
             'ENV_OVERLAYS_ALLOW':'',
             'IGNORE_RUN_WITH_SUDO':'yes'
         },
@@ -99,10 +98,6 @@ class ConfigDictionary(object):
             for name,val in namevals.items():
                 if not self.parser.has_option(section, name):
                     self.parser.set(section, name, val)
-
-        # allow for environment override of the two path variables
-        if 'WRAPPER_DIRECTORY' in os.environ:
-            self.parser.set('etce', 'WRAPPER_DIRECTORY', os.environ['WRAPPER_DIRECTORY'])
 
 
     def get(self, section, key, default=None):
