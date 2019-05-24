@@ -291,13 +291,6 @@ class SSHClient(etce.fieldclient.FieldClient):
                     'sshkey "%s" doesn\'t exist. Quitting.' % \
                     user_specified_key_file)
 
-        policy = RejectPolicy
-
-        if policystr == 'warning':
-            policy = WarningPolicy
-        elif policystr == 'autoadd':
-            policy = AutoAddPolicy
-
         self._envfile = kwargs.get('envfile', None)
 
         self._config = ConfigDictionary()
@@ -311,6 +304,15 @@ class SSHClient(etce.fieldclient.FieldClient):
             ssh_config.parse(open(ssh_config_file))
 
         authenticated_keys = {}
+
+        policy = RejectPolicy
+
+        if policystr == 'warning':
+            policy = WarningPolicy
+        elif policystr == 'autoadd':
+            policy = AutoAddPolicy
+
+        policy = self._set_unknown_hosts_policy(hosts, port, ssh_config, policy)
 
         for host in hosts:
             host_config = None
@@ -364,9 +366,11 @@ class SSHClient(etce.fieldclient.FieldClient):
 
                 client = paramiko.SSHClient()
 
-                client.set_missing_host_key_policy(policy())
-
                 client.load_system_host_keys()
+
+                client.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+
+                client.set_missing_host_key_policy(policy())
 
                 client.connect(hostname=host,
                                username=host_user,
@@ -703,6 +707,50 @@ class SSHClient(etce.fieldclient.FieldClient):
             raise ValueError('Error: "." not permitted is src')
 
         return srcdir,srcbase
+
+
+    def _set_unknown_hosts_policy(self, hosts, port, ssh_config, policy):
+        hk = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+
+        # build list of hosts that don't have an ssh-rsa entry in known_hosts
+        unknown_hosts = []
+
+        for host in hosts:
+            host_config = None
+
+            if ssh_config:
+                host_config = ssh_config.lookup(host)
+
+            host_port = 22
+            if port:
+                host_port = port
+            elif host_config:
+                host_port = host_config.get('port', host_port)
+
+            host_to_check = '[%s]:%d' % (host, int(host_port))
+
+            host_keys = hk.get(host_to_check, None)
+
+            if not host_keys:
+                unknown_hosts.append(host)
+            else:
+                rsakey = host_keys.get('ssh-rsa', None)
+
+                if not rsakey:
+                    unknown_hosts.append(host)
+
+        # if we found an unknown host and we're configured to reject, ask user for permission to add
+        if unknown_hosts and (policy == RejectPolicy):
+            unknown_hosts_str = '{' + ', '.join(sorted(unknown_hosts)) + '}'
+            response = raw_input('Found unknown hosts: "%s". Add to known_hosts (Y/N) [N]? ' % unknown_hosts_str)
+
+            if not response.upper() == 'Y':
+                print >>sys.stderr,'Quitting.'
+                exit(1)
+
+            return AutoAddPolicy
+
+        return policy
 
 
     def close(self):
