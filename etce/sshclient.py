@@ -710,7 +710,7 @@ class SSHClient(etce.fieldclient.FieldClient):
 
 
     def _set_unknown_hosts_policy(self, hosts, port, ssh_config, policy):
-        hk = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+        all_host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
 
         # build list of hosts that don't have an ssh-rsa entry in known_hosts
         unknown_hosts = []
@@ -727,13 +727,17 @@ class SSHClient(etce.fieldclient.FieldClient):
             elif host_config:
                 host_port = host_config.get('port', host_port)
 
-            host_to_check = '[%s]:%d' % (host, int(host_port))
+            # try host and [host]:port as keys to check in known_hosts as
+            # format depends on ssh version
+            keys_to_check = set([host, '[%s]:%d' % (host, int(host_port))])
 
-            host_keys = hk.get(host_to_check, None)
+            found_keys = keys_to_check.intersection(set(all_host_keys.keys()))
 
-            if not host_keys:
+            if not found_keys:
                 unknown_hosts.append(host)
             else:
+                host_keys = all_host_keys.get(sorted(found_keys)[0], None)
+
                 rsakey = host_keys.get('ssh-rsa', None)
 
                 if not rsakey:
