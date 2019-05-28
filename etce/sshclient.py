@@ -746,7 +746,7 @@ class SSHClient(etce.fieldclient.FieldClient):
         # if we found an unknown host and we're configured to reject, ask user for permission to add
         if unknown_hosts and (policy == RejectPolicy):
             unknown_hosts_str = '{' + ', '.join(sorted(unknown_hosts)) + '}'
-            response = raw_input('Found unknown hosts: "%s". Add to known_hosts (Y/N) [N]? ' % unknown_hosts_str)
+            response = raw_input('Unknown hosts: %s. Add to known_hosts (Y/N) [N]? ' % unknown_hosts_str)
 
             if not response.upper() == 'Y':
                 print >>sys.stderr,'Quitting.'

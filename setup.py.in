@@ -45,7 +45,7 @@ setup(description='Extendable Test Control Environment',
       scripts=[ 'scripts/etce-field-exec',
                 'scripts/etce-list-hosts',
                 'scripts/etce-lxc',
-                'scripts/etce-populate-knownhosts',
+                'scripts/etce-check-connection',
                 'scripts/etce-test',
                 'scripts/etce-wrapper'])
 
