@@ -196,10 +196,8 @@ class TemplateFileBuilder(object):
 
 
     def _read_attributes(self, templatefileelem):
-        default_hostname_format = ConfigDictionary().get('etce', 'DEFAULT_ETCE_HOSTNAME_FORMAT')
-
         hostname_format = \
-            templatefileelem.attrib.get('hostname_format', default_hostname_format)
+            templatefileelem.attrib['hostname_format']
 
         outputfilename = \
             templatefileelem.attrib.get('output_file_name', 

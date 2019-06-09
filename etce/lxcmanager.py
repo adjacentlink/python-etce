@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2017,2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@ from etce.lxcplanfiledoc import LXCPlanFileDoc
 from etce.lxcerror import LXCError
 
 
-def startlxcs(lxcplan, writehosts=False, forcelxcroot=False, dryrun=False):
+def startlxcs(lxcplan, writehosts=False, dryrun=False):
     lxcplanfiledoc = lxcplan
 
     if not type(lxcplan) == LXCPlanFileDoc:
@@ -54,7 +54,6 @@ def startlxcs(lxcplan, writehosts=False, forcelxcroot=False, dryrun=False):
     try:
         LXCManagerImpl().start(lxcplanfiledoc,
                                writehosts=writehosts,
-                               forcelxcroot=forcelxcroot,
                                dryrun=dryrun)
     except Exception as e:
         raise LXCError(e.message)
@@ -76,13 +75,10 @@ def stoplxcs(lxcplan):
 
 class LXCManagerImpl(object):
     def __init__(self):
-        # check root
-        #if not os.geteuid() == 0:
-        #    raise RuntimeError('You need to be root to perform this command.')
         self._platform = Platform()
 
 
-    def start(self, plandoc, writehosts, forcelxcroot=False, dryrun=False):
+    def start(self, plandoc, writehosts, dryrun=False):
         hostname = socket.gethostname().split('.')[0]
         lxcrootdir = plandoc.lxc_root_directory(hostname)
         containers = plandoc.containers(hostname)
@@ -115,14 +111,16 @@ class LXCManagerImpl(object):
 
         # delete and remake the node root
         if os.path.exists(lxcrootdir):
-            if forcelxcroot:
-                print 'Force removal of "%s" lxc root directory.' \
-                    % lxcrootdir
-                shutil.rmtree(lxcrootdir)
-            else:
-                raise LXCError('%s lxc root directory already exists, Quitting.' % lxcrootdir)
-
-        os.makedirs(lxcrootdir)
+            print 'Removing contents of "%s" directory.' \
+                % lxcrootdir
+            for subentry in os.listdir(lxcrootdir):
+                entry = os.path.join(lxcrootdir, subentry)
+                if os.path.isfile(entry):
+                    os.remove(entry)
+                elif os.path.isdir(entry):
+                    shutil.rmtree(entry)
+        else:
+            os.makedirs(lxcrootdir)
 
         # set kernelparameters
         kernelparameters = plandoc.kernelparameters(hostname)

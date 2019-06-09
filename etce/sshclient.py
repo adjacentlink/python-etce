@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,13 +33,17 @@
 
 from collections import namedtuple
 import errno
+import getpass
 import os
 import json
 import paramiko
 from paramiko.client import RejectPolicy,WarningPolicy,AutoAddPolicy
+from paramiko.pkey import PasswordRequiredException
+from paramiko.rsakey import RSAKey
 import re
 import select
 import socket
+import sys
 import StringIO
 from threading import Thread, Lock
 import tarfile
@@ -241,20 +245,53 @@ class SSHClient(etce.fieldclient.FieldClient):
 
         self._execute_threads = []
 
+        # ssh authentication is revised (5/7/2019):
+        #
+        # As tested against paramiko 1.16
+        #
+        # User must specify the ssh key file to use for authentication. They
+        # can specify the key file explicitly with the sshkey parameter -
+        # if the filename is not absolute, it is assumed to be a file located
+        # in ~/.ssh. If sshkey is None, try to determine the key file from
+        # ~/.ssh/config. If that also fails, check for the default ssh rsa
+        # key ~/.ssh/id_rsa and attempt to use that.
+        #
+        # paramiko also allows provides a paramiko.agent.Agent class for
+        # querying a running ssh-agent for its loaded keys. The agent
+        # agent can be used:
+        #
+        #   1. by calling connect with allow_agent = True (the default)
+        #   2. by calling Agent().get_keys() and passing to connect as pkey
+        #
+        # In the first case, the connect call selects the first key found
+        # in the running agent and prompts for a passphrase - without indicating
+        # the key it is prompting for. In the second case, the only identifying
+        # information that can be obtained from an agent returned key object is
+        # its md5 fingerprint - which is correct but not convenient for
+        # helping the user select and identify the agent key to use. For these
+        # reasons, ignore the agent for authentication and make the user identify
+        # the key file(s) to use - preferable via there .ssh/config file.
+
         user = kwargs.get('user', None)
 
         port = kwargs.get('port', None)
 
         policystr = kwargs.get('policy', 'reject')
 
-        policy = RejectPolicy
+        sshkey = kwargs.get('sshkey', None)
 
-        if policystr == 'warning':
-            policy = WarningPolicy
-        elif policystr == 'autoadd':
-            policy = AutoAddPolicy
+        user_specified_key_file = None
 
-        key_filenames = None
+        if sshkey:
+            if sshkey[0] == '/':
+                user_specified_key_file = sshkey
+            else:
+                user_specified_key_file = os.path.expanduser(os.path.join('~/.ssh', sshkey))
+
+            if not os.path.exists(user_specified_key_file):
+                raise FieldConnectionError(
+                    'sshkey "%s" doesn\'t exist. Quitting.' % \
+                    user_specified_key_file)
 
         self._envfile = kwargs.get('envfile', None)
 
@@ -264,58 +301,110 @@ class SSHClient(etce.fieldclient.FieldClient):
 
         ssh_config = None
 
-        if os.path.exists(ssh_config_file):            
+        if os.path.exists(ssh_config_file):
             ssh_config = paramiko.SSHConfig()
             ssh_config.parse(open(ssh_config_file))
-        
+
+        authenticated_keys = {}
+
+        policy = RejectPolicy
+
+        if policystr == 'warning':
+            policy = WarningPolicy
+        elif policystr == 'autoadd':
+            policy = AutoAddPolicy
+
+        policy = self._set_unknown_hosts_policy(hosts, port, ssh_config, policy)
+
         for host in hosts:
             host_config = None
+
             if ssh_config:
                 host_config = ssh_config.lookup(host)
+
             host_user = os.path.basename(os.path.expanduser('~'))
-            host_port = 22
-            host_key_filenames = []
-            
             if user:
                 host_user = user
             elif host_config:
                 host_user = host_config.get('user', host_user)
 
+            host_port = 22
             if port:
                 host_port = port
             elif host_config:
                 host_port = host_config.get('port', host_port)
 
-            if key_filenames:
-                host_key_filenames = key_filenames
+            host_key_filenames = []
+            if user_specified_key_file:
+                host_key_filenames = [ user_specified_key_file ]
             elif host_config:
                 host_key_filenames = host_config.get('identityfile', host_key_filenames)
-                
-            try:
-                client = paramiko.SSHClient()
 
-                client.set_missing_host_key_policy(policy())
+            if not host_key_filenames:
+                default_rsa_keyfile = os.path.join(os.path.expanduser('~'), '.ssh', 'id_rsa')
+                if os.path.exists(default_rsa_keyfile) and os.path.isfile(default_rsa_keyfile):
+                    host_key_filenames = [default_rsa_keyfile]
+                else:
+                    message = 'Unable to find an RSA SSH key associated with host "%s". '\
+                              'Either:\n\n' \
+                              ' 1) specify a key using the "sshkey" option\n' \
+                              ' 2) add a "Host" rule to your ~/.ssh/config file identifying the key\n' \
+                              ' 3) create a default RSA key ~/.ssh/id_rsa".\n\n' \
+                              'Quitting.' % host
+                    raise FieldConnectionError(message)
+
+            try:
+                pkey = None
+
+                for host_key_file in host_key_filenames:
+                    if host_key_file in authenticated_keys:
+                        pkey = authenticated_keys[host_key_file]
+                    else:
+                        pkey = None
+                        try:
+                            # Assume key is not passphrase protected first
+                            pkey = RSAKey.from_private_key_file(host_key_file, None)
+                        except PasswordRequiredException as pre:
+                            # if that fails, prompt for passphrase
+                            pkey = RSAKey.from_private_key_file(
+                                host_key_file,
+                                getpass.getpass('Enter passphrase for %s: ' % host_key_file))
+
+                    authenticated_keys[host_key_file] = pkey
+
+                    break
+
+                if not pkey:
+                    message = 'Unable to connect to host "%s", cannot authenticate. ' \
+                              'Quitting.' % host,
+                    raise FieldConnectionError(message)
+
+                client = paramiko.SSHClient()
 
                 client.load_system_host_keys()
 
-                self._connection_dict[host] = client
+                client.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
 
-                self._connection_dict[host].connect(hostname=host,
-                                                    username=host_user,
-                                                    port=int(host_port),
-                                                    key_filename=host_key_filenames,
-                                                    allow_agent=True)
+                client.set_missing_host_key_policy(policy())
+
+                client.connect(hostname=host,
+                               username=host_user,
+                               port=int(host_port),
+                               pkey=pkey,
+                               allow_agent=False)
+
+                self._connection_dict[host] = client
 
             except socket.gaierror as ge:
                 message = '%s "%s". Quitting.' % (ge.strerror, host)
                 raise FieldConnectionError(message)
 
             except paramiko.ssh_exception.NoValidConnectionsError as e:
-                raise FieldConnectionError('Unable to connect to host "%s". Quitting.' % host)
+                raise FieldConnectionError('Unable to connect to host "%s", ' \
+                                           'NoValidConnectionsError. Quitting.' % host)
 
             except Exception as e:
-                message = 'Unable to connect to host "%s" (%s). Quitting.' % (host, str(e))
-                raise FieldConnectionError(message)
+                raise FieldConnectionError(e)
 
 
     def sourceisdestination(self, host, srcfilename, dstfilename):
@@ -474,8 +563,6 @@ class SSHClient(etce.fieldclient.FieldClient):
 
 
     def collect(self, remotesrc, localdstdir, hosts):
-        print 'Collecting files from hosts "%s" to "%s."' % (', '.join(hosts), localdstdir)
-
         if len(hosts) == 0:
             print '   Warning: no hosts.'
             return
@@ -525,47 +612,60 @@ class SSHClient(etce.fieldclient.FieldClient):
             print '   Warning: no files to transfer.'
             return
 
-        # Create GetThread for the hosts that have a tarfile to transfer
-        threads = [ GetThread(self._connection_dict[host],
-                              tfile,
-                              os.path.join('/tmp',os.path.basename(tfile)),
-                              host) for host,tfile in tarfiles.items() ]
+        # Retrieve and extract data from each remote host
+        removers = []
+        for host,tfile in tarfiles.items():
+            host_is_local = False
 
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
+            if os.path.exists(tfile):
+                # ignore file if it is already on local machine
+                host_is_local = True
 
-        # extract the tarfiles to the dst directory
-        threads = []
-        for h,tfile in tarfiles.items():
+            getter = GetThread(self._connection_dict[host],
+                               tfile,
+                               os.path.join('/tmp',os.path.basename(tfile)),
+                               host)
+
+            getter.start()
+            getter.join()
+
             ltf = os.path.join('/tmp', os.path.basename(tfile))
             if not os.path.exists(ltf) or not os.path.isfile(ltf):
                 raise RuntimeError('%s does not exist' % ltf)
+
             tf = None
             try:
-                tf = tarfile.open(ltf, 'r:gz')
-                tf.extractall(localdstdir)
                 command = 'etce-field-exec platform rmfile %s' % tfile
                 if self._envfile is not None:
                     command = '. %s; %s' % (self._envfile, command)
                 # also set up a thread to remove the tarfile on remotes
-                threads.append(ExecuteThread(self._connection_dict[host],
+                removers.append(ExecuteThread(self._connection_dict[host],
                                              command,
                                              host))
-            finally:
-                if not tf is None:
+
+                absolute_localdstdir = localdstdir
+                if not absolute_localdstdir[0] == '/':
+                    absolute_localdstdir = os.path.join(localdstdir, remotesrc)
+
+                if host_is_local and os.path.exists(absolute_localdstdir):
+                    print 'Skipping collection from local host "%s".' % host
+                else:
+                    print 'Collecting files from host "%s" to "%s".' % (host, localdstdir)
+                    tf = tarfile.open(ltf, 'r:gz')
+                    tf.extractall(localdstdir)
                     tf.close()
+
+            finally:
                 os.remove(ltf)
 
         # execute the remove threads
-        for t in threads:
+        for t in removers:
             t.start()
 
         # collect the return objects and monitor for exception
         returnobjs = {}
         exception = False
-        for t in threads:
+        for t in removers:
             t.join()
             returnobjs[t.name] = t.returnobject()
             if returnobjs[t.name].retval['isexception']:
@@ -622,6 +722,54 @@ class SSHClient(etce.fieldclient.FieldClient):
             raise ValueError('Error: "." not permitted is src')
 
         return srcdir,srcbase
+
+
+    def _set_unknown_hosts_policy(self, hosts, port, ssh_config, policy):
+        all_host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+
+        # build list of hosts that don't have an ssh-rsa entry in known_hosts
+        unknown_hosts = []
+
+        for host in hosts:
+            host_config = None
+
+            if ssh_config:
+                host_config = ssh_config.lookup(host)
+
+            host_port = 22
+            if port:
+                host_port = port
+            elif host_config:
+                host_port = host_config.get('port', host_port)
+
+            # try host and [host]:port as keys to check in known_hosts as
+            # format depends on ssh version
+            keys_to_check = set([host, '[%s]:%d' % (host, int(host_port))])
+
+            found_keys = keys_to_check.intersection(set(all_host_keys.keys()))
+
+            if not found_keys:
+                unknown_hosts.append(host)
+            else:
+                host_keys = all_host_keys.get(sorted(found_keys)[0], None)
+
+                rsakey = host_keys.get('ssh-rsa', None)
+
+                if not rsakey:
+                    unknown_hosts.append(host)
+
+        # if we found an unknown host and we're configured to reject, ask user for permission to add
+        if unknown_hosts and (policy == RejectPolicy):
+            unknown_hosts_str = '{' + ', '.join(sorted(unknown_hosts)) + '}'
+            response = raw_input('Unknown hosts: %s. Add to known_hosts (Y/N) [N]? ' % unknown_hosts_str)
+
+            if not response.upper() == 'Y':
+                print >>sys.stderr,'Quitting.'
+                exit(1)
+
+            return AutoAddPolicy
+
+        return policy
 
 
     def close(self):

@@ -1,6 +1,5 @@
-#!/bin/bash -
 #
-# Copyright (c) 2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2017-2018 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,27 +30,32 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-usage="usage: etce-populate-knownhosts.sh [-u USER] [-p SSHPORT] HOSTFILE"
+from etce.wrapper import Wrapper
 
-user='root'
 
-sshport=22
+class Olsrd(Wrapper):
+    """
+    Run olsrd with the specified olsrd configuration file.
+    """
 
-while getopts ":hp:" opt; do
-    case $opt in
-        p) sshport=$OPTARG; shift; shift;;
-        h) echo ${usage} && exit 0;;
-        \?) echo "Invalid option -$OPTARG";;
-    esac
-done
+    def register(self, registrar):
+        registrar.register_infile_name('olsrd.conf')
 
-if [ ! $# == 1 ]; then
-  echo ${usage}
-  exit 1
-fi
+        registrar.register_outfile_name('olsrd.log')
 
-hostfile=$1
 
-for host in $(etce-list-hosts ${hostfile}); do
-    ssh ${user}@${host} -p ${sshport} -o HostKeyAlgorithms=ssh-rsa -o HashKnownHosts=no 'hostname';
-done
+    def run(self, ctx):
+        if ctx.args.infile is None:
+            return
+
+        argstr = '-f %s' % ctx.args.infile
+
+        ctx.run('olsrd',
+                argstr,
+                stdout=ctx.args.outfile, 
+                stderr=ctx.args.outfile,
+                pidincrement=1)
+
+
+    def stop(self, ctx):
+        ctx.stop()

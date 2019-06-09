@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2015-2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 
 import imp
 import os
+import sys
 
 from etce.config import ConfigDictionary
 
@@ -41,32 +42,41 @@ class WrapperLoader(object):
         self._config = ConfigDictionary()
 
 
-    def wrapperpaths(self):
-        return self._config.get('etce',
-                                'WRAPPER_DIRECTORY').split(':')
-
-
-    def loadwrappers(self, wrapperpath):
+    def loadwrappers(self):
         wrapperinstances = {}
-        for cwd,dirnames,filenames in os.walk(wrapperpath):
-            for wrapperfile in filenames:
-                try:
-                    wrapperfile = os.path.join(cwd, wrapperfile.split('.')[0])
-                    fullwrappername = \
-                        os.path.relpath(wrapperfile, wrapperpath)
-                    wrapper = self._load_module(fullwrappername, None)
-                    if wrapper is not None:
-                        basename = wrapper.__name__.split('/')[-1]
-                        candidateclassname = basename.upper()
-                        classinstance = None
-                        for key in wrapper.__dict__:
-                            if key.upper() == candidateclassname:
-                                candidateclass = wrapper.__dict__[key]
-                                if callable(candidateclass):
-                                    key = fullwrappername.replace(os.sep,'.')
-                                    wrapperinstances[key] = (wrapperpath,candidateclass())
-                except:
-                    continue
+        for syspath in sys.path:
+            if not os.path.exists(syspath) or not os.path.isdir(syspath):
+                continue
+
+            if not 'etcewrappers' in os.listdir(syspath):
+                continue
+
+            wrapperspath = os.path.join(syspath, 'etcewrappers')
+            if not os.path.isdir(wrapperspath):
+                continue
+
+            for cwd,dirnames,filenames in os.walk(wrapperspath):
+                
+                for wrapperfile in filenames:
+                    try:
+                        wrapperfile = os.path.join(cwd, wrapperfile.split('.')[0])
+                        fullwrappername = \
+                            os.path.relpath(wrapperfile, syspath)
+                        relwrappername = fullwrappername[fullwrappername.index(os.sep)+1:]
+                        wrapper = self._load_module(relwrappername, None)
+                        if wrapper is not None:
+                            basename = wrapper.__name__.split('/')[-1]
+                            candidateclassname = basename.upper()
+                            classinstance = None
+                            for key in wrapper.__dict__:
+                                if key.upper() == candidateclassname:
+                                    candidateclass = wrapper.__dict__[key]
+                                    if callable(candidateclass):
+                                        wkey = relwrappername.replace(os.sep,'.')
+                                        if not wkey in wrapperinstances:
+                                            wrapperinstances[wkey] = (wrapperspath,candidateclass())
+                    except:
+                        continue
         return wrapperinstances
 
                      
@@ -77,10 +87,10 @@ class WrapperLoader(object):
 
         for packagename in packageprefixfilter:
             wrapper = self._load_module(wrappername,packagename)
-            
+
             if wrapper is not None:
                 basename = wrapper.__name__.split('/')[-1]
-                
+
                 candidateclassname = basename.upper()
                 
                 classinstance = None
@@ -99,19 +109,20 @@ class WrapperLoader(object):
 
     def _load_module(self, wrappername, packageprefix):
         wrapper = None
-        
+
         if packageprefix:
             wrappername = packageprefix + '.' + wrappername
-            
+
+        # all wrappers start with etcewrappers
+        wrappername = 'etcewrappers' + '.' + wrappername
+
         etcewrapper = wrappername.replace('.', os.sep)
-        
+
         try:
             f,pathname,description = \
-                imp.find_module(etcewrapper, self.wrapperpaths())
-            
+                imp.find_module(etcewrapper)
+
             wrapper = imp.load_module(etcewrapper,f,pathname,description)
         except:
             pass
         return wrapper
-
-

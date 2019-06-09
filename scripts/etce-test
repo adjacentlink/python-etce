@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -199,6 +199,16 @@ def add_run_arguments(parser):
                         specified, ETCE will look for the host's "Port" value
                         in the ~/.ssh/config file. If not found, uses the default
                         ssh port value, 22.''')
+    parser.add_argument('--sshkey',
+                        metavar='KEYFILE',
+                        default=None,
+                        help='''The SSH key file to use for connecting to
+                        test hosts. If KEYFILE is not an absolute filename
+                        it is assumed to be a keyfile in ~/.ssh. When not
+                        specified, ETCE tries to determine the appropriate
+                        key to use for each host by inspecting 
+                        ~/.ssh/config. If that fails, it will use the
+                        default RSA key ~/.ssh/id_rsa if it exists.''')
     parser.add_argument('--user',
                         action='store',
                         default=None,
@@ -385,6 +395,15 @@ def run_test(args):
             try:
                 # run test trials
                 for i in range(args.numtrials):
+                    # create connection to all nodes
+                    if client is None:
+                        client = ClientBuilder().build(allnodes,
+                                                       user=args.user,
+                                                       port=args.port,
+                                                       policy=args.policy,
+                                                       sshkey=args.sshkey,
+                                                       envfile=args.envfile)
+                    
                     print testdivider
 
                     print 'BEGIN "%s" trial %d' % (test.name(), i+1)
@@ -420,27 +439,13 @@ def run_test(args):
                                              ('setup',
                                               localtesttemplatedir,
                                               localtestresultsdir)
-                        
+
                         print 'setup hookscript:',hookscript_command
-                        
+
                         print 'returns: %d' % \
                             AppRunner(hookscript_command, stdout=sys.stdout, stderr=sys.stderr).retvalue()
 
                         print
-                        
-                        client = ClientBuilder().build(allnodes,
-                                                       user=args.user,
-                                                       port=args.port,
-                                                       policy=args.policy,
-                                                       envfile=args.envfile)
-
-                    # create connection to all nodes
-                    elif client is None:
-                        client = ClientBuilder().build(allnodes,
-                                                       user=args.user,
-                                                       port=args.port,
-                                                       policy=args.policy,
-                                                       envfile=args.envfile)
 
                     stepsfiledoc = \
                         StepsFileDoc(os.path.join(localtesttemplatedir,
@@ -522,7 +527,7 @@ def run_test(args):
                         client.collect(trialsubdirs,
                                        localtestresultsdir,
                                        filesystemnodes)
-                
+
                     resultsubdirs.append(localtestresultsdir)
 
                     # kill any processes with pids stored in left-over lockfiles
@@ -545,7 +550,7 @@ def run_test(args):
                                              ('teardown',
                                               localtesttemplatedir,
                                               localtestresultsdir)
-                        
+
                         print 'teardown hookscript:',hookscript_command
 
                         print 'returns: %d' % \
@@ -560,7 +565,7 @@ def run_test(args):
                     # to close
                     if keyboard_interrupt:
                         raise KeyboardInterrupt()
-                    
+
             except ETCEExecuteException as e:
                 print >>sys.stderr
                 print >>sys.stderr,'Failed test "%s" with exception:' \
@@ -588,7 +593,7 @@ def run_test(args):
         print >>sys.stderr
         if args.verbose:
             print traceback.format_exc()
-        
+
     finally:
         if client:
             client.close()
@@ -600,7 +605,7 @@ def run_test(args):
 
             for resultsubdir in sorted(resultsubdirs):
                 print '\t%s' % resultsubdir
-            
+
 
 
 

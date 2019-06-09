@@ -1,6 +1,6 @@
 #!/usr/bin/env python 
 #
-# Copyright (c) 2015-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2015-2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,113 +45,96 @@ from etce.wrappercontext import WrapperContext
 from etce.wrappercontextimpl import WrapperContextImpl
 
 
-def print_path(args):
-    for wpath in WrapperLoader().wrapperpaths():
-        print wpath
-        print
-
-
 def list_wrappers(args):
     ignore_sudo = \
         ConfigDictionary().get('etce', 'IGNORE_RUN_WITH_SUDO').lower() == 'yes'
 
     wl = WrapperLoader()
-    wpaths = wl.wrapperpaths()
 
-    for wpath in wpaths:
-        wrappers = wl.loadwrappers(wpath)
-        if args.prefix in wrappers:
+    wrappers = wl.loadwrappers()
+    if args.prefix in wrappers:
+        if args.verbose:
+            wprinter = WrapperInfoPrinter(wrappers[args.prefix][1].__doc__,
+                                          ignore_sudo)
+            wrappers[args.prefix][1].register(wprinter)
+            print '-' * len(args.prefix)
+            print args.prefix
+            print '-' * len(args.prefix)
+            print str(wprinter)
+        else:
+            print args.prefix
+    else:
+        for k,v in sorted(wrappers.items()):
+            if not k.startswith(args.prefix):
+                continue
             if args.verbose:
-                wprinter = WrapperInfoPrinter(wrappers[args.prefix][0],
-                                              wrappers[args.prefix][1].__doc__,
+                wprinter = WrapperInfoPrinter(v[1].__doc__,
                                               ignore_sudo)
-                wrappers[args.prefix][1].register(wprinter)
-                print '-' * len(args.prefix)
-                print args.prefix
-                print '-' * len(args.prefix)
+                v[1].register(wprinter)
+                print '-' * len(k)
+                print k
+                print '-' * len(k)
                 print str(wprinter)
             else:
-                print args.prefix
-        else:
-            for k,v in sorted(wrappers.items()):
-                if not k.startswith(args.prefix):
-                    continue
-                if args.verbose:
-                    wprinter = WrapperInfoPrinter(v[0],
-                                                  v[1].__doc__,
-                                                  ignore_sudo)
-                    v[1].register(wprinter)
-                    print '-' * len(k)
-                    print k
-                    print '-' * len(k)
-                    print str(wprinter)
-                else:
-                    print k
+                print k
 
 
 def run_wrapper(args):
     wl = WrapperLoader()
 
-    wpaths = [ p for p in args.wrapperpaths.split(':')
-               if p ]
+    wrappers = wl.loadwrappers()
 
-    if not wpaths:
-        wpaths = wl.wrapperpaths()
+    if args.wrappername in wrappers:
+        wutpath,wut = wrappers[args.wrappername]
 
-    for wpath in wpaths:
-        wrappers = wl.loadwrappers(wpath)
+        nodename = args.nodename
 
-        if args.wrappername in wrappers:
-            wutpath,wut = wrappers[args.wrappername]
+        if not nodename:
+            nodename = os.path.basename(args.configpath)
 
-            nodename = args.nodename
+        trialargs = {
+            'logdirectory':args.logpath,
+            'starttime':time_offset(getstrtimenow(), args.delaysecs),
+            'stepname':'wrappertest',
+            'dryrun':args.dryrun
+        }
 
-            if not nodename:
-                nodename = os.path.basename(args.configpath)
-            
-            trialargs = {
-                'logdirectory':args.logpath,
-                'starttime':time_offset(getstrtimenow(), args.delaysecs),
-                'stepname':'wrappertest',
-                'dryrun':args.dryrun
-            }
+        wrapperargs = {}
+        for arg in args.args:
+            name,val = arg.split(':')
+            wrapperargs[name] = etce.utils.configstrtoval(val)
 
-            wrapperargs = {}
-            for arg in args.args:
-                name,val = arg.split(':')
-                wrapperargs[name] = etce.utils.configstrtoval(val)
+        configfiledoc = ConfigFileDoc(args.configfile)
 
-            configfiledoc = ConfigFileDoc(args.configfile)
+        cwd = os.getcwd()
 
-            cwd = os.getcwd()
-            
-            try:
-                os.chdir(args.configpath)
+        try:
+            os.chdir(args.configpath)
 
-                ctx = WrapperContext(
-                    WrapperContextImpl(args.wrappername,
-                                       wut,
-                                       trialargs,
-                                       wrapperargs,
-                                       ConfigDictionary(),
-                                       PseudoTestDirectory(configfiledoc, nodename)))
+            ctx = WrapperContext(
+                WrapperContextImpl(args.wrappername,
+                                   wut,
+                                   trialargs,
+                                   wrapperargs,
+                                   ConfigDictionary(),
+                                   PseudoTestDirectory(configfiledoc, nodename)))
 
-                print
-                
-                wut.register(ctx)
-                
-                wut.prerun(ctx)
-                
-                wut.run(ctx)
+            print
 
-                print
-            except PseuedoTestDirectoryError as ptde:
-                print ptde.message
-            finally:
-                os.chdir(cwd)
+            wut.register(ctx)
 
-        else:
-            print >>sys.stderr,'Failed to locate wrapper "%s".' % args.wrappername
+            wut.prerun(ctx)
+
+            wut.run(ctx)
+
+            print
+        except PseuedoTestDirectoryError as ptde:
+            print ptde.message
+        finally:
+            os.chdir(cwd)
+
+    else:
+        print >>sys.stderr,'Failed to locate wrapper "%s".' % args.wrappername
 
 
 def main():
@@ -160,11 +143,6 @@ def main():
     parser = argparse.ArgumentParser()
 
     subparsers = parser.add_subparsers()
-
-    parser_path = subparsers.add_parser('path', 
-                                        help='List the configured wrapper paths.')
-
-    parser_path.set_defaults(func=print_path)
 
     parser_list = subparsers.add_parser('list', 
                                         help='List the wrappers found in the configured wrapper path.')
@@ -228,11 +206,6 @@ def main():
                             metavar='OVERLAYTAG:OVERLAYVALUE',
                             help='''Overlay values to pass in the wrapper via the context "overlays"
                             member.''')
-
-    parser_run.add_argument('--wrapperpaths',
-                            default=':'.join(WrapperLoader().wrapperpaths()),
-                            help='''A ":" separated list of paths to the wrapper class.
-                            default: "%s".''' % ':'.join(WrapperLoader().wrapperpaths()))
 
     parser_run.add_argument('wrappername',
                             metavar='WRAPPERNAME',

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -70,7 +70,6 @@ def startfield(args):
 
     startlxcs(plandoc,
               args.writehosts,
-              args.forcelxcroot,
               args.dryrun)
 
     if not args.dryrun:
@@ -93,10 +92,9 @@ def startfield(args):
 
             # on the destination node the netplan file gets pushed to the
             # ETCE WORK_DIRECTORY
-            command = 'lxcmanager startlxcs %s writehosts=%s forcelxcroot=%s' \
+            command = 'lxcmanager startlxcs %s writehosts=%s ' \
                       % (os.path.basename(args.lxcplanfile),
-                         args.writehosts,
-                         args.forcelxcroot)
+                         args.writehosts)
 
             ret = client.execute(command,
                                  other_hosts)
@@ -184,11 +182,6 @@ def main():
                               default=False,
                               help='''Create the container configurations but do not start
                               the containers.''')
-    parser_start.add_argument('--forcelxcroot',
-                              action='store_true',
-                              default=False,
-                              help='''Force the deletion of the lxcroot directory
-                              if it already exists.''')
     parser_start.add_argument('--writehosts',
                               action='store_true',
                               default=False,

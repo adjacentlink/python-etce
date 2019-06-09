@@ -1,6 +1,6 @@
 #!/usr/bin/env python 
 #
-# Copyright (c) 2013-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -72,12 +72,39 @@ def main():
     parser = argparse.ArgumentParser(description=usagestr,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
+    parser.add_argument('--user',
+                        action='store',
+                        default=None,
+                        help='''Connect to hosts as the specified user.
+                        Default it the current user.''')
+    parser.add_argument('--port',
+                        action='store',
+                        type=int,
+                        default=None,
+                        help='''Connect to hosts using the specified port number.
+                        Default: 22''')
+    parser.add_argument('--sshkey',
+                        metavar='KEYFILE',
+                        default=None,
+                        help='''The SSH key file to use for connecting to
+                        test hosts. If KEYFILE is not an absolute filename
+                        it is assumed to be a keyfile in ~/.ssh. When not
+                        specified ETCE tries to determine the appropriate
+                        key to use for each host by inspecting 
+                        ~/.ssh/config.''')
+    parser.add_argument('--policy',
+                        action='store',
+                        choices=['reject','warning','autoadd'],
+                        default='reject',
+                        help='''Specify the policy to use when a target
+                        host is not listed in the local "known_hosts" file.
+                        Default: reject''')
     parser.add_argument('--envfile',
                         action='store',
                         default=None,
                         help='''Environment file to invoke on remove nodes
                         before running the specified command.
-                        default: Nonee.''')
+                        default: None.''')
     parser.add_argument('localsrc',
                         metavar='LOCALSRC',
                         action='store',
@@ -103,11 +130,18 @@ def main():
     client = None
     try:
         field = Field(args.hostfile)
+
         client = ClientBuilder().build(field.roots(),
+                                       user=args.user,
+                                       port=args.port,
+                                       sshkey=args.sshkey,
+                                       policy=args.policy,
                                        envfile=args.envfile)
+
         ret = client.put(args.localsrc, 
                          args.remotedst, 
                          field.roots())
+
     except RuntimeError as e:
         print e.message
     except ValueError as e:
