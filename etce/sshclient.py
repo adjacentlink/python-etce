@@ -38,6 +38,7 @@ import os
 import json
 import paramiko
 from paramiko.client import RejectPolicy,WarningPolicy,AutoAddPolicy
+from paramiko.pkey import PasswordRequiredException
 from paramiko.rsakey import RSAKey
 import re
 import select
@@ -252,7 +253,8 @@ class SSHClient(etce.fieldclient.FieldClient):
         # can specify the key file explicitly with the sshkey parameter -
         # if the filename is not absolute, it is assumed to be a file located
         # in ~/.ssh. If sshkey is None, try to determine the key file from
-        # ~/.ssh/config. Fail if a key file can't be determined.
+        # ~/.ssh/config. If that also fails, check for the default ssh rsa
+        # key ~/.ssh/id_rsa and attempt to use that.
         #
         # paramiko also allows provides a paramiko.agent.Agent class for
         # querying a running ssh-agent for its loaded keys. The agent
@@ -339,10 +341,17 @@ class SSHClient(etce.fieldclient.FieldClient):
                 host_key_filenames = host_config.get('identityfile', host_key_filenames)
 
             if not host_key_filenames:
-                message = 'Unable to find ssh key file associated with host "%s". '\
-                          'Use "sshkey" option or update your ~/.ssh/config ' \
-                          'file. Quitting.' % host
-                raise FieldConnectionError(message)
+                default_rsa_keyfile = os.path.join(os.path.expanduser('~'), '.ssh', 'id_rsa')
+                if os.path.exists(default_rsa_keyfile) and os.path.isfile(default_rsa_keyfile):
+                    host_key_filenames = [default_rsa_keyfile]
+                else:
+                    message = 'Unable to find an RSA SSH key associated with host "%s". '\
+                              'Either:\n\n' \
+                              ' 1) specify a key using the "sshkey" option\n' \
+                              ' 2) add a "Host" rule to your ~/.ssh/config file identifying the key\n' \
+                              ' 3) create a default RSA key ~/.ssh/id_rsa".\n\n' \
+                              'Quitting.' % host
+                    raise FieldConnectionError(message)
 
             try:
                 pkey = None
@@ -351,9 +360,15 @@ class SSHClient(etce.fieldclient.FieldClient):
                     if host_key_file in authenticated_keys:
                         pkey = authenticated_keys[host_key_file]
                     else:
-                        pkey = RSAKey.from_private_key_file(
-                            host_key_file,
-                            getpass.getpass('Enter passphrase for %s: ' % host_key_file))
+                        pkey = None
+                        try:
+                            # Assume key is not passphrase protected first
+                            pkey = RSAKey.from_private_key_file(host_key_file, None)
+                        except PasswordRequiredException as pre:
+                            # if that fails, prompt for passphrase
+                            pkey = RSAKey.from_private_key_file(
+                                host_key_file,
+                                getpass.getpass('Enter passphrase for %s: ' % host_key_file))
 
                     authenticated_keys[host_key_file] = pkey
 

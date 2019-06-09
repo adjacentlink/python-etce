@@ -32,7 +32,7 @@ AC_COPYRIGHT([
  
 ])
 
-AC_INIT([python-etce],1.1.3,[labs at adjacentlink dot com])
+AC_INIT([python-etce],1.2.1,[labs at adjacentlink dot com])
 
 AM_INIT_AUTOMAKE([1.9.6])
 
@@ -51,8 +51,8 @@ AC_SUBST(DISTRIB_ID)
 AC_SUBST(DISTRIB_RELEASE)
 DISTRIB_VERSION_PARTS=(${DISTRIB_RELEASE//./ })
 
-if test ${DISTRIB_ID} = Ubuntu; then
-if ((${DISTRIB_VERSION_PARTS[[0]]} >= 16)); then
+if test "${DISTRIB_ID}" = Ubuntu; then
+if (("${DISTRIB_VERSION_PARTS[[0]]}" >= 16)); then
 AC_SUBST(LXCPACKAGE, lxc1)
 else
 AC_SUBST(LXCPACKAGE, lxc)
