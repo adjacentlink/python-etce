@@ -205,9 +205,10 @@ def add_run_arguments(parser):
                         help='''The SSH key file to use for connecting to
                         test hosts. If KEYFILE is not an absolute filename
                         it is assumed to be a keyfile in ~/.ssh. When not
-                        specified ETCE tries to determine the appropriate
+                        specified, ETCE tries to determine the appropriate
                         key to use for each host by inspecting 
-                        ~/.ssh/config.''')
+                        ~/.ssh/config. If that fails, it will use the
+                        default RSA key ~/.ssh/id_rsa if it exists.''')
     parser.add_argument('--user',
                         action='store',
                         default=None,
