@@ -725,7 +725,15 @@ class SSHClient(etce.fieldclient.FieldClient):
 
 
     def _set_unknown_hosts_policy(self, hosts, port, ssh_config, policy):
-        all_host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+        known_hosts_filename = os.path.expanduser('~/.ssh/known_hosts')
+
+        if not os.path.exists(known_hosts_filename) or \
+           not os.path.isfile(known_hosts_filename):
+            raise FieldConnectionError(
+                'Error: ~/.ssh/known_hosts file does not exist, ' \
+                'please create it.')
+
+        all_host_keys = paramiko.util.load_host_keys(known_hosts_filename)
 
         # build list of hosts that don't have an ssh-rsa entry in known_hosts
         unknown_hosts = []
