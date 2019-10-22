@@ -25,8 +25,8 @@ missing
 build
 dist
 *.pyc
-python-etce-*.tar.gz
-python_etce.egg-info
+python*etce-*.tar.gz
+python*etce.egg-info
 
 # debs
 deb_dist

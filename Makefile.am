@@ -40,14 +40,9 @@ spec: setup.py
 
 
 if HAVE_RPMBUILD
-if HAVE_PYTHON2
-REQUIRES=python2-paramiko python2-lxml python2-mako lxc
-else
-REQUIRES=python3-paramiko python3-lxml python3-mako lxc
-endif
-
+REQUIRES=@PYTHON_PACKAGE_PREFIX@-paramiko @PYTHON_PACKAGE_PREFIX@-lxml @PYTHON_PACKAGE_PREFIX@-mako lxc
 rpm: setup.py
-	$(PYTHON) setup.py bdist_rpm --release $(RELEASE) --requires "$(REQUIRES)"
+	$(PYTHON) setup.py bdist_rpm --python @PYTHON_PACKAGE_PREFIX@ --release $(RELEASE) --requires "$(REQUIRES)"
 endif
 
 
