@@ -46,7 +46,8 @@ class ChainMap(Mapping):
 
         self._keys = set([])
 
-        map(self._keys.update, self._maps)
+        for amap in self._maps:
+            self._keys.update(amap)
 
 
     def __len__(self):

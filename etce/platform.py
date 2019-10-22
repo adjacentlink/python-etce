@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
 import signal
 import platform
 import etce.loader

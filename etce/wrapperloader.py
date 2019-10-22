@@ -30,8 +30,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+import importlib
 import imp
 import os
+import pkgutil
 import sys
 
 from etce.config import ConfigDictionary
@@ -44,17 +46,52 @@ class WrapperLoader(object):
 
     def loadwrappers(self):
         wrapperinstances = {}
+
+        wrappermod = importlib.import_module('etcewrappers')
+
+        self.returnmembers('etcewrappers', wrappermod, wrapperinstances)
+
+        return wrapperinstances
+
+
+    def returnmembers(self, modpath, module, wrapperdict):
+        for instance,name,ispkg in pkgutil.walk_packages(module.__path__):
+            if ispkg:
+                try:
+                    thismodpath = '.'.join([modpath, name])
+                    thismod = importlib.import_module(thismodpath)
+                    self.returnmembers(thismodpath, importlib.import_module(thismodpath), wrapperdict)
+                except Exception as e:
+                    pass
+            else:
+                thismodpath = '.'.join([modpath, name])
+                try:
+                    thisclass = importlib.import_module(thismodpath)
+                    for entry in thisclass.__dict__:
+                        if name.upper() == entry.upper():
+                            candidateclass = thisclass.__dict__[entry]
+                            if callable(candidateclass):
+                                o = candidateclass()
+                                if not thismodpath in wrapperdict:
+                                    relative_wrapperpath = '.'.join(thismodpath.split('.')[1:])
+                                    wrapperdict[relative_wrapperpath] = (thisclass.__file__,o)
+
+                except Exception as e:
+                    pass
+
+
+    def oldloading(self):
+        wrapperinstances = {}
+
         for syspath in sys.path:
             if not os.path.exists(syspath) or not os.path.isdir(syspath):
                 continue
 
             if not 'etcewrappers' in os.listdir(syspath):
                 continue
-
             wrapperspath = os.path.join(syspath, 'etcewrappers')
             if not os.path.isdir(wrapperspath):
                 continue
-
             for cwd,dirnames,filenames in os.walk(wrapperspath):
                 
                 for wrapperfile in filenames:
@@ -65,7 +102,7 @@ class WrapperLoader(object):
                         relwrappername = fullwrappername[fullwrappername.index(os.sep)+1:]
                         wrapper = self._load_module(relwrappername, None)
                         if wrapper is not None:
-                            basename = wrapper.__name__.split('/')[-1]
+                            basename = wrapper.__name__.split('.')[-1]
                             candidateclassname = basename.upper()
                             classinstance = None
                             for key in wrapper.__dict__:
@@ -89,10 +126,10 @@ class WrapperLoader(object):
             wrapper = self._load_module(wrappername,packagename)
 
             if wrapper is not None:
-                basename = wrapper.__name__.split('/')[-1]
+                basename = wrapper.__name__.split('.')[-1]
 
                 candidateclassname = basename.upper()
-                
+
                 classinstance = None
                 
                 for key in wrapper.__dict__:
@@ -116,13 +153,8 @@ class WrapperLoader(object):
         # all wrappers start with etcewrappers
         wrappername = 'etcewrappers' + '.' + wrappername
 
-        etcewrapper = wrappername.replace('.', os.sep)
-
         try:
-            f,pathname,description = \
-                imp.find_module(etcewrapper)
-
-            wrapper = imp.load_module(etcewrapper,f,pathname,description)
+            wrapper = importlib.import_module(wrappername)
         except:
             pass
         return wrapper

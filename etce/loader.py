@@ -30,7 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import imp
+from __future__ import absolute_import, division, print_function
+import importlib
 import etce.platform
 
 
@@ -70,8 +71,9 @@ Capitalization doesn't matter. If there are more than one class
 definitions with the module name, but differeing only by capitalization,
 then not well defined which one will be instantiated'''
 def load_class_instance_from_module(module, args=[], kwargs={}):
-    basename = module.__name__.split('/')[-1]
+    basename = module.__name__.split('.')[-1]
     candidateclassname = basename.upper()
+
     try:
         for key in module.__dict__:
             if key.upper() == candidateclassname:
@@ -79,7 +81,7 @@ def load_class_instance_from_module(module, args=[], kwargs={}):
                 if callable(candidateclass):
                     o = candidateclass(*args, **kwargs)
                     return o
-    except KeyError, e:
+    except KeyError:
         return None
     
     return None
@@ -100,7 +102,7 @@ def load_etce_method(modulename, methodname):
                 candidatemethod = getattr(obj, methodname)
                 if callable(candidatemethod):
                     return candidatemethod
-        except AttributeError, e:
+        except AttributeError:
             pass
 
         # then just try a module level function
@@ -108,7 +110,7 @@ def load_etce_method(modulename, methodname):
             candidatemethod = getattr(mod, methodname)
             if callable(candidatemethod):
                 return candidatemethod
-        except AttributeError, e:
+        except AttributeError:
             pass
 
     return None
@@ -127,8 +129,6 @@ def load_class_instance(modulename, args=[], kwargs={}):
 Load the named python module, None if unsuccessful
 '''
 def load_module(modulename):
-    m = modulename.replace('.', '/')
-    fp,pathname,description = imp.find_module(m)
-    return imp.load_module(m,fp,pathname,description)
+    return importlib.import_module(modulename)
 
 

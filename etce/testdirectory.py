@@ -52,7 +52,6 @@ class TestDirectory(object):
     DOCSUBDIRNAME = 'doc'
 
     def __init__(self, rootdir, basedir_override):
-        
         self._rootdir = rootdir
         
         self._platform = Platform()
@@ -76,7 +75,6 @@ class TestDirectory(object):
         # before copying it to hostfile's root nodes
         hostfile = os.path.join(self._rootdir, 
                                 TestDirectory.HOSTFILENAME)
-
         self._verified_nodes = []
         if os.path.exists(hostfile) or os.path.isfile(hostfile):
             self._verified_nodes = self._verify_nodes_in_hostfile(hostfile)

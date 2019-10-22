@@ -30,8 +30,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 import os
-import ConfigParser
+import configparser
 
 from etce.wrapper import Wrapper
 
@@ -62,11 +63,11 @@ class SysCtlUtil(Wrapper):
         if not ctx.args.infile:
             return
 
-        parser = ConfigParser.SafeConfigParser()
+        parser = configparser.SafeConfigParser()
         parser.read(ctx.args.infile)
 
         if 'run' in parser.sections():
-            for name,val in parser.items('run'):
+            for name,val in list(parser.items('run')):
                 os.system('sysctl -w %s=%s' % (name,val))
 
 
@@ -74,7 +75,7 @@ class SysCtlUtil(Wrapper):
         if not ctx.args.infile:
             return
 
-        parser = ConfigParser.SafeConfigParser()
+        parser = configparser.SafeConfigParser()
         parser.read(ctx.args.infile)
 
         if 'stop' in parser.sections():

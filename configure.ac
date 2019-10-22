@@ -40,7 +40,17 @@ LT_INIT
 
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_PATH_PYTHON([2.6])
+AC_ARG_WITH(python2,
+           [  --with-python2          use python2 instead of python3 (off)])
+
+if test "$with_python2" = "yes"
+then
+AM_CONDITIONAL(HAVE_PYTHON2,true)
+AM_PATH_PYTHON([2.7])
+else
+AM_CONDITIONAL(HAVE_PYTHON2,false)
+AM_PATH_PYTHON([3.6])
+fi
 
 AC_SUBST(RELEASE, 1)
 
@@ -51,14 +61,29 @@ AC_SUBST(DISTRIB_ID)
 AC_SUBST(DISTRIB_RELEASE)
 DISTRIB_VERSION_PARTS=(${DISTRIB_RELEASE//./ })
 
-if test "${DISTRIB_ID}" = Ubuntu; then
+# Ubuntu
+if test "${DISTRIB_ID}" = "Ubuntu"; then
+
 if (("${DISTRIB_VERSION_PARTS[[0]]}" >= 16)); then
 AC_SUBST(LXCPACKAGE, lxc1)
 else
 AC_SUBST(LXCPACKAGE, lxc)
 fi
+
+if ${HAVE_PYTHON2}; then
+AC_SUBST(PYTHONPREFIX, python)
+else
+AC_SUBST(PYTHONPREFIX, python3)
+fi
+
+# Not Ubuntu
 else
 AC_SUBST(LXCPACKAGE, lxc)
+if ${HAVE_PYTHON2}; then
+AC_SUBST(PYTHONPREFIX, python2)
+else
+AC_SUBST(PYTHONPREFIX, python3)
+fi
 fi
 
 # check for rpmbuild

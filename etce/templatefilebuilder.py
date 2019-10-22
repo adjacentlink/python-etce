@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
+
 import copy
 import os.path
 
@@ -175,7 +177,8 @@ class TemplateFileBuilder(object):
                                   self._global_overlays,
                                   etce_config_overlays ] 
 
-        map(other_keys.update, non_reserved_overlays)
+        for some_overlays in non_reserved_overlays:
+            other_keys.update(some_overlays)
 
         key_clashes =  other_keys.intersection(set(reserved_overlays.keys()))
 
@@ -190,7 +193,7 @@ class TemplateFileBuilder(object):
             os.makedirs(os.path.dirname(publishfile))
 
         if os.path.exists(publishfile):
-            print 'Warning: %s already exists. Overwriting!' % publishfile
+            print('Warning: %s already exists. Overwriting!' % publishfile)
 
         format_file(self._absname, publishfile, overlays)
 

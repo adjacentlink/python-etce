@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
+
 import os
 
 from etce.testdirectory import TestDirectory
@@ -126,6 +128,7 @@ class TestCollection(object):
         for dirpath,dirnames,filenames in os.walk(testroot):
             if self._istestdirectory(filenames):
                 test = TestDirectory(dirpath, basedir_override)
+
                 if test.name() in self._tests:
                     err = '''ERROR: tests must have unique names. Test at 
                              %s 
@@ -172,19 +175,19 @@ def list_tests(args):
     try:
         collection.adddirectory(args.testrootdir, None)
     except XMLDocError as xmle:
-        print >>sys.stderr,xmle.message
+        print(xmle.message, file=sys.stderr)
         exit(1)
 
     # on an exact match, just print the single test
     if args.prefix in collection:
         if args.verbose:
-            print testdir
+            print(testdir)
         else:
-            print testdir.name()
+            print(testdir.name())
     else:
         for testdir in collection:
             if testdir.name().startswith(args.prefix):
                 if args.verbose:
-                    print testdir
+                    print(testdir)
                 else:
-                    print testdir.name()
+                    print(testdir.name())

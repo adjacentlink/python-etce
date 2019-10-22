@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
+
 import os
 import re
 import shlex
@@ -74,5 +76,5 @@ class PlatformImpl:
 
     def rmdir(self, subdir):
         if subdir in os.listdir(os.getcwd()):
-            print 'removing subdirectory "%s" from "%s"' % (subdir, os.getcwd())
+            print('removing subdirectory "%s" from "%s"' % (subdir, os.getcwd()))
             shutil.rmtree(subdir)

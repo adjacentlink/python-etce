@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
+
 import datetime
 import os
 import os.path
@@ -176,7 +178,7 @@ def daemonize_command(commandstr,
                       starttime=None):
 
     # 1. print the command name
-    print commandstr
+    print(commandstr)
 
     # 2. shlex the command string
     command = shlex.split(commandstr)

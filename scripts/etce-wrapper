@@ -31,6 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 import os
 import sys
 
@@ -50,19 +51,19 @@ def list_wrappers(args):
         ConfigDictionary().get('etce', 'IGNORE_RUN_WITH_SUDO').lower() == 'yes'
 
     wl = WrapperLoader()
-
     wrappers = wl.loadwrappers()
+
     if args.prefix in wrappers:
         if args.verbose:
             wprinter = WrapperInfoPrinter(wrappers[args.prefix][1].__doc__,
                                           ignore_sudo)
             wrappers[args.prefix][1].register(wprinter)
-            print '-' * len(args.prefix)
-            print args.prefix
-            print '-' * len(args.prefix)
-            print str(wprinter)
+            print('-' * len(args.prefix))
+            print(args.prefix)
+            print('-' * len(args.prefix))
+            print(str(wprinter))
         else:
-            print args.prefix
+            print(args.prefix)
     else:
         for k,v in sorted(wrappers.items()):
             if not k.startswith(args.prefix):
@@ -71,12 +72,12 @@ def list_wrappers(args):
                 wprinter = WrapperInfoPrinter(v[1].__doc__,
                                               ignore_sudo)
                 v[1].register(wprinter)
-                print '-' * len(k)
-                print k
-                print '-' * len(k)
-                print str(wprinter)
+                print('-' * len(k))
+                print(k)
+                print('-' * len(k))
+                print(str(wprinter))
             else:
-                print k
+                print(k)
 
 
 def run_wrapper(args):
@@ -119,7 +120,7 @@ def run_wrapper(args):
                                    ConfigDictionary(),
                                    PseudoTestDirectory(configfiledoc, nodename)))
 
-            print
+            print()
 
             wut.register(ctx)
 
@@ -127,22 +128,23 @@ def run_wrapper(args):
 
             wut.run(ctx)
 
-            print
+            print()
         except PseuedoTestDirectoryError as ptde:
-            print ptde.message
+            print(ptde.message)
         finally:
             os.chdir(cwd)
 
     else:
-        print >>sys.stderr,'Failed to locate wrapper "%s".' % args.wrappername
+        print('Failed to locate wrapper "%s".' % args.wrappername,
+              file=sys.stderr)
 
 
 def main():
     import argparse
-    
+
     parser = argparse.ArgumentParser()
 
-    subparsers = parser.add_subparsers()
+    subparsers = parser.add_subparsers(dest='selected_subparser')
 
     parser_list = subparsers.add_parser('list', 
                                         help='List the wrappers found in the configured wrapper path.')
@@ -227,6 +229,10 @@ def main():
     parser_run.set_defaults(func=run_wrapper)
 
     args = parser.parse_args()
+
+    if not args.selected_subparser:
+        parser.print_help()
+        exit(1)
 
     args.func(args)
 

@@ -1,4 +1,4 @@
 [DEFAULT]
-Package: python-etce
-Depends: python-paramiko, python-lxml, python-mako, @LXCPACKAGE@
+Package: @PYTHONPREFIX@-etce
+Depends: @PYTHONPREFIX@-paramiko, @PYTHONPREFIX@-lxml, @PYTHONPREFIX@-mako, @LXCPACKAGE@
 Debian-Version: @RELEASE@

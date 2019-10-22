@@ -33,8 +33,7 @@
 from mako.exceptions import SyntaxException
 from mako.template import Template
 from mako.runtime import Context
-from StringIO import StringIO
-
+import io
 
 class TemplateError(Exception):
     def __init__(self, message):
@@ -44,7 +43,7 @@ class TemplateError(Exception):
 class CaptureContext(Context):
     def __init__(self):
         self._keys = set([])
-        super(CaptureContext, self).__init__(StringIO())
+        super(CaptureContext, self).__init__(io.StringIO())
 
     def get(self, key, default=None):
         self._keys.update([key])
@@ -71,11 +70,10 @@ def format_file(srcfile, dstfile, overlays):
 
             outf.write(template.render(**overlays))
         except NameError as ne:
-            message = '%s for template file "%s". Quitting.' % \
-                      (ne.message, srcfile)
+            message = '%s for template file "%s". Quitting.' % (str(ne), srcfile)
             raise TemplateError(message)
         except SyntaxException as se:
-            raise TemplateError(se.message)
+            raise TemplateError(str(se))
 
 
 def format_string(template_string, overlays):

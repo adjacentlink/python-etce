@@ -31,6 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 import argparse
 import datetime
 import os
@@ -247,23 +248,23 @@ def run_test(args):
 
     for testroot in args.testroot:
         if not os.path.isdir(testroot):
-            print >>sys.stderr,'Cannot find directory "%s". Quitting.' % testroot
+            print('Cannot find directory "%s". Quitting.' % testroot, file=sys.stderr)
             exit(1)
 
     if not os.path.isfile(args.hostfile):
-        print >>sys.stderr,'Cannot find hostfile "%s". Quitting.' % args.hostfile
+        print('Cannot find hostfile "%s". Quitting.' % args.hostfile, sys.stderr)
         exit(1)
 
     if args.envfile:
         if not args.envfile[0] == os.path.sep:
-            print >>sys.stderr, 'envfile argument must be an absolute path. Quitting'
+            print('envfile argument must be an absolute path. Quitting', sys.stderr)
             exit(1)
 
     workdir = config.get('etce', 'WORK_DIRECTORY')
     if not os.path.exists(workdir):
-        print >>sys.stderr, \
-            'ETCE WORK_DIRECTORY "%s" not found. ' \
-            'Please create it before starting.' % workdir
+        print('ETCE WORK_DIRECTORY "%s" not found. ' \
+              'Please create it before starting.' % workdir,
+              file = sys.stderr)
         exit(1)
             
     field = Field(args.hostfile)
@@ -281,47 +282,48 @@ def run_test(args):
         for testroot in args.testroot:
             tests.adddirectory(testroot, args.basedirectory)
     except XMLDocError as xmle:
-        print
-        print >>sys.stderr,xmle.message
-        print
+        print()
+        print(xmle.message, file=sys.stderr)
+        print()
         exit(1)
     except etce.templateutils.TemplateError as tmpe:
-        print
-        print >>sys.stderr,tmpe.message
-        print
+        print()
+        print(tmpe.message, file=sys.stderr)
+        print()
         exit(1)
 
     if not tests:
-        print >>sys.stderr,'No tests found in any of the specied ' \
-            'TESTROOT(s). Make sure your test directories include a ' \
-            'test.xml file.'
+        print('No tests found in any of the specied ' \
+              'TESTROOT(s). Make sure your test directories include a ' \
+              'test.xml file.',
+              file=sys.stderr)
         exit(1)
     else:
-        print tests
+        print(tests)
         
     if args.runtostep:
         if args.numtrials > 1 or len(tests) > 1:
-            print >>sys.stderr,'Cannot mix --runtostep option with ' \
-                '--itererations > 1 or with testroot containing more ' \
-                'than one test'
+            print('Cannot mix --runtostep option with ' \
+                  '--itererations > 1 or with testroot containing more ' \
+                  'than one test',
+                  file=sys.stderr)
             exit(1)
 
         if args.kill == 'after':
             args.kill = 'none'
-            print >>sys.stderr,'Ignoring kill argument "after" used ' \
-                'in conjunction with runtostep. Using "none" instead.'
-            print >>sys.stderr  
+            print('Ignoring kill argument "after" used ' \
+                  'in conjunction with runtostep. Using "none" instead.\n',
+                  sys.stderr)
         elif args.kill == 'both':
             args.kill = 'before'
-            print >>sys.stderr,'Ignoring kill argument "both" used ' \
-                'in conjunction with runtostep. Using "before" instead.'
-            print >>sys.stderr
+            print('Ignoring kill argument "both" used ' \
+                  'in conjunction with runtostep. Using "before" instead.\n',
+                  file=sys.stderr)
 
     try:
         worknodes = tests.participant_nodes(field.leaves())
     except TestCollectionError as tce:
-        print >>sys.stderr,tce.message
-        print >>sys.stderr
+        print(tce.message + '\n', file=sys.stderr)
         exit(1)
 
     # root nodes host the filesystem for all of the virtual nodes attached
@@ -334,7 +336,7 @@ def run_test(args):
     def sigint_handler(signum, frame):
         if signum == signal.SIGINT:
             if client:
-                print 'keyboard interrupt'
+                print('keyboard interrupt')
                 client.interrupt()
 
     signal.signal(signal.SIGINT, sigint_handler)
@@ -359,7 +361,7 @@ def run_test(args):
             if not os.path.isfile(entryhookfile):
                 message = 'entryhookfile "%s" does not exist. Quitting.' \
                           % entryhookfile
-                print >>sys.stderr,message
+                print(message, file=sys.stderr)
                 exit(1)
             hookfiles.append(entryhookfile)
             entryhooksteps = \
@@ -374,7 +376,7 @@ def run_test(args):
             if not os.path.isfile(exithookfile):
                 message = 'exithookfile "%s" does not exist. Quitting.' \
                           % exithookfile
-                print >>sys.stderr,message
+                print(message, file=sys.stderr)
                 exit(1)
             hookfiles.append(exithookfile)
             exithooksteps = \
@@ -404,9 +406,9 @@ def run_test(args):
                                                        sshkey=args.sshkey,
                                                        envfile=args.envfile)
                     
-                    print testdivider
+                    print(testdivider)
 
-                    print 'BEGIN "%s" trial %d' % (test.name(), i+1)
+                    print('BEGIN "%s" trial %d' % (test.name(), i+1))
 
                     testdir = buildtestname(args.testprefix, test.name())
 
@@ -433,19 +435,21 @@ def run_test(args):
                                               absbasedir_override=args.basedirectory)
 
                     if hookscript_format:
-                        print stepdivider
+                        print(stepdivider)
 
                         hookscript_command = hookscript_format % \
                                              ('setup',
                                               localtesttemplatedir,
                                               localtestresultsdir)
 
-                        print 'setup hookscript:',hookscript_command
+                        print('setup hookscript:%s' % hookscript_command)
 
-                        print 'returns: %d' % \
-                            AppRunner(hookscript_command, stdout=sys.stdout, stderr=sys.stderr).retvalue()
+                        print('returns: %d' % \
+                              AppRunner(hookscript_command,
+                                        stdout=sys.stdout,
+                                        stderr=sys.stderr).retvalue())
 
-                        print
+                        print()
 
                     stepsfiledoc = \
                         StepsFileDoc(os.path.join(localtesttemplatedir,
@@ -479,9 +483,9 @@ def run_test(args):
                         args.delaysecs,
                         quantizesecs=10)
 
-                    print 'Trial Start Time: %s' % starttime
+                    print('Trial Start Time: %s' % starttime)
 
-                    print stepdivider
+                    print(stepdivider)
 
                     # kill any processes with pids stored in left-over lockfiles
                     # before starting the test
@@ -494,16 +498,16 @@ def run_test(args):
                     # create logdir on the root nodes
                     command = 'testprepper run %s %s %s' % \
                               (starttime, remotetemplatedir, trialdir)
-                    print command
+                    print(command)
                     client.execute(command, filesystemnodes)
 
                     for stepname in steps:
                         command = 'executer step %s %s %s' % \
                             (stepname, starttime, trialdir)
 
-                        print stepdivider
+                        print(stepdivider)
 
-                        print 'step: %s %s %s' % (stepname, starttime, trialdir)
+                        print('step: %s %s %s' % (stepname, starttime, trialdir))
 
                         try:
                             client.execute(command, worknodes, 'current_test')
@@ -512,15 +516,15 @@ def run_test(args):
 
                     trialend = datetime.datetime.now()
 
-                    print 'trial time: %07d' % \
-                        (trialend - trialstart).seconds
+                    print('trial time: %07d' % \
+                        (trialend - trialstart).seconds)
 
-                    print stepdivider
+                    print(stepdivider)
 
                     if args.nocollect:
-                        print 'Skipping results collection to localhost (args.nocollect=True).'
+                        print('Skipping results collection to localhost (args.nocollect=True).')
                     else:
-                        print 'Collecting "%s" results.' % test.name()
+                        print('Collecting "%s" results.' % test.name())
 
                         trialsubdirs = os.path.join(remoteresultssubdir, 'data')
 
@@ -536,12 +540,12 @@ def run_test(args):
                         client.execute('kill kill %d True' % signal.SIGQUIT, allnodes)
 
                     if args.deletecompleted:
-                        print 'removing data/%s from testnodes' % testdir
+                        print('removing data/%s from testnodes' % testdir)
                         client.execute('platform rmdir %s' % testdir,
                                        hosts=filesystemnodes,
                                        workingdir='data')
 
-                    print stepdivider
+                    print(stepdivider)
 
                     if hookscript_format:
                         client = None and client.close()
@@ -551,15 +555,17 @@ def run_test(args):
                                               localtesttemplatedir,
                                               localtestresultsdir)
 
-                        print 'teardown hookscript:',hookscript_command
+                        print('teardown hookscript: %s' % hookscript_command)
 
-                        print 'returns: %d' % \
-                            AppRunner(hookscript_command, stdout=sys.stdout, stderr=sys.stderr).retvalue()
+                        print('returns: %d' % \
+                              AppRunner(hookscript_command,
+                                        stdout=sys.stdout,
+                                        stderr=sys.stderr).retvalue())
 
-                        print
-                        print stepdivider
+                        print()
+                        print(stepdivider)
 
-                    print 'END "%s" trial %d' % (test.name(),i+1)
+                    print('END "%s" trial %d' % (test.name(),i+1))
 
                     # raise a cached KeyboardInterrupt on completion
                     # to close
@@ -567,44 +573,44 @@ def run_test(args):
                         raise KeyboardInterrupt()
 
             except ETCEExecuteException as e:
-                print >>sys.stderr
-                print >>sys.stderr,'Failed test "%s" with exception:' \
-                    % test.name()
-                print >>sys.stderr,e
+                print(file=sys.stderr)
+                print('Failed test "%s" with exception:' % test.name(),
+                      file=sys.stderr)
+                print(e, file=sys.stderr)
 
                 if args.verbose:
-                    print >>sys.stderr,e.traceback
+                    print(e.traceback, file=sys.stderr)
 
                 if args.quitonerror:
-                    print 'Quitting.'
+                    print('Quitting.')
                     break
                 else:
-                    print 'Continuing to next test.'
+                    print('Continuing to next test.')
 
     except KeyboardInterrupt:
-        print 'Quitting on interrupt.'
+        print('Quitting on interrupt.')
     except FieldConnectionError as fce:
-        print >>sys.stderr
-        print >>sys.stderr,fce.message
-        print >>sys.stderr
+        print(file=sys.stderr)
+        print(str(fce), file=sys.stderr)
+        print(file=sys.stderr)
     except Exception as e:
-        print >>sys.stderr
-        print >>sys.stderr,str(e)
-        print >>sys.stderr
+        print(file=sys.stderr)
+        print(str(e), sys.stderr)
+        print(file=sys.stderr)
         if args.verbose:
-            print traceback.format_exc()
+            print(traceback.format_exc())
 
     finally:
         if client:
             client.close()
 
         if resultsubdirs and len(resultsubdirs) > 0:
-            print testdivider
+            print(testdivider)
 
-            print 'Result Directories:'
+            print('Result Directories:')
 
             for resultsubdir in sorted(resultsubdirs):
-                print '\t%s' % resultsubdir
+                print('\t%s' % resultsubdir)
 
 
 
@@ -612,7 +618,7 @@ def run_test(args):
 def main():
     parser = argparse.ArgumentParser()
 
-    subparsers = parser.add_subparsers()
+    subparsers = parser.add_subparsers(dest='selected_subparser')
 
     # run
     parser_run = \
@@ -660,6 +666,10 @@ def main():
     parser_list.set_defaults(func=list_tests)
 
     args = parser.parse_args()
+
+    if not args.selected_subparser:
+        parser.print_help()
+        exit(1)
 
     try:
         args.func(args)

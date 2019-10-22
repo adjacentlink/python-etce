@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
+
 import os
 import shlex
 import signal
@@ -160,7 +162,8 @@ class WrapperContextImpl(ArgRegistrar):
 
         # print the commandstr and return on a dryrun         
         if self._trialargs['dryrun']:
-            print commandstr
+            print(commandstr)
+            sys.stdout.flush()
             return
         
         # 1. call self.stop(pidfilename)
@@ -209,12 +212,14 @@ class WrapperContextImpl(ArgRegistrar):
         
         # print the commandstr and return on a dryrun         
         if self._trialargs['dryrun']:
-            print commandstr
+            print(commandstr)
+            sys.stdout.flush()
             return
         
         self.stop(pidfilename)
 
-        print commandstr
+        print(commandstr)
+        sys.stdout.flush()
 
         stdoutfd = None
         stderrfd = None
@@ -257,7 +262,10 @@ class WrapperContextImpl(ArgRegistrar):
 
         existing_paths = filter(os.path.isdir, all_paths)
 
-        found_paths = filter(lambda d: command in os.listdir(d), existing_paths)
+        found_paths=[]
+        for existing_path in existing_paths:
+            if command in os.listdir(existing_path):
+                found_paths.append(existing_path)
 
         if not found_paths:
             raise WrapperError('Cannot find command "%s" in system paths {%s}. Quitting.' \

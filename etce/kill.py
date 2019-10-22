@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
+
 import os
 import signal
 from etce.platform import Platform
@@ -62,5 +64,4 @@ class Kill(object):
                 pid = p.kill(fullpidfile, signal, sudo)
 
                 if pid:
-                    print 'killed process "%d" from pidfile "%s"' \
-                        % (pid, fullpidfile)
+                    print('killed process "%d" from pidfile "%s"' % (pid, fullpidfile))

@@ -31,6 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 import sys
 import argparse
 
@@ -143,11 +144,11 @@ def main():
                          field.roots())
 
     except RuntimeError as e:
-        print e.message
+        print(e.message)
     except ValueError as e:
-        print e.message
+        print(e.message)
     except ETCEExecuteException as e:
-        print e.message
+        print(e.message)
     finally:
         if not client is None:
             client.close()

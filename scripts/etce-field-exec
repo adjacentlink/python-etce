@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
+
+# Force sys.stdout to be unbuffered w/o using the python -u option, which
+# does not always work as #!/usr/bin/env python -u
+# Solution from:
+# https://stackoverflow.com/questions/107705/disable-output-buffering
+
 import gc
-import imp
+import importlib
 import json
 import os
 import argparse
@@ -45,12 +52,8 @@ from etce.config import ConfigDictionary
 from etce.platform import Platform
 from etce.sshclient import SSHClient
 
-# Force sys.stdout to be unbuffered w/o using the python -u option, which
-# does not always work as #!/usr/bin/env python -u
-# Solution from:
-# https://stackoverflow.com/questions/107705/disable-output-buffering
-gc.garbage.append(sys.stdout)
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+#gc.garbage.append(sys.stdout)
+#sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 def sendreturnandexit(isexception,
                       result):    
@@ -58,9 +61,12 @@ def sendreturnandexit(isexception,
     if isexception:
         tracebackmsg = traceback.format_exc()
 
-    print SSHClient.RETURNVALUE_OPEN_DEMARCATOR
-    print json.dumps({ 'isexception':isexception, 'result':result, 'traceback':tracebackmsg })
-    print SSHClient.RETURNVALUE_CLOSE_DEMARCATOR
+    print(SSHClient.RETURNVALUE_OPEN_DEMARCATOR)
+    sys.stdout.flush()
+    print(json.dumps({ 'isexception':isexception, 'result':result, 'traceback':tracebackmsg }))
+    sys.stdout.flush()
+    print(SSHClient.RETURNVALUE_CLOSE_DEMARCATOR)
+    sys.stdout.flush()
     
     if(isexception):
         sys.exit(1)
@@ -138,7 +144,7 @@ if len(args.cwd) > 0:
 
 if not os.path.exists(workingdir):
     hostname = Platform().hostname()
-    print 'Creating working directory "%s" on host "%s"' % (workingdir, hostname)
+    print('Creating working directory "%s" on host "%s"' % (workingdir, hostname))
     os.makedirs(workingdir)
 
 if not os.path.isdir(workingdir):
@@ -150,7 +156,7 @@ if not os.path.isdir(workingdir):
 os.chdir(workingdir)
 
 if verbose:
-    print 'etce: Running from %s' % workingdir
+    print('etce: Running from %s' % workingdir)
 
 try:
     method = etce.loader.load_etce_method(args.modulename, args.methodname)
@@ -158,12 +164,12 @@ try:
     if method:
         if len(args.methodargs) == 2:
             if verbose:
-                print "(%s,%s)" % (args.modulename, args.methodname)
+                print("(%s,%s)" % (args.modulename, args.methodname))
             ret = method()
         else:
             if verbose:
-                print "(%s,%s,%s)" % \
-                    (args.modulename, args.methodname, ' '.join(args.methodargs))
+                print("(%s,%s,%s)" % \
+                    (args.modulename, args.methodname, ' '.join(args.methodargs)))
 
             typedargs = [ etce.utils.configstrtoval(arg) for arg in args.methodargs ]
 
@@ -175,5 +181,5 @@ try:
 
     sendreturnandexit(False, ret)
 
-except Exception, e:
+except Exception as e:
     sendreturnandexit(True, str(e))

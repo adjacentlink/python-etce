@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2017,2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+
+from __future__ import absolute_import, division, print_function
 
 import os
 import re
@@ -77,7 +79,7 @@ class PseudoTestDirectory(object):
                 if os.path.isfile(entry):
                     return name
 
-        print 'File "%s" not found.' % name
+        print('File "%s" not found.' % name)
         
         return None
 

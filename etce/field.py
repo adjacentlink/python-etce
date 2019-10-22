@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
+
 import os.path
 import string
 import sys
@@ -69,7 +71,7 @@ class Field(object):
                     allnodes.append(leaf)
             self._allnodes = tuple(allnodes)
         except Exception as e:
-            print >>sys.stderr, 'Failed to parse hostfile "%s" with error "%s". Quitting.' % (nodefile, e)
+            print('Failed to parse hostfile "%s" with error "%s". Quitting.' % (nodefile, e), file=sys.stderr)
             exit(1)
 
 
@@ -265,22 +267,22 @@ In this case there are 4 roots
     args = parser.parse_args()
 
     if not os.path.isfile(args.hostfile):
-        print >>sys.stderr,'HOSTFILE "%s" does not exist. Quitting.' % args.hostfile
+        print('HOSTFILE "%s" does not exist. Quitting.' % args.hostfile, file=sys.stderr)
         exit(1)
 
     f = Field(args.hostfile)
 
     if args.position.lower() == 'all':
         for node in f.allnodes():
-            print node
+            print(node)
     elif args.position.lower() == 'roots':
         for node in f.roots():
-            print node
+            print(node)
     elif args.position.lower() == 'leaves':
         for node in f.leaves():
-            print node
+            print(node)
     else:
-        print 'Unknown position: %s' % args.position
+        print('Unknown position: %s' % args.position)
         exit(1)
 
 

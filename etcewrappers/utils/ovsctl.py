@@ -30,6 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 import os
 import time
 
@@ -144,7 +145,7 @@ class OvsCtl(Wrapper):
                     continue
 
                 if not eventtype in builders:
-                    print 'wrapper ovsctl.py: Warning, skipping unsupported event type "%s"'
+                    print('wrapper ovsctl.py: Warning, skipping unsupported event type "%s"')
                     continue
                 
                 argstr = builders[eventtype](ctx, eventargline)

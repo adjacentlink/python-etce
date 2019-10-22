@@ -30,6 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 import shlex
 import subprocess
 import time
@@ -92,14 +93,14 @@ class Ifconfig(Wrapper):
                 if txqueuelen > 0:
                     queuelencommand = 'ifconfig %s txqueuelen %d' \
                                       % (interface, txqueuelen)
-                    print queuelencommand
+                    print(queuelencommand)
                     subprocess.call(shlex.split(queuelencommand))
 
             if len(mtu.strip()) > 0:
                 mtu = int(mtu)
                 if mtu > 0:
                     mtucommand = 'ifconfig %s mtu %d' % (interface, mtu)
-                    print mtucommand
+                    print(mtucommand)
                     subprocess.call(shlex.split(mtucommand))
 
         testtimesecs = ctx.args.testtimesecs
@@ -107,11 +108,11 @@ class Ifconfig(Wrapper):
         periodsecs = ctx.args.periodsecs
 
         if testtimesecs < 0:
-            print 'testtimesecs is < 0. Quitting.'
+            print('testtimesecs is < 0. Quitting.')
             return
 
         if periodsecs < 0:
-            print 'periodsecs is < 0. Quitting.'
+            print('periodsecs is < 0. Quitting.')
             return
 
         if etce.utils.daemonize() > 0:

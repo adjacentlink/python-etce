@@ -32,7 +32,6 @@
 
 import copy
 import os
-import sets
 
 import lxml.etree
 
@@ -132,7 +131,7 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
             new_root.append(elem)
 
         with open(outfile, 'w') as outf:
-            outf.write(lxml.etree.tostring(new_root, pretty_print=True))
+            outf.write(lxml.etree.tostring(new_root, pretty_print=True).decode())
 
 
     def rewrite_without_overlays_and_templates(self, outfile):
@@ -150,7 +149,7 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
             new_root.append(elem)
 
         with open(outfile, 'w') as outf:
-            outf.write(lxml.etree.tostring(new_root, pretty_print=True))
+            outf.write(lxml.etree.tostring(new_root, pretty_print=True).decode())
 
             
     def _parsefile(self, testfile):
@@ -250,5 +249,5 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
 
         return (indices,
                 templates,
-                sets.ImmutableSet(template_directory_names),
-                sets.ImmutableSet(formatted_dir_names))
+                frozenset(template_directory_names),
+                frozenset(formatted_dir_names))
