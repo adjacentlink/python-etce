@@ -43,8 +43,6 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_ARG_WITH(python2,
            [  --with-python2          use python2 instead of python3 (off)])
 
-AM_CONDITIONAL([HAVE_PYTHON2], [test x$with_python2 = xtrue])
-
 AC_SUBST(RELEASE, 1)
 
 # Python 2 or 3
@@ -52,7 +50,7 @@ if test "$with_python2" = yes; then
 AM_PATH_PYTHON([2.7])
 AC_SUBST(PYTHON_PACKAGE_PREFIX, python2)
 else
-AM_PATH_PYTHON([3])
+AM_PATH_PYTHON([3.5])
 AC_SUBST(PYTHON_PACKAGE_PREFIX, python3)
 fi
 
