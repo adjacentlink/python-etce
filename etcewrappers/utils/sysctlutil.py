@@ -31,8 +31,12 @@
 #
 
 from __future__ import absolute_import, division, print_function
+
 import os
-import configparser
+try:
+    import configparser
+except:
+    import ConfigParser as configparser
 
 from etce.wrapper import Wrapper
 
