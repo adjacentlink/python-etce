@@ -60,11 +60,8 @@ def sendreturnandexit(isexception,
     tracebackmsg = ''
     if isexception:
         tracebackmsg = traceback.format_exc()
-
     print(SSHClient.RETURNVALUE_OPEN_DEMARCATOR)
-    sys.stdout.flush()
     print(json.dumps({ 'isexception':isexception, 'result':result, 'traceback':tracebackmsg }))
-    sys.stdout.flush()
     print(SSHClient.RETURNVALUE_CLOSE_DEMARCATOR)
     sys.stdout.flush()
     
