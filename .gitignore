@@ -29,4 +29,8 @@ python*etce-*.tar.gz
 python*etce.egg-info
 
 # debs
-deb_dist
+.debbuild
+
+# rpm
+.rpmbuild
+python-etce.spec

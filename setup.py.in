@@ -33,7 +33,7 @@
 from setuptools import setup, find_packages
 
 setup(description='Extendable Test Control Environment',
-      name='@PYTHON_PACKAGE_PREFIX@-etce',
+      name='python-etce',
       version='@VERSION@',
       author='Adjacent Link LLC',
       author_email='labs at adjacent link doc com',

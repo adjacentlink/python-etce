@@ -1,0 +1,241 @@
+Summary: Extendable Test Control Environment
+Name:  python-etce
+Version: @VERSION@
+Release: 1%{?dist}
+License: BSD
+Group: Development/Libraries
+URL: https://github.com/adjacentlink/python-etce
+Source0: %{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+Vendor: Adjacent Link LLC
+BuildArch: noarch
+%define base_name etce
+%define with_old_depends 0
+%define with_pathfix 1
+
+# RHEL/CentOS
+%if 0%{?el7}
+%define with_python2 1
+%define with_old_depends 1
+%define with_pathfix 0
+%endif
+
+# Fedora (non-EOL)
+%if 0%{?fedora}
+%if %{fedora} < 31
+%define with_python3 1
+%define with_python2 1
+%else
+%define with_python3 1
+%endif
+%endif
+
+%if 0%{?with_python2}
+%if %{with_old_depends}
+%define use_python2_sitelib %{python_sitelib}
+%else
+%define use_python2_sitelib %{python2_sitelib}
+%endif
+%endif
+
+%global _description \
+Extendable Test Control Environment        
+
+%description %{_description}
+
+%if 0%{?with_python2}
+%package -n python2-%{base_name}
+Summary: %{summary}
+%{?python_provide:%python_provide python2-%{base_name}}
+%if %{with_old_depends}
+BuildRequires: python-devel
+Requires: python-mako
+Requires: python-paramiko
+Requires: python-lxml
+Requires: lxc
+Conflicts: python3-etce
+Obsoletes: python-etce
+Provides: python-etce
+%define use_python2_sitelib %{python_sitelib}
+%else
+BuildRequires: python2-devel
+Requires: python2-mako
+Requires: python2-paramiko
+Requires: python2-lxml
+Requires: lxc
+Conflicts: python3-etce
+%define use_python2_sitelib %{python2_sitelib}
+%endif
+%description -n python2-%{base_name} %{_description}
+%endif
+
+%if 0%{?with_python3}
+%package -n python3-%{base_name}
+Summary: %{summary}
+%{?python_provide:%python_provide python3-%{base_name}}
+BuildRequires: python3-devel
+Requires: python3-mako
+Requires: python3-paramiko
+Requires: python3-lxml
+Requires: lxc
+Conflicts: python-etce
+Conflicts: python2-etce
+%description -n python3-%{base_name} %{_description}
+%endif
+
+%prep
+%setup -q
+
+%build
+%configure
+
+%install
+%if 0%{?with_python3}
+make  DESTDIR=${RPM_BUILD_ROOT} PYTHON=%{__python3} install
+mv %{buildroot}/%{_bindir}/etce-field-exec %{buildroot}/%{_bindir}/etce-field-exec-%{python3_version}
+mv %{buildroot}/%{_bindir}/etce-list-hosts %{buildroot}/%{_bindir}/etce-list-hosts-%{python3_version}
+mv %{buildroot}/%{_bindir}/etce-lxc %{buildroot}/%{_bindir}/etce-lxc-%{python3_version}
+mv %{buildroot}/%{_bindir}/etce-check-connection %{buildroot}/%{_bindir}/etce-check-connection-%{python3_version}
+mv %{buildroot}/%{_bindir}/etce-test %{buildroot}/%{_bindir}/etce-test-%{python3_version}
+mv %{buildroot}/%{_bindir}/etce-wrapper %{buildroot}/%{_bindir}/etce-wrapper-%{python3_version}
+ln -s etce-field-exec-%{python3_version} %{buildroot}/%{_bindir}/etce-field-exec-3
+ln -s etce-list-hosts-%{python3_version} %{buildroot}/%{_bindir}/etce-list-hosts-3
+ln -s etce-lxc-%{python3_version} %{buildroot}/%{_bindir}/etce-lxc-3
+ln -s etce-check-connection-%{python3_version} %{buildroot}/%{_bindir}/etce-check-connection-3
+ln -s etce-test-%{python3_version} %{buildroot}/%{_bindir}/etce-test-3
+ln -s etce-wrapper-%{python3_version} %{buildroot}/%{_bindir}/etce-wrapper-3
+pathfix.py -pni "%{__python3} %{py3_shbang_opts}" %{buildroot}%{_bindir}/*-%{python3_version}
+%endif
+
+%if 0%{?with_python2}
+make  DESTDIR=${RPM_BUILD_ROOT} PYTHON=%{__python2} install
+mv %{buildroot}/%{_bindir}/etce-field-exec %{buildroot}/%{_bindir}/etce-field-exec-%{python2_version}
+mv %{buildroot}/%{_bindir}/etce-list-hosts %{buildroot}/%{_bindir}/etce-list-hosts-%{python2_version}
+mv %{buildroot}/%{_bindir}/etce-lxc %{buildroot}/%{_bindir}/etce-lxc-%{python2_version}
+mv %{buildroot}/%{_bindir}/etce-check-connection %{buildroot}/%{_bindir}/etce-check-connection-%{python2_version}
+mv %{buildroot}/%{_bindir}/etce-test %{buildroot}/%{_bindir}/etce-test-%{python2_version}
+mv %{buildroot}/%{_bindir}/etce-wrapper %{buildroot}/%{_bindir}/etce-wrapper-%{python2_version}
+ln -s etce-field-exec-%{python2_version} %{buildroot}/%{_bindir}/etce-field-exec-2
+ln -s etce-list-hosts-%{python2_version} %{buildroot}/%{_bindir}/etce-list-hosts-2
+ln -s etce-lxc-%{python2_version} %{buildroot}/%{_bindir}/etce-lxc-2
+ln -s etce-check-connection-%{python2_version} %{buildroot}/%{_bindir}/etce-check-connection-2
+ln -s etce-test-%{python2_version} %{buildroot}/%{_bindir}/etce-test-2
+ln -s etce-wrapper-%{python2_version} %{buildroot}/%{_bindir}/etce-wrapper-2
+%if %{with_pathfix}
+pathfix.py -pni "%{__python2} %{py2_shbang_opts}" %{buildroot}%{_bindir}/*-%{python2_version}
+%endif
+%endif
+
+find ${RPM_BUILD_ROOT} -name '*.a' -exec rm '{}'  \;
+find ${RPM_BUILD_ROOT} -name '*.la' -exec rm '{}' \;
+mkdir -p ${RPM_BUILD_ROOT}%{_pkgdocdir}
+install -t ${RPM_BUILD_ROOT}%{_pkgdocdir} AUTHORS %{!?_licensedir:COPYING} ChangeLog NEWS README 
+%if 0%{?_licensedir:1}
+mkdir -p ${RPM_BUILD_ROOT}%{_licensedir}/%{name}
+install -t ${RPM_BUILD_ROOT}%{_licensedir}/%{name} COPYING
+%endif
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%if 0%{?with_python2}
+%post -n python2-%{base_name}
+%{__rm} -f %{_bindir}/etce-field-exec
+%{__rm} -f %{_bindir}/etce-list-hosts
+%{__rm} -f %{_bindir}/etce-lxc
+%{__rm} -f %{_bindir}/etce-check-connection
+%{__rm} -f %{_bindir}/etce-test
+%{__rm} -f %{_bindir}/etce-wrapper
+ln -s %{_bindir}/etce-field-exec-2 %{_bindir}/etce-field-exec
+ln -s %{_bindir}/etce-list-hosts-2 %{_bindir}/etce-list-hosts
+ln -s %{_bindir}/etce-lxc-2 %{_bindir}/etce-lxc
+ln -s %{_bindir}/etce-check-connection-2 %{_bindir}/etce-check-connection
+ln -s %{_bindir}/etce-test-2 %{_bindir}/etce-test
+ln -s %{_bindir}/etce-wrapper-2 %{_bindir}/etce-wrapper
+%endif
+
+%if 0%{?with_python3}
+%post -n python3-%{base_name}
+%{__rm} -f %{_bindir}/etce-field-exec
+%{__rm} -f %{_bindir}/etce-list-hosts
+%{__rm} -f %{_bindir}/etce-lxc
+%{__rm} -f %{_bindir}/etce-check-connection
+%{__rm} -f %{_bindir}/etce-test
+%{__rm} -f %{_bindir}/etce-wrapper
+ln -s %{_bindir}/etce-field-exec-3 %{_bindir}/etce-field-exec
+ln -s %{_bindir}/etce-list-hosts-3 %{_bindir}/etce-list-hosts
+ln -s %{_bindir}/etce-lxc-3 %{_bindir}/etce-lxc
+ln -s %{_bindir}/etce-check-connection-3 %{_bindir}/etce-check-connection
+ln -s %{_bindir}/etce-test-3 %{_bindir}/etce-test
+ln -s %{_bindir}/etce-wrapper-3 %{_bindir}/etce-wrapper
+%endif
+
+%if 0%{?with_python2}
+%preun -n python2-%{base_name}
+if [ $1 -lt 1 ] ; then
+    %{__rm} -f %{_bindir}/etce-field-exec
+    %{__rm} -f %{_bindir}/etce-list-hosts
+    %{__rm} -f %{_bindir}/etce-lxc
+    %{__rm} -f %{_bindir}/etce-check-connection
+    %{__rm} -f %{_bindir}/etce-test
+    %{__rm} -f %{_bindir}/etce-wrapper
+fi
+%endif
+
+%if 0%{?with_python3}
+%preun -n python3-%{base_name}
+if [ $1 -lt 1 ] ; then
+    %{__rm} -f %{_bindir}/etce-field-exec
+    %{__rm} -f %{_bindir}/etce-list-hosts
+    %{__rm} -f %{_bindir}/etce-lxc
+    %{__rm} -f %{_bindir}/etce-check-connection
+    %{__rm} -f %{_bindir}/etce-test
+    %{__rm} -f %{_bindir}/etce-wrapper
+fi
+%endif
+
+%if 0%{?with_python2}
+%files -n python2-%{base_name}
+%defattr(-,root,root,-)
+%{_bindir}/etce-field-exec-2
+%{_bindir}/etce-list-hosts-2
+%{_bindir}/etce-lxc-2
+%{_bindir}/etce-check-connection-2
+%{_bindir}/etce-test-2
+%{_bindir}/etce-wrapper-2
+%{_bindir}/etce-field-exec-%{python2_version}
+%{_bindir}/etce-list-hosts-%{python2_version}
+%{_bindir}/etce-lxc-%{python2_version}
+%{_bindir}/etce-check-connection-%{python2_version}
+%{_bindir}/etce-test-%{python2_version}
+%{_bindir}/etce-wrapper-%{python2_version}
+%{use_python2_sitelib}/*
+%doc %{_pkgdocdir}
+%if 0%{?_licensedir:1}
+%dir %{_licensedir}/%{name}
+%license %{_licensedir}/%{name}/COPYING
+%endif
+%endif
+
+%if 0%{?with_python3}
+%files -n python3-%{base_name}
+%defattr(-,root,root,-)
+%{_bindir}/etce-field-exec-3
+%{_bindir}/etce-list-hosts-3
+%{_bindir}/etce-lxc-3
+%{_bindir}/etce-check-connection-3
+%{_bindir}/etce-test-3
+%{_bindir}/etce-wrapper-3
+%{_bindir}/etce-field-exec-%{python3_version}
+%{_bindir}/etce-list-hosts-%{python3_version}
+%{_bindir}/etce-lxc-%{python3_version}
+%{_bindir}/etce-check-connection-%{python3_version}
+%{_bindir}/etce-test-%{python3_version}
+%{_bindir}/etce-wrapper-%{python3_version}
+%{python3_sitelib}/*
+%doc %{_pkgdocdir}
+%if 0%{?_licensedir:1}
+%dir %{_licensedir}/%{name}
+%license %{_licensedir}/%{name}/COPYING
+%endif
+%endif

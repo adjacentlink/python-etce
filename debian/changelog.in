@@ -1,0 +1,5 @@
+python-etce (@VERSION@-1) stable; urgency=low
+
+  * package automatically created from toplevel project
+
+ -- Adjacent Link LLC <labs@adjacentlink.com>  @DATE_RFC2822@

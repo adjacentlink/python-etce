@@ -1,0 +1,9 @@
+usr/lib/python3.*/*-packages/*
+usr/bin/etce-field-exec
+usr/bin/etce-list-hosts
+usr/bin/etce-lxc
+usr/bin/etce-check-connection
+usr/bin/etce-test
+usr/bin/etce-wrapper
+
+

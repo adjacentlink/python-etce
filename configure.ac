@@ -40,19 +40,15 @@ LT_INIT
 
 AC_CONFIG_MACRO_DIR([m4])
 
-AC_ARG_WITH(python2,
-           [  --with-python2          use python2 instead of python3 (off)])
-
 AC_SUBST(RELEASE, 1)
 
-# Python 2 or 3
-if test "$with_python2" = yes; then
-AM_PATH_PYTHON([2.7])
-AC_SUBST(PYTHON_PACKAGE_PREFIX, python2)
-else
-AM_PATH_PYTHON([3.5])
-AC_SUBST(PYTHON_PACKAGE_PREFIX, python3)
-fi
+AC_CHECK_PROG(HAVE_DEB, dh_clean, true, false)
+AM_CONDITIONAL(HAVE_DEB,$HAVE_DEB)
+
+AC_CHECK_FILE(/etc/debian_version,[DEBIAN_VERSION=`cat /etc/debian_version | awk -F/ '{print $1}'`],)
+AC_SUBST(DEBIAN_VERSION)
+
+AC_SUBST(DATE_RFC2822,`date -R`)
 
 # check for rpmbuild
 AC_CHECK_PROG(HAVE_RPMBUILD, rpmbuild, true, false)
@@ -64,6 +60,4 @@ AM_CONDITIONAL(HAVE_DEB,$HAVE_DEB)
 
 AC_OUTPUT(
  Makefile
- stdeb.cfg
- setup.py
 )
