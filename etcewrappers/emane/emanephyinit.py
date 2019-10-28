@@ -195,7 +195,7 @@ class EmanePhyInit(Wrapper):
 
 
     def fadingselection(self, moduleid, eventtype, eventargs):
-        from .emane.events import FadingSelectionEvent
+        from emane.events import FadingSelectionEvent
 
         # -Inf   nem:4 fadingselection nem:1,none nem:2,nakagami
         nem = int(moduleid.split(':')[1])
