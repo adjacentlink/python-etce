@@ -13,3 +13,6 @@ override_dh_gencontrol:
 
 %:
 	dh $@ --with python2
+
+override_dh_auto_configure:
+	dh_auto_configure -- --with-python2
