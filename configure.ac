@@ -42,7 +42,17 @@ AC_CONFIG_MACRO_DIR([m4])
 
 AC_SUBST(RELEASE, 1)
 
+AC_ARG_WITH(python2,
+           [  --with-python2          use python2 instead of python3 (off)])
+
+if test "$with_python2" = "yes"
+then
 AM_PATH_PYTHON([2.7])
+AM_CONDITIONAL(HAVE_PYTHON2,true)
+else
+AM_PATH_PYTHON([3.5])
+AM_CONDITIONAL(HAVE_PYTHON2,false)
+fi
 
 AC_CHECK_PROG(HAVE_DEB, dh_clean, true, false)
 AM_CONDITIONAL(HAVE_DEB,$HAVE_DEB)

@@ -6,9 +6,10 @@ Build-Depends: debhelper (>= 8.0.0), dh-python
 Standards-Version: 3.9.3
 Homepage: https://github.com/adjacentlink/python-etce
 
-Package: python3-etce
+Package: python-etce
 Section: python
 Architecture: all
-Conflicts: python-etce
-Depends: ${python3:Depends}, ${misc:Depends}
+Conflicts: python3-etce
+Depends: ${python:Depends}, ${misc:Depends}
 Description: Extendable Test Control Environment
+
