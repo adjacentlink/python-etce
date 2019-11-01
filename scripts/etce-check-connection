@@ -31,6 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 import argparse
 import os
 import pwd
@@ -107,17 +108,17 @@ try:
                                   envfile=args.envfile)
 
 
-   print
-   print 'Attempting connection:'
-   print '==='
+   print()
+   print('Attempting connection:')
+   print('===')
    ret = client.execute(commandstr, hosts)
 
    for host in sorted(ret):
-      print 'Connected: %s' % (ret[host].retval['result'])
-   print
+      print('Connected: %s' % (ret[host].retval['result']))
+   print()
 
 except FieldConnectionError as fe:
-   print fe.message
+   print(fe.message)
 finally:
    if client:
       client.close()

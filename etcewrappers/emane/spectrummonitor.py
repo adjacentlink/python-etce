@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,60 +30,40 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from __future__ import absolute_import, division, print_function
-
-import os
-try:
-    import configparser
-except:
-    import ConfigParser as configparser
-
 from etce.wrapper import Wrapper
 
-
-class SysCtlUtil(Wrapper):
+class SpectrumMonitor(Wrapper):
     """
-    Configure Linux kernel parameters.
-    The input file should have format: 
-
-      [run]
-      kernelparamname=val
-      ...
-
-      [stop]
-      kernelparamname=val
-      ...
-
-    Both "run" and "stop" sections are optional. Named
-    parameters are set to the specified value when the
-    corresponding wrapper method is called.
+    Run emane-spectrum-monitor with the provided configuration file.
     """
 
     def register(self, registrar):
-        registrar.register_infile_name('sysctlutil.conf')
+        registrar.register_infile_name('emane-spectrum-monitor.xml')
+
+        registrar.register_outfile_name('emane-spectrum-monitor.log')
+
+        registrar.register_argument('loglevel', 2, 'log level - [0,4]')
+
+        registrar.run_with_sudo()
 
 
     def run(self, ctx):
         if not ctx.args.infile:
             return
 
-        parser = configparser.SafeConfigParser()
-        parser.read(ctx.args.infile)
+        argstr = '--config %s ' \
+                 '-r ' \
+                 '-d ' \
+                 '-l %d ' \
+                 '-f %s ' \
+                 '--pidfile %s' \
+                 % (ctx.args.infile,
+                    ctx.args.loglevel,
+                    ctx.args.outfile,
+                    ctx.args.default_pidfilename)
 
-        if 'run' in parser.sections():
-            for name,val in list(parser.items('run')):
-                os.system('sysctl -w %s=%s' % (name,val))
+        ctx.run('emane-spectrum-monitor', argstr, genpidfile=False)
 
 
     def stop(self, ctx):
-        if not ctx.args.infile:
-            return
-
-        parser = configparser.SafeConfigParser()
-        parser.read(ctx.args.infile)
-
-        if 'stop' in parser.sections():
-            for name,val in parser.items('stop'):
-                os.system('sysctl -w %s=%s' % (name,val))
-
-
+        ctx.stop()

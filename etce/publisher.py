@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 import os
 import re
 import shutil
@@ -71,7 +72,8 @@ class Publisher(object):
         # Quit if the merge directory already exists. This also handles the case
         # where mergedir is the same as the self._test_directory
         if os.path.exists(mergedir):
-            print >>sys.stderr,'Merge directory "%s" already exists, skipping merge.' % mergedir
+            print('Merge directory "%s" already exists, skipping merge.' % mergedir,
+                  file=sys.stderr)
             return
 
         srcdirs = [self._test_directory]
@@ -176,8 +178,9 @@ class Publisher(object):
             raise ValueError(errstr)
 
         for  empty_template_directory in empty_template_directories:
-            print >>sys.stderr,'Warning: template directory "%s" is empty.' \
-                % empty_template_directory
+            print('Warning: template directory "%s" is empty.' \
+                  % empty_template_directory,
+                  file=sys.stderr)
             os.makedirs(os.path.join(mergedir, empty_template_directory))
 
 
@@ -214,7 +217,8 @@ class Publisher(object):
 
         subdirectory_map = {}
 
-        map(subdirectory_map.update,  map(self._build_subdirectory_map, srcdirs))
+        for srcdir in srcdirs:
+            subdirectory_map.update(self._build_subdirectory_map(srcdir))
 
         subdirectory_map = self._prune_unused_template_directories(subdirectory_map)
         
@@ -222,8 +226,8 @@ class Publisher(object):
 
         testfile_global_overlays = self._testdoc.global_overlays(subdirectory_map)
 
-        print
-        print 'Publishing %s to %s' % (self._testdoc.name, publishdir)
+        print()
+        print('Publishing %s to %s' % (self._testdoc.name, publishdir))
 
         if os.path.exists(publishdir):
             if overwrite_existing_publishdir:
@@ -446,15 +450,15 @@ def publish_test(args):
     import sys
 
     if not os.path.exists(args.testdirectory):
-        print
-        print 'testdirectory "%s" does not exist. Quitting.' % args.testdirectory
-        print
+        print()
+        print('testdirectory "%s" does not exist. Quitting.' % args.testdirectory)
+        print()
         exit(1)
 
     if os.path.exists(args.outdirectory):
-        print
-        print 'Destination "%s" already exists. Quitting.' % args.outdirectory
-        print
+        print()
+        print('Destination "%s" already exists. Quitting.' % args.outdirectory)
+        print()
         exit(2)
 
     # if basedirectory is a relative path, make it absolute with respect
@@ -465,7 +469,8 @@ def publish_test(args):
     runtime_overlays = {}
     if args.overlayfile is not None:
         if not os.path.isfile(args.overlayfile):
-            print >>sys.stderr, 'overlayfile "%s" doesn\'t exist. Quitting' % args.overlayfile
+            print('overlayfile "%s" doesn\'t exist. Quitting' % args.overlayfile,
+                  file=sys.stderr)
             exit(1)
         for line in open(args.overlayfile,'r'):
             line = line.strip()
@@ -482,6 +487,6 @@ def publish_test(args):
                           absbasedir_override=args.basedirectory)
 
     except Exception as e:
-        print >>sys.stderr, e
+        print(e, file=sys.stderr)
         if args.verbose:
-            print traceback.format_exc()
+            print(traceback.format_exc())

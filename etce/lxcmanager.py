@@ -30,6 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 import os
 import socket
 import shutil
@@ -84,35 +85,37 @@ class LXCManagerImpl(object):
         containers = plandoc.containers(hostname)
 
         if not containers:
-            print 'No containers assigned to "%s". Skipping.' % hostname
+            print('No containers assigned to "%s". Skipping.' % hostname)
             return
         
         if not lxcrootdir[0] == '/':
-            print 'root_directory "%s" for hostname "%s" is not an absolute path. Quitting.' % \
-                (lxcrootdir, hostname)
+            print('root_directory "%s" for hostname "%s" is not an absolute path. ' \
+                  'Quitting.' % \
+                  (lxcrootdir, hostname))
             return
 
         directory_level = len(lxcrootdir.split('/')) - 1
         if not directory_level >= 3:
-            print 'root_directory "%s" for hostname "%s" is less than 3 levels deep. Quitting.' % \
-                (lxcrootdir, hostname)
+            print('root_directory "%s" for hostname "%s" is less than 3 levels deep. ' \
+                  'Quitting.' % \
+                  (lxcrootdir, hostname))
             return
 
         allowed_roots = ('tmp', 'opt', 'home', 'var', 'mnt')
         if not lxcrootdir.split('/')[1] in allowed_roots:
-            print 'root_directory "%s" for hostname "%s" is not located in one of {%s} ' \
-                'directory trees. Quitting.' % \
-                (lxcrootdir, hostname, ', '.join(allowed_roots))
+            print('root_directory "%s" for hostname "%s" is not located in one of {%s} ' \
+                  'directory trees. Quitting.' % \
+                  (lxcrootdir, hostname, ', '.join(allowed_roots)))
             return
 
         if lxcrootdir is None or len(containers) == 0:
-            print 'No containers assigned to host %s. Quitting.' % hostname
+            print('No containers assigned to host %s. Quitting.' % hostname)
             return
 
         # delete and remake the node root
         if os.path.exists(lxcrootdir):
-            print 'Removing contents of "%s" directory.' \
-                % lxcrootdir
+            print('Removing contents of "%s" directory.' % lxcrootdir)
+
             for subentry in os.listdir(lxcrootdir):
                 entry = os.path.join(lxcrootdir, subentry)
                 if os.path.isfile(entry):
@@ -125,7 +128,7 @@ class LXCManagerImpl(object):
         # set kernelparameters
         kernelparameters = plandoc.kernelparameters(hostname)
         if len(kernelparameters) > 0:
-            print 'Setting kernel parameters:'
+            print('Setting kernel parameters:')
 
             for kernelparamname,kernelparamval in kernelparameters.items():
                 os.system('sysctl %s=%s' % (kernelparamname,kernelparamval))
@@ -134,7 +137,7 @@ class LXCManagerImpl(object):
         if not dryrun:
             for _,bridge in plandoc.bridges(hostname).items():
                 if not bridge.persistent:
-                    print 'Bringing up bridge: %s' % bridge.devicename
+                    print('Bringing up bridge: %s' % bridge.devicename)
 
                     self._platform.bridgeup(bridge.devicename,
                                             bridge.addifs,
@@ -184,7 +187,7 @@ class LXCManagerImpl(object):
                              stat.S_IXOTH)
 
         if dryrun:
-            print 'dryrun'
+            print('dryrun')
         else:
             self._startnodes(containers)
 
@@ -196,12 +199,12 @@ class LXCManagerImpl(object):
 
         for container in plandoc.containers(hostname):
             command = 'lxc-stop -n %s -k &> /dev/null' % container.lxc_name
-            print command
+            print(command)
             os.system(command)
 
         for _,bridge in plandoc.bridges(hostname).items():
             if not bridge.persistent:
-                print 'Bringing down bridge: %s' % bridge.devicename
+                print('Bringing down bridge: %s' % bridge.devicename)
                 self._platform.bridgedown(bridge.devicename)
 
         os.remove(plandoc.planfile())
@@ -247,16 +250,16 @@ class LXCManagerImpl(object):
         for i in range(10):
             command = 'lxc-ls -1 --active'
             numstarted = len(self._platform.runcommand(command))
-            print 'Waiting for lxc containers: %d of %d are running.' % \
-                (numstarted, nodecount)
+            print('Waiting for lxc containers: %d of %d are running.' % \
+                  (numstarted, nodecount))
 
             if numstarted == nodecount:
                 break
 
             time.sleep(1)
 
-        print 'Continuing with %d of %d running lxc containers.' % \
-            (numstarted, nodecount)
+        print('Continuing with %d of %d running lxc containers.' % \
+              (numstarted, nodecount))
 
         
     def _writehosts(self, containers):

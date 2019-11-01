@@ -32,7 +32,7 @@ AC_COPYRIGHT([
  
 ])
 
-AC_INIT([python-etce],1.2.1,[labs at adjacentlink dot com])
+AC_INIT([python-etce],1.2.2,[labs at adjacentlink dot com])
 
 AM_INIT_AUTOMAKE([1.9.6])
 
@@ -40,26 +40,27 @@ LT_INIT
 
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_PATH_PYTHON([2.6])
-
 AC_SUBST(RELEASE, 1)
 
-DISTRIB_ID=
-DISTRIB_RELEASE=
-AC_CHECK_FILE(/etc/lsb-release,[. /etc/lsb-release],)
-AC_SUBST(DISTRIB_ID)
-AC_SUBST(DISTRIB_RELEASE)
-DISTRIB_VERSION_PARTS=(${DISTRIB_RELEASE//./ })
+AC_ARG_WITH(python2,
+           [  --with-python2          use python2 instead of python3 (off)])
 
-if test "${DISTRIB_ID}" = Ubuntu; then
-if (("${DISTRIB_VERSION_PARTS[[0]]}" >= 16)); then
-AC_SUBST(LXCPACKAGE, lxc1)
+if test "$with_python2" = "yes"
+then
+AM_PATH_PYTHON([2.7])
+AM_CONDITIONAL(HAVE_PYTHON2,true)
 else
-AC_SUBST(LXCPACKAGE, lxc)
+AM_PATH_PYTHON([3.5])
+AM_CONDITIONAL(HAVE_PYTHON2,false)
 fi
-else
-AC_SUBST(LXCPACKAGE, lxc)
-fi
+
+AC_CHECK_PROG(HAVE_DEB, dh_clean, true, false)
+AM_CONDITIONAL(HAVE_DEB,$HAVE_DEB)
+
+AC_CHECK_FILE(/etc/debian_version,[DEBIAN_VERSION=`cat /etc/debian_version | awk -F/ '{print $1}'`],)
+AC_SUBST(DEBIAN_VERSION)
+
+AC_SUBST(DATE_RFC2822,`date -R`)
 
 # check for rpmbuild
 AC_CHECK_PROG(HAVE_RPMBUILD, rpmbuild, true, false)
@@ -71,6 +72,4 @@ AM_CONDITIONAL(HAVE_DEB,$HAVE_DEB)
 
 AC_OUTPUT(
  Makefile
- stdeb.cfg
- setup.py
 )

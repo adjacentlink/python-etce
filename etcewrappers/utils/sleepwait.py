@@ -30,6 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 import time
 import random
 
@@ -63,7 +64,7 @@ class SleepWait(Wrapper):
         sleepsecs = random.uniform(sleepsecsmiddle - (sleeprange/2.0),
                                    sleepsecsmiddle + (sleeprange/2.0))
 
-        print 'sleepwait sleepsecs=%0.1f' % sleepsecs
+        print('sleepwait sleepsecs=%0.1f' % sleepsecs)
 
         time.sleep(sleepsecs)
 

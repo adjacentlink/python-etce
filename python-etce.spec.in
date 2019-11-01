@@ -1,0 +1,136 @@
+%define with_python2 %{?_with_python2:1}%{!?_with_python2:0}
+
+Summary: Extendable Test Control Environment
+Name:  python-etce
+Version: @VERSION@
+Release: 1%{?dist}
+License: BSD
+Group: Development/Libraries
+URL: https://github.com/adjacentlink/python-etce
+Source0: %{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+Vendor: Adjacent Link LLC
+BuildArch: noarch
+%define base_name etce
+%define with_old_depends 0
+%define with_pathfix 1
+
+%define with_old_depends 0%{?el7}
+%define with_pathfix 0%{!?el7}
+
+%if 0%{?with_python2}
+%if %{with_old_depends}
+%define use_python2_sitelib %{python_sitelib}
+%else
+%define use_python2_sitelib %{python2_sitelib}
+%endif
+%endif
+
+%global _description \
+Extendable Test Control Environment        
+
+%description %{_description}
+
+%if 0%{?with_python2}
+%package -n python2-%{base_name}
+Summary: %{summary}
+%{?python_provide:%python_provide python2-%{base_name}}
+%if %{with_old_depends}
+BuildRequires: python-devel
+Requires: python-mako
+Requires: python-paramiko
+Requires: python-lxml
+Requires: lxc
+Conflicts: python3-etce
+Obsoletes: python-etce
+Provides: python-etce
+%define use_python2_sitelib %{python_sitelib}
+%else
+BuildRequires: python2-devel
+Requires: python2-mako
+Requires: python2-paramiko
+Requires: python2-lxml
+Requires: lxc
+Conflicts: python3-etce
+%define use_python2_sitelib %{python2_sitelib}
+%endif
+%description -n python2-%{base_name} %{_description}
+%else
+%package -n python3-%{base_name}
+Summary: %{summary}
+%{?python_provide:%python_provide python3-%{base_name}}
+BuildRequires: python3-devel
+Requires: python3-mako
+Requires: python3-paramiko
+Requires: python3-lxml
+Requires: lxc
+Conflicts: python-etce
+Conflicts: python2-etce
+%description -n python3-%{base_name} %{_description}
+%endif
+
+%prep
+%setup -q
+
+%build
+%if 0%{?with_python2}
+%configure --with-python2
+%else
+%configure
+%endif
+make
+
+%install
+%if 0%{?with_python2}
+make  DESTDIR=${RPM_BUILD_ROOT} PYTHON=%{__python2} install
+%if %{with_pathfix}
+pathfix.py -pni "%{__python2} %{py2_shbang_opts}" %{buildroot}%{_bindir}/*
+%endif
+%else
+make  DESTDIR=${RPM_BUILD_ROOT} PYTHON=%{__python3} install
+pathfix.py -pni "%{__python3} %{py3_shbang_opts}" %{buildroot}%{_bindir}/*
+%endif
+
+find ${RPM_BUILD_ROOT} -name '*.a' -exec rm '{}'  \;
+find ${RPM_BUILD_ROOT} -name '*.la' -exec rm '{}' \;
+mkdir -p ${RPM_BUILD_ROOT}%{_pkgdocdir}
+install -t ${RPM_BUILD_ROOT}%{_pkgdocdir} AUTHORS %{!?_licensedir:COPYING} ChangeLog NEWS README 
+%if 0%{?_licensedir:1}
+mkdir -p ${RPM_BUILD_ROOT}%{_licensedir}/%{name}
+install -t ${RPM_BUILD_ROOT}%{_licensedir}/%{name} COPYING
+%endif
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%if 0%{?with_python2}
+%files -n python2-%{base_name}
+%defattr(-,root,root,-)
+%{_bindir}/etce-field-exec
+%{_bindir}/etce-list-hosts
+%{_bindir}/etce-lxc
+%{_bindir}/etce-check-connection
+%{_bindir}/etce-test
+%{_bindir}/etce-wrapper
+%{use_python2_sitelib}/*
+%doc %{_pkgdocdir}
+%if 0%{?_licensedir:1}
+%dir %{_licensedir}/%{name}
+%license %{_licensedir}/%{name}/COPYING
+%endif
+%else
+%files -n python3-%{base_name}
+%defattr(-,root,root,-)
+%{_bindir}/etce-field-exec
+%{_bindir}/etce-list-hosts
+%{_bindir}/etce-lxc
+%{_bindir}/etce-check-connection
+%{_bindir}/etce-test
+%{_bindir}/etce-wrapper
+%{python3_sitelib}/*
+%doc %{_pkgdocdir}
+%if 0%{?_licensedir:1}
+%dir %{_licensedir}/%{name}
+%license %{_licensedir}/%{name}/COPYING
+%endif
+%endif

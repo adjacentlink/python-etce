@@ -30,6 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 import os.path
 
 from etce.wrapper import Wrapper
@@ -75,7 +76,7 @@ class EmaneshSnapshot(Wrapper):
             showfile = os.path.join(logdirectory, 'emaneshow.log')
 
             with open(showfile, 'w') as showf:
-                for nemid, layertuples in cp.getManifest().items():
+                for nemid, layertuples in list(cp.getManifest().items()):
                     layermapping[nemid] = []
                     line = 'nem %d ' % nemid
                     for buildid,layertype,layername in layertuples:
@@ -108,14 +109,14 @@ class EmaneshSnapshot(Wrapper):
                         for configname,configvaltuples in sorted(cp.getConfiguration(buildid).items()):
                             configvalstr = ''
                             if configvaltuples:
-                                configvalstr = ','.join(map(str, zip(*configvaltuples)[0]))
+                                configvalstr = ','.join(map(str, list(zip(*configvaltuples))[0]))
                             sf.write('nem %d %s %s = %s\n' % (nemid, layerlabel, configname, configvalstr))
 
                 # emulator
                 for configname,configvaltuples in sorted(cp.getConfiguration(0).items()):
                     configvalstr = ''
                     if configvaltuples:
-                        configvalstr = ','.join(map(str, zip(*configvaltuples)[0]))
+                        configvalstr = ','.join(map(str, list(zip(*configvaltuples))[0]))
                     sf.write('emulator %s = %s\n' % (configname, configvalstr))
 
 
@@ -150,7 +151,7 @@ class EmaneshSnapshot(Wrapper):
 
         rows = []
         for rowtuple in rowtuples:
-            rows.append(map(str, zip(*rowtuple)[0]))
+            rows.append(list(map(str, list(zip(*rowtuple))[0])))
             
         for row in rows:
             for i,value in enumerate(row):

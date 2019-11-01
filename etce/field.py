@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
+
 import os.path
 import string
 import sys
@@ -69,7 +71,7 @@ class Field(object):
                     allnodes.append(leaf)
             self._allnodes = tuple(allnodes)
         except Exception as e:
-            print >>sys.stderr, 'Failed to parse hostfile "%s" with error "%s". Quitting.' % (nodefile, e)
+            print('Failed to parse hostfile "%s" with error "%s". Quitting.' % (nodefile, e), file=sys.stderr)
             exit(1)
 
 
@@ -211,78 +213,3 @@ class Field(object):
                 if len(leaves) == 0:
                     self._leaves.append(root)
                 self._leaves.extend(leaves)
-
-
-def main():
-    usagestr = '''
-List the nodes in the ETCE field specified by HOSTFILE. 
-An ETCE field consists of a tree of IP resolvable hostnames 
-up to 2 levels deep.
-
-Roots are interpreted to be nodes with an independent file
-system; during tests, configuration is pushed to each root node.
-Leaf nodes run applications during tests. A node may be both
-a root and leaf node.
-
-Example:
-
-  server1 {
-    node-001
-    node-002
-  }
-
-  server2
-  node-003
-
-  server3 {
-    server3
-    node-004
-  }
-
-In this case there are 4 roots 
-{ server1, server2 and node-003, server3 } and 6 leafs 
-{ node-001, node-002, server2, node-003, server3, node-004 }.
-'''
-
-    import argparse
-
-    parser = argparse.ArgumentParser( \
-                prog='etce-list-hosts',
-                description=usagestr,
-                formatter_class=argparse.RawDescriptionHelpFormatter)
-
-    parser.add_argument('--position', 
-                        default='all',
-                        help='''List the nodes at the specified tree,
-                        position, one of { leaves, roots, all }.
-                        Default: leaves.''')
-    parser.add_argument('hostfile',
-                        metavar='HOSTFILE',
-                        help='''The ETCE Host file containing the 
-                        node names from which the remote source 
-                        directories are collected.''')
-
-    args = parser.parse_args()
-
-    if not os.path.isfile(args.hostfile):
-        print >>sys.stderr,'HOSTFILE "%s" does not exist. Quitting.' % args.hostfile
-        exit(1)
-
-    f = Field(args.hostfile)
-
-    if args.position.lower() == 'all':
-        for node in f.allnodes():
-            print node
-    elif args.position.lower() == 'roots':
-        for node in f.roots():
-            print node
-    elif args.position.lower() == 'leaves':
-        for node in f.leaves():
-            print node
-    else:
-        print 'Unknown position: %s' % args.position
-        exit(1)
-
-
-if __name__=='__main__':
-    main()

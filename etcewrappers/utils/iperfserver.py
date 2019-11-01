@@ -30,6 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 import shlex
 import subprocess
 import time
@@ -101,7 +102,7 @@ class IPerfServer(Wrapper):
 
             command = 'iperf -s -D %s %s' % (fileargstr, argstr)
 
-            print command
+            print(command)
 
             with open(ctx.args.outfile, 'w') as stdoutfd:
                 stdoutfd.write(command)

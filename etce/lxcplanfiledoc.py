@@ -30,6 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 import copy
 import os.path
 import socket
@@ -62,7 +63,9 @@ class ParamConverter(object):
     }
 
     def __init__(self):
-        self._lxc_major_version = int(AppRunner('lxc-execute --version').stdout().readlines()[0].split('.')[0])
+        lines = AppRunner('lxc-execute --version').stdout().readlines()
+
+        self._lxc_major_version = int(lines[0].decode().split('.')[0])
 
     def uts_param_name(self):
         if self._lxc_major_version > 2:
@@ -76,9 +79,10 @@ class ParamConverter(object):
         updated_paramname = ParamConverter.lxc_param_translation_2_to_3.get(paramname, paramname)
 
         if (updated_paramname != paramname):
-            print >>sys.stderr, \
-                'Warning: updating LXC parameter name "%s" to "%s" for detected LXC version 3' \
-                % (paramname, updated_paramname)
+            print('Warning: updating LXC parameter name "%s" to "%s" ' \
+                  'for detected LXC version 3' \
+                  % (paramname, updated_paramname),
+                  file=sys.stderr)
 
         return updated_paramname
 
@@ -96,9 +100,10 @@ class ParamConverter(object):
                 (inum,
                  ParamConverter.lxc_network_param_suffix_translation_2_to_3.get(paramsuffix, paramsuffix))
 
-            print >>sys.stderr, \
-                'Warning: updating LXC network parameter name "%s" to "%s" for detected LXC version 3' \
-                % (paramname, updated_paramname)
+            print('Warning: updating LXC network parameter name "%s" to "%s" ' \
+                  'for detected LXC version 3' \
+                  % (paramname, updated_paramname),
+                  file=sys.stderr)
 
         return updated_paramname
 
@@ -246,8 +251,8 @@ class ContainerTemplate(object):
         for paramelem in containertemplateelem.findall('./parameters/parameter'):
             # lxc.utsname set by container element attribute
             if(str(paramelem.attrib['name']) == 'lxc.utsname'):
-                print >>sys.stderr, \
-                    'Found lxc.utsname in containertemplate. Ignoring'
+                print('Found lxc.utsname in containertemplate. Ignoring',
+                      file=sys.stderr)
                 continue
 
             params.append((paramelem.attrib['name'],
@@ -411,8 +416,8 @@ class Container(object):
         for paramelem in containerelem.findall('./parameters/parameter'):
             if(str(paramelem.attrib['name']) == 'lxc.utsname'):
                 # the lxc_name is set by the container element atribute
-                print >>sys.stderr, \
-                    'Found lxc.utsname in containertemplate. Ignoring'
+                print('Found lxc.utsname in containertemplate. Ignoring',
+                      file=sys.stderr)
                 continue
 
             containerparams.append((str(paramelem.attrib['name']),
@@ -816,7 +821,7 @@ def main():
     import sys
 
     if len(sys.argv) != 2:
-        print 'usage: lxcplanfiledoc.py lxcplanfile'
+        print('usage: lxcplanfiledoc.py lxcplanfile')
         exit(1)
 
     lxcplanfile = sys.argv[1]
@@ -828,14 +833,14 @@ def main():
         # machine name
         hostname = socket.gethostname().split('.')[0]
         for kernelparamname,kernelparamval in plandoc.kernelparameters(hostname).items():
-            print kernelparamname,kernelparamval
+            print(kernelparamname,kernelparamval)
         for bridge in plandoc.bridges(hostname):
-            print bridge
+            print(bridge)
         for container in plandoc.containers(hostname):
-            print container
+            print(container)
 
     except LXCError as e:
-        print e.message
+        print(e.message)
         exit (1)
 
 

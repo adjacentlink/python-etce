@@ -59,7 +59,7 @@ class Emane(Wrapper):
             return
 
         emaneversion = \
-            ctx.platform.runcommand('emane --version')[0].strip()
+            ctx.platform.runcommand('emane --version')[0].strip().decode()
 
         # store the version
         ctx.store({'version':emaneversion})

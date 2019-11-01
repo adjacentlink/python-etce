@@ -30,6 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 from collections import defaultdict
 import itertools
 import re
@@ -132,7 +133,7 @@ class EmanePhyInit(Wrapper):
         
         sequencer = EELSequencer(ctx.args.infile,
                                  ctx.args.starttime,
-                                 handlers.keys())
+                                 list(handlers.keys()))
 
         mcgroup,port = ctx.args.eventservicegroup.split(':')
         
@@ -144,13 +145,13 @@ class EmanePhyInit(Wrapper):
 
                 events = handlers[eventtype](moduleid, eventtype, eventargs)
 
-                for nem,event in events.items():
+                for nem,event in list(events.items()):
                     service.publish(nem, event)
 
                 logline = 'process eventtype "%s" to nems {%s}' % \
                           (eventtype,','.join(map(str, sorted(events.keys()))))
 
-                print logline
+                print(logline)
 
                 self.log(lfd, logline)
 
@@ -177,13 +178,13 @@ class EmanePhyInit(Wrapper):
 
     def location_gps(self, moduleid, eventtype, eventargs):
         # -Inf   nem:1-3,7 location gps nem:3,40.025495,-74.315441,3.0
-        receiving_nems = map(int, nodestr_to_nodelist(moduleid.split(':')[1]))
+        receiving_nems = list(map(int, nodestr_to_nodelist(moduleid.split(':')[1])))
 
         toks = eventargs[1].split(',')
 
         location_nem = int(toks[0].split(':')[1])
         
-        lat,lon,alt = map(float, toks[1:4])
+        lat,lon,alt = list(map(float, toks[1:4]))
 
         events = defaultdict(lambda: LocationEvent())
 

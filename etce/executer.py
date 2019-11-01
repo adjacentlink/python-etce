@@ -54,7 +54,7 @@ class Executer(object):
 
     def step(self, stepname, starttime, logsubdirectory):
         wrappers = self._stepsfiledoc.getwrappers(stepname)
-        
+
         hostname = Platform().hostname()
 
         hostdir = os.path.join(self._test.location(), hostname)
@@ -79,7 +79,7 @@ class Executer(object):
             }
 
             wldr = WrapperLoader()
-            
+
             for wrapperentry,methodname,testargs in wrappers:
                 wrapperinstance = \
                     wldr.loadwrapper(wrapperentry.name,

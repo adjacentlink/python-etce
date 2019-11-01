@@ -31,6 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 import sys
 import argparse
 
@@ -144,7 +145,7 @@ def main():
     try:
         ret = client.collect(args.remotesrc, args.localdst, field.roots())
     except ValueError as e:
-        print e.message
+        print(e.message, file=sys.stderr)
     finally:
         client.close()
 

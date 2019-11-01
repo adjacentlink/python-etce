@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
+
 import datetime
 import os
 import re
@@ -73,7 +75,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         devmatcher = re.compile(r'^\d+: (\w+):')
 
         for line in runner.stdout():
-            match = devmatcher.match(line)
+            match = devmatcher.match(line.decode())
 
             if match:
                 devices.append(match.group(1))
@@ -102,7 +104,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         e = AppRunner(command)
 
         for line in e.stdout():
-            match =  devicematcher.match(line)
+            match =  devicematcher.match(line.decode())
             if match:
                 attributes = match.group(1).split(',')
                 return 'UP' in attributes
@@ -172,7 +174,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         runner = AppRunner('ps --no-headers -eo pid,command')
 
         for line in runner.stdout():
-            toks = line.strip().split()
+            toks = line.decode().strip().split()
 
             pids.append( (int(toks[0]), toks[1]) )
 
@@ -199,8 +201,8 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         runner = AppRunner('ps -eo args')
 
         for line in runner.stdout():
-            if psmatcher.match(line):
-                print line.strip()
+            if psmatcher.match(line.decode()):
+                print(line.strip())
 
 
     def listdir(self, abspath, fileregex='.*'):
@@ -232,9 +234,10 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
                 try:
                     pid = int(open(pidfile).readline())
                 except ValueError as e:
-                    print >>sys.stderr,type(e)
-                    print >>sys.stderr,'Pidfile "%s" does not contain a valid PID. Skipping.' % \
-                        pidfile
+                    print(type(e), file=sys.stderr)
+                    print('Pidfile "%s" does not contain a valid PID. Skipping.' % \
+                          pidfile,
+                          file=sys.stderr)
                     pid = None
             else:
                 # error - pidfile is not a regular fle
@@ -250,7 +253,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         # if found a pid, kill the process and remove the file
         try:
             if pid:
-                print 'killing pid %d found in %s' % (pid, pidfile)
+                print('killing pid %d found in %s' % (pid, pidfile))
                 commandstr = 'kill -%d %d' % (signal, pid)
                 if sudo:
                     commandstr = 'sudo ' + commandstr
@@ -277,7 +280,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
             os.system(command)
 
         except:
-            print 'problem in killing %s' % applicationname
+            print('problem in killing %s' % applicationname)
 
 
     def _get_local_ip_addresses(self):
@@ -287,7 +290,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
 
         runner = AppRunner('ip addr show')
 
-        lines = [ line.strip() for line in runner.stdout() ]
+        lines = [ line.decode().strip() for line in runner.stdout() ]
 
         for line in lines:
             match = matcher.match(line)

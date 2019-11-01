@@ -31,7 +31,10 @@
 #
 
 import os
-import ConfigParser
+try:
+    import configparser
+except:
+    import ConfigParser as configparser
 
 
 def getconfig():
@@ -57,7 +60,7 @@ class ConfigDictionary(object):
     def __init__(self,
                  configfilename='etce',
                  defaults = defaults):
-        self.parser = ConfigParser.ConfigParser()
+        self.parser = configparser.ConfigParser()
         self.parser.optionxform = str # leave case
 
         config_dir = os.getenv('ETCECONFIGDIR','/etc/etce')

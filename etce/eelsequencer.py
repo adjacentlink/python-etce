@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2015-2019 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
 import datetime
 import math
 import os.path
@@ -146,7 +147,7 @@ if __name__=='__main__':
 
     import sys
     if len(sys.argv) < 4:
-        print 'usage: python eelsequencer.py eelfile starttime [eventtype]+'
+        print('usage: python eelsequencer.py eelfile starttime [eventtype]+')
         exit(1)
 
     eelfile = sys.argv[1]
@@ -154,4 +155,4 @@ if __name__=='__main__':
     eventlist = tuple(sys.argv[3:])
 
     for eventtuple in EELSequencer(eelfile, starttime, eventlist):
-        print eventtuple
+        print(eventtuple)

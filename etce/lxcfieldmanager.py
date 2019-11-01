@@ -31,10 +31,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import argparse
+from __future__ import absolute_import, division, print_function
 import os
 import shutil
-import sys
 
 from etce.clientbuilder import ClientBuilder
 from etce.config import ConfigDictionary
@@ -100,7 +99,7 @@ def startfield(args):
                                  other_hosts)
 
             for k in ret:
-                print '[%s] return: %s' % (k, ret[k].retval['result'])
+                print('[%s] return: %s' % (k, ret[k].retval['result']))
 
         finally:
             if client:
@@ -139,78 +138,10 @@ def stopfield(args):
                 ret = client.execute(command, other_hosts)
 
                 for k in ret:
-                    print '[%s] return: %s' % (k, ret[k].retval['result'])
+                    print('[%s] return: %s' % (k, ret[k].retval['result']))
 
             finally:
                 if client:
                     client.close()
     finally:
         stoplxcs(plandoc)
-
-
-
-def main():
-    parser = argparse.ArgumentParser(prog='etce-lxc')
-
-    parser.add_argument('--port',
-                        action='store',
-                        type=int,
-                        default=None,
-                        help='''If the LXCPLANFILE contains remote host(s),
-                        connect to the hosts via the specified port. If not
-                        specified, ETCE will look for the host's "Port" value
-                        in the ~/.ssh/config file. If not found, uses the default
-                        ssh port value, 22.''')
-    parser.add_argument('--user',
-                        action='store',
-                        default=None,
-                        help='''If the LXCPLANFILE contains remote host(s),
-                        connect to the hosts as the specified user. If not
-                        specified, ETCE will look for the host's "User" value
-                        in the ~/.ssh/config file. If not found, uses the
-                        current user''')
-    
-    subparsers = parser.add_subparsers()
-
-    parser_start = \
-        subparsers.add_parser('start', 
-                              help='Start a network of LXC container and Linux bridges' \
-                              'based on the description in the LXC plan file.')
-
-    parser_start.add_argument('--dryrun',
-                              action='store_true',
-                              default=False,
-                              help='''Create the container configurations but do not start
-                              the containers.''')
-    parser_start.add_argument('--writehosts',
-                              action='store_true',
-                              default=False,
-                              help='''Add an /etc/hosts entry for interface elements in the
-                              LXCPLANFILE that contain a hosts_entry_ipv4 or hosts_entry_ipv6 
-                              attribute. The has form "lxc.network.ipv4 hosts_entry_ipv4" or
-                              "lxc.netowrk.ipv6 hosts_entry_ipv6".''')
-    parser_start.add_argument('lxcplanfile',
-                              metavar='LXCPLANFILE',
-                              action='store',
-                              help='The LXC plan file')
-
-    parser_start.set_defaults(func=startfield)
-
-    parser_stop = \
-        subparsers.add_parser('stop', 
-                              help = 'Stop the LXC container network previously started with ' \
-                              '"etce-lxc start"')
-
-    parser_stop.set_defaults(func=stopfield)
-
-    args = parser.parse_args()
-
-    try:
-        args.func(args)
-    except LXCError as e:
-        print
-        print e
-        print
-
-if __name__=='__main__':
-    main()

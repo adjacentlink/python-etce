@@ -33,16 +33,17 @@
 import shlex
 import subprocess
 import syslog
+import threading
 from threading import Thread, Event
 
 
 class AppRunner(Thread):
     def __init__(self, commandstr, stdout=subprocess.PIPE, stderr=subprocess.STDOUT):
+        args = shlex.split(commandstr)
+        Thread.__init__(self, name=args[0])
         self._stdout_arg = stdout
         self._stderr_arg = stderr
         self._args = shlex.split(commandstr)
-
-        Thread.__init__(self, name=self._args[0])
         self._event = Event()
         self.start()
         self._event.wait()

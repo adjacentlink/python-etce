@@ -3,51 +3,114 @@ ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST= \
  autogen.sh \
  etce \
+ etcewrappers \
  scripts \
  test \
  Copyright \
- README.md
+ README.md \
+ debian \
+ $(PACKAGE).spec.in \
+ setup.py.in
 
 all-local: setup.py
-	python setup.py build
+	$(PYTHON) setup.py build
 
 
 clean-local: setup.py
-	python setup.py clean
-	-rm -rf python_etce.egg-info
+	$(PYTHON) setup.py clean
+	-rm -rf python*etce.egg-info
 	-rm -rf build
 	-rm -rf dist
-	-rm -rf deb_dist
-	-rm -f @PACKAGE@-@VERSION@.tar.gz
+	-rm -f python*tar.gz
 	-rm -f setup.py
 	-rm -f MANIFEST
 	-rm -f stdeb.cfg
 	-rm -f installed.txt
 	-rm -rf `find . -name "*\.pyc"`
 	-rm -rf `find . -name "*~"`
-
+	-rm -rf .debbuild
+	-rm -rf .rpmbuild
+	-rm -rf $(PACKAGE).spec
 
 install: setup.py
-	python setup.py install --record=installed.txt --prefix=@prefix@
-
+	$(PYTHON) setup.py install \
+	    -O1 \
+        --record .installedfiles \
+	    --prefix=$(prefix) \
+	    --exec-prefix=$(exec_prefix) \
+	    $(if $(DESTDIR),--root=$(DESTDIR))
 
 uninstall:
-	xargs --arg-file installed.txt rm
-
+	if test -f .installedfiles; then xargs -a .installedfiles rm -f; fi
 
 spec: setup.py
-	python setup.py bdist_rpm --spec-only
+	$(PYTHON) setup.py bdist_rpm --spec-only
 
+
+edit = sed \
+        -e 's|@VERSION[@]|$(VERSION)|g' \
+        -e 's|@DEBIAN_VERSION[@]|$(DEBIAN_VERSION)|g' \
+        -e 's|@DATE_RFC2822[@]|$(DATE_RFC2822)|g'
 
 if HAVE_RPMBUILD
-REQUIRES=python-paramiko python-lxml python-mako lxc
 
-rpm: setup.py
-	python setup.py bdist_rpm --release $(RELEASE) --requires "$(REQUIRES)"
+RPMARCH=`arch`
+
+if HAVE_PYTHON2
+RPMBUILD_ARGS=--with python2
+else
+RPMBUILD_ARGS=
 endif
 
+rpm: $(PACKAGE).spec dist-gzip
+	mkdir -p .rpmbuild/BUILD \
+	.rpmbuild/SPECS \
+	.rpmbuild/SOURCES \
+	.rpmbuild/SRPMS \
+	.rpmbuild/RPMS/noarch \
+	.rpmbuild/tmp
+	cp -f $(PACKAGE)-$(VERSION).tar.gz .rpmbuild/SOURCES
+	rpmbuild --clean -ba $(top_srcdir)/$(PACKAGE).spec --target $(RPMARCH) \
+    --define "_topdir $$PWD/.rpmbuild" \
+    --define "_tmppath $$PWD/.rpmbuild/tmp" \
+    $(RPMBUILD_ARGS)
+	@echo "============================================================"
+	@echo "RPMs located in .rpmbuild/RPMS and .rpmbuild/SRPMS"
+
+endif
 
 if HAVE_DEB
-deb:    setup.py stdeb.cfg
-	export DEB_BUILD_OPTIONS=nocheck && python setup.py --command-packages=stdeb.command bdist_deb
+
+deb: dist-gzip
+	rm -rf .debbuild
+	mkdir -p .debbuild
+	cp -f $(PACKAGE)-$(VERSION).tar.gz .debbuild
+	cd .debbuild && tar xzf $(PACKAGE)-$(VERSION).tar.gz
+	$(edit) .debbuild/$(PACKAGE)-$(VERSION)/debian/changelog.in > \
+          .debbuild/$(PACKAGE)-$(VERSION)/debian/changelog
+if HAVE_PYTHON2
+	cp .debbuild/$(PACKAGE)-$(VERSION)/debian/control.with-python2 \
+              .debbuild/$(PACKAGE)-$(VERSION)/debian/control
+	cp .debbuild/$(PACKAGE)-$(VERSION)/debian/rules.with-python2 \
+              .debbuild/$(PACKAGE)-$(VERSION)/debian/rules
 endif
+	cd .debbuild/$(PACKAGE)-$(VERSION) && dpkg-buildpackage -F -us -uc
+	@echo "============================================================"
+	@echo "debs located in .debbuild"
+cleandeb:
+	dh_clean
+else
+
+cleandeb:
+
+endif
+
+$(PACKAGE).spec: $(PACKAGE).spec.in
+	if test -f $@; then chmod u+w $@; fi
+	$(edit) $< > $@
+	chmod g-w,u-w $@
+
+setup.py: setup.py.in
+	if test -f $@; then chmod u+w $@; fi
+	$(edit) $< > $@
+	chmod g-w,u-w $@

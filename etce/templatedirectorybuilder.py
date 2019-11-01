@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
+
 import copy
 import os
 
@@ -46,7 +48,6 @@ class TemplateDirectoryBuilder(object):
                  indices,
                  testfile_global_overlays,
                  templates_global_overlaylists):
-
         self._global_overlays = testfile_global_overlays
 
         self._templates_global_overlaylists = templates_global_overlaylists
@@ -141,7 +142,7 @@ class TemplateDirectoryBuilder(object):
                             env_overlays,
                             etce_config_overlays)
 
-        print
+        print()
         return self.prune(subdirectory_map)
 
 
@@ -185,7 +186,8 @@ class TemplateDirectoryBuilder(object):
         
         other_keys = set([])
 
-        map(other_keys.update, non_reserved_overlays)
+        for some_overlays in non_reserved_overlays:
+            other_keys.update(some_overlays)
 
         key_clashes =  other_keys.intersection(set(reserved_overlays))
 
@@ -195,8 +197,9 @@ class TemplateDirectoryBuilder(object):
 
         overlays = ChainMap(reserved_overlays, *non_reserved_overlays)
 
-        print 'Processing template directory "%s" for etce_index=%d and destination=%s' % \
-            (self.template_directory_name, index, node_publishdir)
+        print('Processing template directory "%s" for etce_index=%d ' \
+              'and destination=%s' % \
+              (self.template_directory_name, index, node_publishdir))
 
         if not os.path.exists(node_publishdir):
             os.makedirs(node_publishdir)

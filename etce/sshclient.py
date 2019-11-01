@@ -30,6 +30,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
+
+try:
+    from __builtin__ import raw_input
+except:
+    from builtins import input as raw_input
 
 from collections import namedtuple
 import errno
@@ -44,7 +50,7 @@ import re
 import select
 import socket
 import sys
-import StringIO
+import io
 from threading import Thread, Lock
 import tarfile
 
@@ -93,7 +99,7 @@ class Reader(Thread):
         self._lock = lock
         self._banner = banner
         self._read_stderr = read_stderr
-        self._state = Reader.State(False, '', '', '', StringIO.StringIO())
+        self._state = Reader.State(False, '', '', '', io.StringIO())
 
         # Initialize return object
         self._remote_returnobject = { 'isexception':False,
@@ -105,9 +111,9 @@ class Reader(Thread):
 
         if evt & select.EPOLLIN:
             if self._read_stderr:
-                read = self._stream.channel.recv_stderr(1000)
+                read = self._stream.channel.recv_stderr(1000).decode()
             else:
-                read = self._stream.channel.recv(1000)
+                read = self._stream.channel.recv(1000).decode()
             if not read:
                 return True
 
@@ -131,7 +137,7 @@ class Reader(Thread):
                     retstrio.write(line)
                 else:
                     self._lock.acquire()
-                    print self._banner + line.strip()
+                    print(self._banner + line.strip())
                     self._lock.release()
 
                 eol_index = read.find('\n')
@@ -209,7 +215,6 @@ class ExecuteThread(Thread):
         try:
             while not all(readers_finished.values()):
                 results = ep.poll()
-
                 for fd,evt in results:
                     if fd == self._read_pipe:
                         raise KeyboardInterrupt
@@ -462,7 +467,7 @@ class SSHClient(etce.fieldclient.FieldClient):
             # only move when not same host and same directory
             for host in hosts:
                 if self.sourceisdestination(host, abssrc, absdst):
-                    print 'Skipping host "%s". Source and destination are the same.' % host
+                    print('Skipping host "%s". Source and destination are the same.' % host)
                     continue
                 dsthosts.append(host)
 
@@ -564,7 +569,7 @@ class SSHClient(etce.fieldclient.FieldClient):
 
     def collect(self, remotesrc, localdstdir, hosts):
         if len(hosts) == 0:
-            print '   Warning: no hosts.'
+            print('   Warning: no hosts.')
             return
 
         remotesubdir = self._normalize_remotesrc(remotesrc)
@@ -572,8 +577,8 @@ class SSHClient(etce.fieldclient.FieldClient):
         srchosts = []
         # make the destination if it does not exist
         if not os.path.exists(localdstdir) or not os.path.isdir(localdstdir):
-            print 'Warning: local directory "%s" does not exist. Will attempt to make.' % \
-                localdstdir
+            print('Warning: local directory "%s" does not exist. Will attempt to make.' % \
+                localdstdir)
             os.makedirs(localdstdir)
             srchosts = hosts
         else:
@@ -591,7 +596,7 @@ class SSHClient(etce.fieldclient.FieldClient):
 
             for host in hosts:
                 if self.sourceisdestination(host, abssrc, absdst):
-                    print '   Skipping host "%s". Source and destination are the same.' % host
+                    print('   Skipping host "%s". Source and destination are the same.' % host)
                     continue
                 srchosts.append(host)
 
@@ -609,7 +614,7 @@ class SSHClient(etce.fieldclient.FieldClient):
                 tarfiles[host] = retvals[host].retval['result']
 
         if not tarfiles:
-            print '   Warning: no files to transfer.'
+            print('   Warning: no files to transfer.')
             return
 
         # Retrieve and extract data from each remote host
@@ -648,9 +653,9 @@ class SSHClient(etce.fieldclient.FieldClient):
                     absolute_localdstdir = os.path.join(localdstdir, remotesrc)
 
                 if host_is_local and os.path.exists(absolute_localdstdir):
-                    print 'Skipping collection from local host "%s".' % host
+                    print('Skipping collection from local host "%s".' % host)
                 else:
-                    print 'Collecting files from host "%s" to "%s".' % (host, localdstdir)
+                    print('Collecting files from host "%s" to "%s".' % (host, localdstdir))
                     tf = tarfile.open(ltf, 'r:gz')
                     tf.extractall(localdstdir)
                     tf.close()
@@ -725,7 +730,15 @@ class SSHClient(etce.fieldclient.FieldClient):
 
 
     def _set_unknown_hosts_policy(self, hosts, port, ssh_config, policy):
-        all_host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+        known_hosts_filename = os.path.expanduser('~/.ssh/known_hosts')
+
+        if not os.path.exists(known_hosts_filename) or \
+           not os.path.isfile(known_hosts_filename):
+            raise FieldConnectionError(
+                'Error: ~/.ssh/known_hosts file does not exist, ' \
+                'please create it.')
+
+        all_host_keys = paramiko.util.load_host_keys(known_hosts_filename)
 
         # build list of hosts that don't have an ssh-rsa entry in known_hosts
         unknown_hosts = []
@@ -764,7 +777,7 @@ class SSHClient(etce.fieldclient.FieldClient):
             response = raw_input('Unknown hosts: %s. Add to known_hosts (Y/N) [N]? ' % unknown_hosts_str)
 
             if not response.upper() == 'Y':
-                print >>sys.stderr,'Quitting.'
+                print('Quitting.', file=sys.stderr)
                 exit(1)
 
             return AutoAddPolicy
