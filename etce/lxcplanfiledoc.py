@@ -785,7 +785,6 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
                     lxcoverlays = copy.copy(overlays)
 
                     # then add list items for this node
-                    print('lxcoverlays=',lxcoverlays)
                     try:
                         for oname,ovals in overlaylists.items():
                             lxcoverlays[oname] = ovals[i]
