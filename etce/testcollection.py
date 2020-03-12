@@ -175,7 +175,7 @@ def list_tests(args):
     try:
         collection.adddirectory(args.testrootdir, None)
     except XMLDocError as xmle:
-        print(xmle.message, file=sys.stderr)
+        print(str(xmle), file=sys.stderr)
         exit(1)
 
     # on an exact match, just print the single test

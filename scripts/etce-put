@@ -144,11 +144,11 @@ def main():
                          field.roots())
 
     except RuntimeError as e:
-        print(e.message)
+        print(str(e))
     except ValueError as e:
-        print(e.message)
+        print(str(e))
     except ETCEExecuteException as e:
-        print(e.message)
+        print(str(e))
     finally:
         if not client is None:
             client.close()

@@ -282,14 +282,10 @@ def run_test(args):
         for testroot in args.testroot:
             tests.adddirectory(testroot, args.basedirectory)
     except XMLDocError as xmle:
-        print()
-        print(xmle.message, file=sys.stderr)
-        print()
+        print('\n' + str(xmle) + '\n', file=sys.stderr)
         exit(1)
     except etce.templateutils.TemplateError as tmpe:
-        print()
-        print(tmpe.message, file=sys.stderr)
-        print()
+        print('\n' + str(tmpe) + '\n', file=sys.stderr)
         exit(1)
 
     if not tests:
@@ -323,7 +319,7 @@ def run_test(args):
     try:
         worknodes = tests.participant_nodes(field.leaves())
     except TestCollectionError as tce:
-        print(tce.message + '\n', file=sys.stderr)
+        print(str(tce), file=sys.stderr)
         exit(1)
 
     # root nodes host the filesystem for all of the virtual nodes attached
@@ -590,13 +586,9 @@ def run_test(args):
     except KeyboardInterrupt:
         print('Quitting on interrupt.')
     except FieldConnectionError as fce:
-        print(file=sys.stderr)
-        print(str(fce), file=sys.stderr)
-        print(file=sys.stderr)
+        print('\n' + str(fce) + '\n', file=sys.stderr)
     except Exception as e:
-        print(file=sys.stderr)
-        print(str(e), sys.stderr)
-        print(file=sys.stderr)
+        print('\n' + str(e) + '\n', sys.stderr)
         if args.verbose:
             print(traceback.format_exc())
 
@@ -674,9 +666,7 @@ def main():
     try:
         args.func(args)
     except NameError as ne:
-        print >>sys.stderr
-        print >>sys.stderr, ne.message
-        print >>sys.stderr
+        print('\n' + str(ne) + '\n', file=sys.stderr)
         exit(1)
 
 

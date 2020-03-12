@@ -844,7 +844,7 @@ def main():
             print(container)
 
     except LXCError as e:
-        print(e.message)
+        print(str(e))
         exit (1)
 
 
