@@ -118,7 +118,7 @@ try:
    print()
 
 except FieldConnectionError as fe:
-   print(fe.message)
+   print(str(fe), file=sys.stderr)
 finally:
    if client:
       client.close()
