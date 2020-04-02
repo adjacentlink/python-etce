@@ -519,7 +519,7 @@ class Container(object):
                         'value for the interface. Quitting.' \
                         % (bridgename, self.lxc_name)
                 raise LXCError(error)
-                
+
             addr = interfaces[bridgename]['lxc.network.ipv6']
 
             hosts_entries_ipv6.append((entry_name_ipv6,  addr))
@@ -785,8 +785,12 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
                     lxcoverlays = copy.copy(overlays)
 
                     # then add list items for this node
-                    for oname,ovals in overlaylists.items():
-                        lxcoverlays[oname] = ovals[i]
+                    try:
+                        for oname,ovals in overlaylists.items():
+                            lxcoverlays[oname] = ovals[i]
+                    except IndexError as ie:
+                        raise LXCError('No value found for overlay "%s" for lxc_index "%d". Quitting.' \
+                                       % (oname, lxcid))
 
                     # then lxcindex, lxc_name and lxc_directory (cannot be overwritten)
                     lxcoverlays.update(
@@ -840,7 +844,7 @@ def main():
             print(container)
 
     except LXCError as e:
-        print(e.message)
+        print(str(e))
         exit (1)
 
 

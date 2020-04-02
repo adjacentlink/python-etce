@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2015-2018,2020 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ class IPerfServer(Wrapper):
     """
 
     def register(self, registrar):
-        registrar.register_infile_name('iperfserver')
+        registrar.register_infile_name('iperfserver.conf')
 
         registrar.register_outfile_name('iperfserver.log')
 
@@ -62,17 +62,13 @@ class IPerfServer(Wrapper):
                            None,
                            'iperf buffer length (iperf -l switch argument)')
 
-        registrar.register_argument('daemonize',
-                           'true',
-                           'run as daemon ("true") or in foreground ("false")')
-
 
     def run(self, ctx):
         if not ctx.args.infile:
             return
 
-        # some server args can be specifiec via test arguments
-        argstr = ''
+        # run as daemon, log to output file and add argument specified via input file
+        argstr = '-D -o %s' % ctx.args.outfile
 
         if ctx.args.interval is not None:
             argstr += ' -i %d ' % ctx.args.interval
@@ -91,45 +87,9 @@ class IPerfServer(Wrapper):
         if len(serverarglines) > 0:
             fileargstr = serverarglines[-1]
 
-        if not ctx.args.daemonize:
-            argstr = '-s %s %s' % (fileargstr, argstr)
+        argstr = '-s %s %s' % (fileargstr, argstr)
 
-            open(ctx.args.outfile, 'w').write('iperf %s' % argstr)
-
-            ctx.run('iperf', argstr, stdout=ctx.args.outfile)
-        else:
-            daemonize = '-D'
-
-            command = 'iperf -s -D %s %s' % (fileargstr, argstr)
-
-            print(command)
-
-            with open(ctx.args.outfile, 'w') as stdoutfd:
-                stdoutfd.write(command)
-
-                # create the Popen subprocess
-                sp = subprocess.Popen(shlex.split(command),
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.STDOUT)
-
-                # search for the server
-                # -----------------------------------
-                # Running Iperf Server as a daemon
-                # The Iperf daemon process ID : 11331
-                pidstr = None
-                for line in sp.stdout:
-                    stdoutfd.write(line.strip())
-                    toks = line.split(':')
-                    if len(toks) == 2:
-                        pidstr = toks[1]
-                        break
-
-                # write the pid to pidfilename
-                if pidstr is not None:
-                    open(ctx.args.default_pidfilename, 'w').write(pidstr)
-
-                # 7. wait on subprocess
-                sp.wait()
+        ctx.run('iperf', argstr)
 
 
     def stop(self, ctx):

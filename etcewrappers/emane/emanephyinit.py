@@ -41,9 +41,9 @@ from etce.eelsequencer import EELSequencer
 from etce.wrapper import Wrapper
 
 try:
-    from emane.events import EventService,LocationEvent,PathlossEvent
+    from emane.events import EventService,LocationEvent,PathlossEvent,AntennaProfileEvent
 except:
-    from emanesh.events import EventService,LocationEvent,PathlossEvent
+    from emanesh.events import EventService,LocationEvent,PathlossEvent,AntennaProfileEvent
 
 
 class EmanePhyInit(Wrapper):
@@ -65,12 +65,12 @@ class EmanePhyInit(Wrapper):
 
        2. EMANE location event sentences with latitute, longitude and altitude only:
 
-          TIME nem:ID[(,|-)ID]* location gps nem:ID,LATITUDE,LONGITUDE,ALTITUDE
+          TIME nem:ID location gps LATITUDE,LONGITUDE,ALTITUDE
 
           example:
-           Send nem 3 location 40.025495,-74.315441,3.0 to nems 1, 2, 3 and 7:
+           Set nem 3 location to 40.025495,-74.315441,3.0:
 
-           -Inf  nem:1-3,7 location gps nem:3,40.025495,-74.315441,3.0
+           -Inf  nem:3 location gps 40.025495,-74.315441,3.0
 
 
        3. EMANE fadingselection event (emane >= 1.2.1) of format:
@@ -93,6 +93,14 @@ class EmanePhyInit(Wrapper):
 
            -Inf  nem:1-3,7 allinformedpathloss 90    
                                                     
+       5. EMANE antennaprofile event of format:
+
+          TIME nem:ID antennaprofile profileid,azimuth,elevation
+
+          example:
+           Set nem 4 antenna profile to 3 with azimuth 195 and elevation 45:
+
+           4.0 nem:4 antennaprofile 3,195,45
 
 
     As shown in all of the examples, the wrapper accepts negative time values and,
@@ -123,7 +131,8 @@ class EmanePhyInit(Wrapper):
             'allinformedpathloss':self.allinformed_pathloss,
             'location':self.location_gps,
             'pathloss':self.pathloss,
-            'fadingselection':self.fadingselection
+            'fadingselection':self.fadingselection,
+            'antennaprofile':self.antennaprofile
         }
 
         if not ctx.args.eventservicedevice:
@@ -177,19 +186,16 @@ class EmanePhyInit(Wrapper):
 
 
     def location_gps(self, moduleid, eventtype, eventargs):
-        # -Inf   nem:1-3,7 location gps nem:3,40.025495,-74.315441,3.0
-        receiving_nems = list(map(int, nodestr_to_nodelist(moduleid.split(':')[1])))
+        # -Inf   nem:45 location gps 40.025495,-74.315441,3.0
+        location_nem = int(moduleid.split(':')[1])
 
         toks = eventargs[1].split(',')
-
-        location_nem = int(toks[0].split(':')[1])
         
-        lat,lon,alt = list(map(float, toks[1:4]))
+        lat,lon,alt = list(map(float, toks[0:3]))
 
         events = defaultdict(lambda: LocationEvent())
 
-        for receiving_nem in receiving_nems:
-            events[receiving_nem].append(location_nem, latitude=lat, longitude=lon, altitude=alt)
+        events[0].append(location_nem, latitude=lat, longitude=lon, altitude=alt)
 
         return events
 
@@ -234,6 +240,23 @@ class EmanePhyInit(Wrapper):
 
         return events
         
+
+    def antennaprofile(self, moduleid, eventtype, eventargs):
+        from emane.events import FadingSelectionEvent
+
+        # TIME nem:ID antennaprofile profileid,azimuth,elevation
+        nem = int(moduleid.split(':')[1])
+
+        e = AntennaProfileEvent()
+        
+        for eventarg in eventargs:
+            profileid,azimuth,elevation = eventarg.split(',')
+
+            e.append(profile=int(profileid), azimuth=float(azimuth), elevation=float(elevation))
+
+        return { nem: e }
+
+
 
     def log(self, lfd, log):
         lfd.write('%s: %s\n' % (etce.timeutils.getstrtimenow(), log))

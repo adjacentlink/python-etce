@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2015-2018,2020 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@ class IPerfClient(Wrapper):
     """
 
     def register(self, registrar):
-        registrar.register_infile_name('iperfclient')
+        registrar.register_infile_name('iperfclient.conf')
 
         registrar.register_outfile_name('iperfclient.log')
 
@@ -78,7 +78,8 @@ class IPerfClient(Wrapper):
             return
 
         # check for arguments specified as test args
-        argsstr = ''
+        argsstr = '-o %s' % ctx.args.outfile
+
         if ctx.args.interval is not None:
             argsstr += ' -i %d ' % ctx.args.interval
 
@@ -112,9 +113,7 @@ class IPerfClient(Wrapper):
 
             argstr = '-c %s %s %s' % (serverip, fileargsstr, argsstr)
 
-            open(ctx.args.outfile, 'w').write('iperf %s' % argstr)
-
-            ctx.run('iperf', argstr, stdout=ctx.args.outfile)
+            ctx.run('iperf', argstr)
 
 
     def stop(self, ctx):

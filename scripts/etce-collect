@@ -145,7 +145,7 @@ def main():
     try:
         ret = client.collect(args.remotesrc, args.localdst, field.roots())
     except ValueError as e:
-        print(e.message, file=sys.stderr)
+        print(str(e), file=sys.stderr)
     finally:
         client.close()
 

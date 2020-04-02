@@ -2,7 +2,7 @@
 # -*- makefile -*-
 export DH_OPTIONS
 
-PYTHON_DEPENDS = -Vpython:Depends="python:any (<< 2.8), python:any (>= 2.7), python, python-mako, python-paramiko, python-lxml, lxc"
+PYTHON_DEPENDS = -Vpython:Depends="python:any (<< 2.8), python:any (>= 2.7), python, python-mako, python-paramiko, python-lxml, python-emane, lxc"
 PYTHON2_VERSION:=$(shell python2 2>&1 --version | awk '{split($$2,v,"."); printf("%d.%d",v[1],v[2]);}')
 
 override_dh_auto_install:

@@ -130,7 +130,7 @@ def run_wrapper(args):
 
             print()
         except PseuedoTestDirectoryError as ptde:
-            print(ptde.message)
+            print(str(ptde))
         finally:
             os.chdir(cwd)
 
