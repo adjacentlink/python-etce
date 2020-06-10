@@ -42,6 +42,7 @@ Requires: python-paramiko
 Requires: python-lxml
 Requires: python-emane
 Requires: lxc
+Requires: net-tools
 Conflicts: python3-etce
 Obsoletes: python-etce
 Provides: python-etce
@@ -53,6 +54,7 @@ Requires: python2-paramiko
 Requires: python2-lxml
 Requires: python2-emane
 Requires: lxc
+Requires: net-tools
 Conflicts: python3-etce
 %define use_python2_sitelib %{python2_sitelib}
 %endif
@@ -67,6 +69,7 @@ Requires: python3-paramiko
 Requires: python3-lxml
 Requires: python3-emane
 Requires: lxc
+Requires: net-tools
 Conflicts: python-etce
 Conflicts: python2-etce
 %description -n python3-%{base_name} %{_description}

@@ -40,6 +40,21 @@ def platform_suffix():
     return platform_suffix_list()[0]
 
 
+def platform_dist():
+    # In python 3.8, platform.dist function is removed.
+    # Use distro.linux_ditribution as an alternative
+    # Return of both is a tuple:
+    #   ('Distro', 'Distro Version', 'Distro Name')
+    #
+    # For example
+    #   ('Ubuntu', '18.04', 'bionic')
+    if 'dist' in dir(platform):
+        return platform.dist
+    else:
+        import distro
+        return distro.linux_distribution
+
+
 def platform_suffix_list():
     suffixes = []
     os = platform.uname()[0].strip().lower()
@@ -53,7 +68,7 @@ def platform_suffix_list():
             suffixes.append('%s' % os)
         else:
             # insure no '.' in distver (ubuntu does this, for one)
-            distver = platform.dist()[1].lower().replace('.','_')
+            distver = platform_dist()[1].lower().replace('.','_')
             suffixes.append('%s.%s.v%s.%s' % (os,distname,distver,arch))
             suffixes.append('%s.%s.v%s' % (os,distname,distver))
             suffixes.append('%s.%s' % (os,distname))
@@ -69,7 +84,7 @@ def platform_suffix_list():
 
 
 def linux_distribution():
-    dist = platform.dist()[0].lower()
+    dist = platform_dist()[0].lower()
     if len(dist) > 0:
         return dist
     if 'amzn1' in platform.uname()[2]:
