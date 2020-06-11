@@ -574,7 +574,10 @@ class Container(object):
         lxc_network_type_param = self._pc.check_version3_network_param_change('lxc.network.type', inum)
         lxc_network_flags_param = self._pc.check_version3_network_param_change('lxc.network.flags', inum)
         s += '%s=empty\n' % lxc_network_type_param
-        s += '%s=up\n' % lxc_network_flags_param
+        # lxc-execute version 4.02, on Ubuntu 20.04, fails to start with the up
+        # flag in place for the loopback device.
+        # Commenting out but leaving to document.
+        #s += '%s=up\n' % lxc_network_flags_param
 
         return s
 

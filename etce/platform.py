@@ -49,10 +49,10 @@ def platform_dist():
     # For example
     #   ('Ubuntu', '18.04', 'bionic')
     if 'dist' in dir(platform):
-        return platform.dist
+        return platform.dist()
     else:
         import distro
-        return distro.linux_distribution
+        return distro.linux_distribution()
 
 
 def platform_suffix_list():
