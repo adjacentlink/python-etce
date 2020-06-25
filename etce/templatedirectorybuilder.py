@@ -86,6 +86,11 @@ class TemplateDirectoryBuilder(object):
 
 
     @property
+    def template_file_key(self):
+        return self._relative_path + '/'
+
+
+    @property
     def template_directory_name(self):
         return self._template_directory_name
 
@@ -142,9 +147,6 @@ class TemplateDirectoryBuilder(object):
                             env_overlays,
                             etce_config_overlays)
 
-        print()
-        return self.prune(subdirectory_map)
-
 
     def _createdir(self,
                    subdirectory_map,
@@ -173,7 +175,7 @@ class TemplateDirectoryBuilder(object):
         if logdir:
             reserved_overlays['etce_log_path'] = \
                 os.path.join(logdir, reserved_overlays['etce_hostname'])
-            
+
         node_publishdir = os.path.join(publishdir, reserved_overlays['etce_hostname'])
 
         non_reserved_overlays = [ runtime_overlays,
@@ -208,22 +210,25 @@ class TemplateDirectoryBuilder(object):
         found = False
 
         for relpath,entry in subdirectory_map.items():
+            # only process files for this template
+            if not relpath.startswith(self._relative_path + '/'):
+                continue
+
             # ignore files outside of the template directory
             pathtoks = relpath.split(os.path.sep)
-            
+
             if not pathtoks[0] == self.template_directory_name:
                 continue
-            
+
             dstfile = os.path.join(node_publishdir,*pathtoks[1:])
 
             dstdir = os.path.dirname(dstfile)
-            
+
             if not os.path.exists(dstdir):
                 os.makedirs(dstdir)
 
             format_file(entry.full_name, dstfile, overlays)
 
-                
 
     def _read_attributes(self, templatedirelem):
         template_subdir = '.'.join([self._name,

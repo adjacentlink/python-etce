@@ -31,6 +31,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
+from collections import defaultdict
 import os
 import re
 import shutil
@@ -135,14 +136,14 @@ class Publisher(object):
     def _move_extra_files(self, extrafiles, dstdir):
         for srcfile,dstfile in extrafiles:
             dstfile = os.path.join(dstdir, dstfile)
-            
+
             dirname = os.path.dirname(dstfile)
-            
+
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
-                
+
             shutil.copyfile(srcfile, dstfile)
-        
+
 
     def _warn_on_empty_template_directory(self, srcdirs, mergedir):
         template_directory_names = self._testdoc.template_directory_names
@@ -238,7 +239,7 @@ class Publisher(object):
                 raise ValueError(errstr)
 
         os.makedirs(publishdir)
-            
+
         # move template files
         self._instantiate_templates(templates,
                                     runtime_overlays,
@@ -371,13 +372,25 @@ class Publisher(object):
                                publishdir,
                                subdirectory_map,
                                logdir):
+        template_file_keys = defaultdict(lambda: 0)
+
         for template in templates:
-            subdirectory_map = template.instantiate(subdirectory_map,
-                                                    publishdir,
-                                                    logdir,
-                                                    runtime_overlays,
-                                                    env_overlays,
-                                                    etce_config_overlays)
+            template_file_keys[template.template_file_key] += 1
+
+        for template in templates:
+            template.instantiate(subdirectory_map,
+                                 publishdir,
+                                 logdir,
+                                 runtime_overlays,
+                                 env_overlays,
+                                 etce_config_overlays)
+
+            # prune template file that have been exhausted
+            template_file_keys[template.template_file_key] -= 1
+
+            if not template_file_keys[template.template_file_key]:
+                subdirectory_map = template.prune(subdirectory_map)
+
 
     def _get_subfiles(self, directory):
         files = []

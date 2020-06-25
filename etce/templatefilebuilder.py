@@ -83,6 +83,11 @@ class TemplateFileBuilder(object):
 
 
     @property
+    def template_file_key(self):
+        return self.name
+
+
+    @property
     def indices(self):
         return self._indices
 
@@ -134,8 +139,6 @@ class TemplateFileBuilder(object):
                              runtime_overlays,
                              env_overlays,
                              etce_config_overlays)
-
-        return self.prune(subdirectory_map)
 
 
     def _createfile(self,
