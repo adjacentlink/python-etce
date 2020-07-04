@@ -743,6 +743,11 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
 
                 template = containertemplates.get(templatename, None)
 
+                if templatename and not template:
+                    error = 'Found container element that references non-existent containertemplate "%s". Quitting.' %\
+                        templatename
+                    raise LXCError(error)
+
                 lxcids = etce.utils.nodestr_to_nodelist(
                     str(containerelem.attrib['lxc_indices']))
 
