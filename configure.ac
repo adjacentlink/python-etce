@@ -32,7 +32,7 @@ AC_COPYRIGHT([
  
 ])
 
-AC_INIT([python-etce],1.2.3,[labs at adjacentlink dot com])
+AC_INIT([python-etce],1.2.4,[labs at adjacentlink dot com])
 
 AM_INIT_AUTOMAKE([1.9.6])
 
