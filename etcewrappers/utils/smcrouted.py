@@ -42,13 +42,27 @@ class SMCRouted(Wrapper):
 
         registrar.register_outfile_name('smcrouted.log')
 
+        registrar.register_argument(
+            'N',
+            False,
+            '''
+            Invoke the smcrouted -N options which
+            which requires the user to add each interface to the router.
+            In configuration this requires a "phyint" sentence for every
+            interface that needs to be included for multicast routing.
+            In the default mode, all interfaces are available for multicast at start up.
+            ''')
+
 
     def run(self, ctx):
         if not ctx.args.infile:
             return
 
-        argstr = '-P %s -f %s' % \
-                 (ctx.args.default_pidfilename, ctx.args.infile)
+        argstr = '-P %s -f %s -I %s' % \
+                 (ctx.args.default_pidfilename, ctx.args.infile, ctx.args.nodename)
+
+        if ctx.args.N:
+            argstr = '-N ' + argstr
 
         ctx.run('smcrouted',
                 argstr,

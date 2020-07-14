@@ -34,6 +34,7 @@
 from __future__ import absolute_import, division, print_function
 
 import argparse
+import os
 import sys
 from etce.lxcfieldmanager import startfield,stopfield
 from etce.lxcerror import LXCError
@@ -97,6 +98,11 @@ def main():
     if not args.selected_subparser:
         parser.print_help()
         exit(1)
+
+    # require superuser permisson to start and stop containers
+    if not os.geteuid() == 0:
+        print("Run as root.", file=sys.stderr)
+        exit(2)
 
     try:
         args.func(args)

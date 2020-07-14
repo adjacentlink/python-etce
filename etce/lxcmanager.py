@@ -57,7 +57,7 @@ def startlxcs(lxcplan, writehosts=False, dryrun=False):
                                writehosts=writehosts,
                                dryrun=dryrun)
     except Exception as e:
-        raise LXCError(e.message)
+        raise LXCError(e)
 
 
 def stoplxcs(lxcplan):
