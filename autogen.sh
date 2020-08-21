@@ -70,7 +70,7 @@ then
        Makefile \
        Makefile.in \
        missing 
-    find m4 -type f ! -name 'm4_ax_cxx_compile_stdcxx_11.m4' -delete
+    find m4 -type f -delete
     find . -name 'Makefile.in' -delete
     
 else

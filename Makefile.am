@@ -24,7 +24,6 @@ clean-local: setup.py
 	-rm -f python*tar.gz
 	-rm -f setup.py
 	-rm -f MANIFEST
-	-rm -f stdeb.cfg
 	-rm -f installed.txt
 	-rm -rf `find . -name "*\.pyc"`
 	-rm -rf `find . -name "*~"`
