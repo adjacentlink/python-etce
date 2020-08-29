@@ -90,7 +90,7 @@ def add_run_arguments(parser):
                         wrapper arguments. default: None.''')
     parser.add_argument('--delaysecs',
                         type=int,
-                        default=40,
+                        default=60,
                         help='''Number of seconds to delay between end of one, 
                         test and beginning of next. default: 40.''')
     parser.add_argument('--deletecompleted',
