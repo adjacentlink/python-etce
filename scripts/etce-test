@@ -90,7 +90,7 @@ def add_run_arguments(parser):
                         wrapper arguments. default: None.''')
     parser.add_argument('--delaysecs',
                         type=int,
-                        default=60,
+                        default=40,
                         help='''Number of seconds to delay between end of one, 
                         test and beginning of next. default: 40.''')
     parser.add_argument('--deletecompleted',
@@ -218,12 +218,10 @@ def add_run_arguments(parser):
                         specified, ETCE will look for the host's "User" value
                         in the ~/.ssh/config file. If not found, uses the
                         current user''')
-    parser.add_argument('-v',
-                        '--verbose',
+    parser.add_argument('--quiet',
                         action='store_true', 
                         default=False,
-                        help='''Print verbose error information when
-                        available.''')
+                        help='''Print slightly less error information.''')
     parser.add_argument('testprefix',
                         metavar='TESTPREFIX',
                         action='store',
@@ -252,12 +250,12 @@ def run_test(args):
             exit(1)
 
     if not os.path.isfile(args.hostfile):
-        print('Cannot find hostfile "%s". Quitting.' % args.hostfile, sys.stderr)
+        print('Cannot find hostfile "%s". Quitting.' % args.hostfile, file=sys.stderr)
         exit(1)
 
     if args.envfile:
         if not args.envfile[0] == os.path.sep:
-            print('envfile argument must be an absolute path. Quitting', sys.stderr)
+            print('envfile argument must be an absolute path. Quitting', file=sys.stderr)
             exit(1)
 
     workdir = config.get('etce', 'WORK_DIRECTORY')
@@ -309,7 +307,7 @@ def run_test(args):
             args.kill = 'none'
             print('Ignoring kill argument "after" used ' \
                   'in conjunction with runtostep. Using "none" instead.\n',
-                  sys.stderr)
+                  file=sys.stderr)
         elif args.kill == 'both':
             args.kill = 'before'
             print('Ignoring kill argument "both" used ' \
@@ -574,7 +572,7 @@ def run_test(args):
                       file=sys.stderr)
                 print(e, file=sys.stderr)
 
-                if args.verbose:
+                if not args.quiet:
                     print(e.traceback, file=sys.stderr)
 
                 if args.quitonerror:
@@ -588,8 +586,8 @@ def run_test(args):
     except FieldConnectionError as fce:
         print('\n' + str(fce) + '\n', file=sys.stderr)
     except Exception as e:
-        print('\n' + str(e) + '\n', sys.stderr)
-        if args.verbose:
+        print('\n' + str(e) + '\n', file=sys.stderr)
+        if not args.quiet:
             print(traceback.format_exc())
 
     finally:
