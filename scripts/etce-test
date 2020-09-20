@@ -48,6 +48,7 @@ from etce.etceexecuteexception import ETCEExecuteException
 from etce.fieldconnectionerror import FieldConnectionError
 from etce.field import Field
 from etce.clientbuilder import ClientBuilder
+from etce.configfiledoc import ConfigFileDoc
 from etce.platform import Platform
 from etce.publisher import add_publish_arguments,publish_test,Publisher
 from etce.testcollection import add_list_arguments,list_tests,TestCollection,TestCollectionError
@@ -252,6 +253,16 @@ def run_test(args):
     if not os.path.isfile(args.hostfile):
         print('Cannot find hostfile "%s". Quitting.' % args.hostfile, file=sys.stderr)
         exit(1)
+
+    if args.configfile:
+        if not os.path.isfile(args.configfile):
+            print('Cannot find configfile "%s". Quitting.' % args.configfile, file=sys.stderr)
+            exit(1)
+        try:
+            ConfigFileDoc(args.configfile)
+        except XMLDocError as xmle:
+            print('%s. Quitting.' % str(xmle), file=sys.stderr)
+            exit(1)
 
     if args.envfile:
         if not args.envfile[0] == os.path.sep:
