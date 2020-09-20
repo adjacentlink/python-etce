@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2018,2020 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@ import etce.utils
 from etce.wrapper import Wrapper
 
 
-class Ifconfig(Wrapper):
+class IpLink(Wrapper):
     """
     Set interface txqueuelen and mtu. Optionally, periodically
     query interface stats.
@@ -73,9 +73,9 @@ class Ifconfig(Wrapper):
                                     'disables queries. Ignored if testtimesecs ' \
                                     'is "0".')
 
-        registrar.register_infile_name('ifconfig.script')
+        registrar.register_infile_name('iplink.script')
 
-        registrar.register_outfile_name('ifconfig.log')
+        registrar.register_outfile_name('iplink.log')
 
 
     def run(self, ctx):
@@ -91,7 +91,7 @@ class Ifconfig(Wrapper):
             if len(txqueuelen.strip()) > 0:
                 txqueuelen = int(txqueuelen)
                 if txqueuelen > 0:
-                    queuelencommand = 'ifconfig %s txqueuelen %d' \
+                    queuelencommand = 'ip link set %s txqueuelen %d' \
                                       % (interface, txqueuelen)
                     print(queuelencommand)
                     subprocess.call(shlex.split(queuelencommand))
@@ -99,7 +99,7 @@ class Ifconfig(Wrapper):
             if len(mtu.strip()) > 0:
                 mtu = int(mtu)
                 if mtu > 0:
-                    mtucommand = 'ifconfig %s mtu %d' % (interface, mtu)
+                    mtucommand = 'ip link set %s mtu %d' % (interface, mtu)
                     print(mtucommand)
                     subprocess.call(shlex.split(mtucommand))
 
@@ -127,7 +127,7 @@ class Ifconfig(Wrapper):
         # exceeded the specified total test time
         while retval == 0 and testtime < testtimesecs:
             for interface in interfaces:
-                command = 'ifconfig %s' % interface
+                command = 'ip link show %s' % interface
                 retval = subprocess.call(shlex.split(command), stdout=stdoutfd)
             time.sleep(periodsecs)
             testtime += periodsecs

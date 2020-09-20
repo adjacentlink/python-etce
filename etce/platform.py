@@ -127,8 +127,8 @@ class Platform:
     def bridgeup(self, bridgename, addifs=[], enablemulticastsnooping=True):
         self._impl.bridgeup(bridgename, addifs, enablemulticastsnooping)
 
-    def bridgedown(self, bridgename):
-        self._impl.bridgedown(bridgename)
+    def bridgedown(self, bridgename, addifs):
+        self._impl.bridgedown(bridgename, addifs)
 
     def hostname(self):
         return self._impl.hostname()
