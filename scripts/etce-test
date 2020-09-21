@@ -91,9 +91,9 @@ def add_run_arguments(parser):
                         wrapper arguments. default: None.''')
     parser.add_argument('--delaysecs',
                         type=int,
-                        default=40,
+                        default=60,
                         help='''Number of seconds to delay between end of one, 
-                        test and beginning of next. default: 40.''')
+                        test and beginning of next. default: 60.''')
     parser.add_argument('--deletecompleted',
                         action='store_true',
                         default=False,
@@ -402,15 +402,6 @@ def run_test(args):
             try:
                 # run test trials
                 for i in range(args.numtrials):
-                    # create connection to all nodes
-                    if client is None:
-                        client = ClientBuilder().build(allnodes,
-                                                       user=args.user,
-                                                       port=args.port,
-                                                       policy=args.policy,
-                                                       sshkey=args.sshkey,
-                                                       envfile=args.envfile)
-                    
                     print(testdivider)
 
                     print('BEGIN "%s" trial %d' % (test.name(), i+1))
@@ -423,21 +414,6 @@ def run_test(args):
                     localtesttemplatedir = os.path.join(localtestresultsdir, 'template')
 
                     remoteresultssubdir = os.path.join('data', testdir)
-
-                    # prepare test template directory - copy it to fixed
-                    # location and add config file and hostsfile
-                    extrafiles = [(args.hostfile, 
-                                   TestDirectory.HOSTFILENAME)]
-
-                    if args.configfile is not None:
-                        extrafiles.append((args.configfile,
-                                           TestDirectory.CONFIGFILENAME))
-
-                    publisher = Publisher(test.location())
-
-                    publisher.merge_with_base(mergedir=localtesttemplatedir,
-                                              extrafiles=extrafiles,
-                                              absbasedir_override=args.basedirectory)
 
                     if hookscript_format:
                         print(stepdivider)
@@ -455,6 +431,31 @@ def run_test(args):
                                         stderr=sys.stderr).retvalue())
 
                         print()
+
+                    # create connection to all nodes
+                    if client is None:
+                        client = ClientBuilder().build(allnodes,
+                                                       user=args.user,
+                                                       port=args.port,
+                                                       policy=args.policy,
+                                                       sshkey=args.sshkey,
+                                                       envfile=args.envfile)
+                    
+
+                    # prepare test template directory - copy it to fixed
+                    # location and add config file and hostsfile
+                    extrafiles = [(args.hostfile, 
+                                   TestDirectory.HOSTFILENAME)]
+
+                    if args.configfile is not None:
+                        extrafiles.append((args.configfile,
+                                           TestDirectory.CONFIGFILENAME))
+
+                    publisher = Publisher(test.location())
+
+                    publisher.merge_with_base(mergedir=localtesttemplatedir,
+                                              extrafiles=extrafiles,
+                                              absbasedir_override=args.basedirectory)
 
                     stepsfiledoc = \
                         StepsFileDoc(os.path.join(localtesttemplatedir,
