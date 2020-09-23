@@ -70,7 +70,7 @@ class ARPCache(Wrapper):
             # arp -i emane0 -s 172.30.1.2 02:02:00:00:00:02
             # ip neigh add ipaddr lladdr dev
 
-            argstr = 'neigh add %s %s %s' % (ipaddress, ethaddress, interface)
+            argstr = 'neigh add %s lladdr %s dev %s' % (ipaddress, ethaddress, interface)
 
             ctx.run('ip', argstr, genpidfile=False)
 
