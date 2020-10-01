@@ -31,6 +31,7 @@
 #
 
 from etce.wrapper import Wrapper
+import os
 
 
 class OStatisticSnapshot(Wrapper):
@@ -48,10 +49,12 @@ class OStatisticSnapshot(Wrapper):
         if not ctx.args.infile:
             return
 
-        statfile = '%sstats' % ctx.args.outfile
+        logdirectory = ctx.args.logdirectory
+
+        statfile = os.path.join(logdirectory, 'ostatisticstats.log')
         ctx.run('ostatistic', 'localhost get stat', stdout=statfile)
 
-        tablefile = '%stables' % ctx.args.outfile
+        tablefile = os.path.join(logdirectory, 'ostatistictables.log')
         ctx.run('ostatistic', 'localhost get table', stdout=tablefile)
 
         
