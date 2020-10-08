@@ -24,7 +24,6 @@ clean-local: setup.py
 	-rm -f python*tar.gz
 	-rm -f setup.py
 	-rm -f MANIFEST
-	-rm -f stdeb.cfg
 	-rm -f installed.txt
 	-rm -rf `find . -name "*\.pyc"`
 	-rm -rf `find . -name "*~"`
@@ -88,12 +87,6 @@ deb: dist-gzip
 	cd .debbuild && tar xzf $(PACKAGE)-$(VERSION).tar.gz
 	$(edit) .debbuild/$(PACKAGE)-$(VERSION)/debian/changelog.in > \
           .debbuild/$(PACKAGE)-$(VERSION)/debian/changelog
-if HAVE_PYTHON2
-	cp .debbuild/$(PACKAGE)-$(VERSION)/debian/control.with-python2 \
-              .debbuild/$(PACKAGE)-$(VERSION)/debian/control
-	cp .debbuild/$(PACKAGE)-$(VERSION)/debian/rules.with-python2 \
-              .debbuild/$(PACKAGE)-$(VERSION)/debian/rules
-endif
 	cd .debbuild/$(PACKAGE)-$(VERSION) && dpkg-buildpackage -F -us -uc
 	@echo "============================================================"
 	@echo "debs located in .debbuild"

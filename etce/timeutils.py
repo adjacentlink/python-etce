@@ -88,6 +88,7 @@ def time_offset(referencetimestr, delayseconds, quantizesecs=None):
 
     # round secs up to next quantization point
     t1 = referencetime + delta
+    day = t1.day
     hour = t1.hour
     minute = t1.minute
     second = int(t1.second) + (quantizesecs - int(t1.second)%quantizesecs)

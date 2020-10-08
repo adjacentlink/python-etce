@@ -205,7 +205,7 @@ class LXCManagerImpl(object):
         for _,bridge in plandoc.bridges(hostname).items():
             if not bridge.persistent:
                 print('Bringing down bridge: %s' % bridge.devicename)
-                self._platform.bridgedown(bridge.devicename)
+                self._platform.bridgedown(bridge.devicename, bridge.addifs)
 
         os.remove(plandoc.planfile())
 

@@ -116,7 +116,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         if not os.system('ip link set %s up' % interface) == 0:
             raise RuntimeError('Failed to up %s network interface' % \
                                     interface)
-        while os.system('ifconfig %s > /dev/null' % interface) != 0:
+        while os.system('ip link show %s > /dev/null' % interface) != 0:
             time.sleep(1)
 
 
@@ -126,7 +126,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
                                     interface)
 
     def bridgeup(self, bridgename, addifs, enablemulticastsnooping):
-        self.runcommand('brctl addbr %s' % bridgename)
+        self.runcommand('ip link add %s type bridge' % bridgename)
        
         self.networkinterfaceup(bridgename)
 
@@ -135,7 +135,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         self.runcommand('iptables -I FORWARD -i %s -j ACCEPT' % bridgename)
 
         for interface in addifs:
-            self.runcommand('brctl addif %s %s' % (bridgename, interface))
+            self.runcommand('ip link set dev %s master %s' % (interface, bridgename))
 
             self.runcommand('ip link set %s up' % interface)
             
@@ -144,14 +144,17 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
                 sf.write('0')
 
 
-    def bridgedown(self, bridgename):
+    def bridgedown(self, bridgename, addifs):
         self.runcommand('iptables -D FORWARD -i %s -j ACCEPT' % bridgename)
 
         self.runcommand('iptables -D INPUT -i %s -j ACCEPT' % bridgename)
 
         self.networkinterfacedown(bridgename)
 
-        self.runcommand('brctl delbr %s' % bridgename)
+        for addif in addifs:
+            self.runcommand('ip link set dev %s nomaster' % addif)
+
+        self.runcommand('ip link del %s' % bridgename)
 
 
     def set_igmp_version(self, version):

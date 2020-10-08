@@ -48,6 +48,7 @@ from etce.etceexecuteexception import ETCEExecuteException
 from etce.fieldconnectionerror import FieldConnectionError
 from etce.field import Field
 from etce.clientbuilder import ClientBuilder
+from etce.configfiledoc import ConfigFileDoc
 from etce.platform import Platform
 from etce.publisher import add_publish_arguments,publish_test,Publisher
 from etce.testcollection import add_list_arguments,list_tests,TestCollection,TestCollectionError
@@ -90,9 +91,9 @@ def add_run_arguments(parser):
                         wrapper arguments. default: None.''')
     parser.add_argument('--delaysecs',
                         type=int,
-                        default=40,
+                        default=60,
                         help='''Number of seconds to delay between end of one, 
-                        test and beginning of next. default: 40.''')
+                        test and beginning of next. default: 60.''')
     parser.add_argument('--deletecompleted',
                         action='store_true',
                         default=False,
@@ -218,12 +219,10 @@ def add_run_arguments(parser):
                         specified, ETCE will look for the host's "User" value
                         in the ~/.ssh/config file. If not found, uses the
                         current user''')
-    parser.add_argument('-v',
-                        '--verbose',
+    parser.add_argument('--quiet',
                         action='store_true', 
                         default=False,
-                        help='''Print verbose error information when
-                        available.''')
+                        help='''Print slightly less error information.''')
     parser.add_argument('testprefix',
                         metavar='TESTPREFIX',
                         action='store',
@@ -252,12 +251,22 @@ def run_test(args):
             exit(1)
 
     if not os.path.isfile(args.hostfile):
-        print('Cannot find hostfile "%s". Quitting.' % args.hostfile, sys.stderr)
+        print('Cannot find hostfile "%s". Quitting.' % args.hostfile, file=sys.stderr)
         exit(1)
+
+    if args.configfile:
+        if not os.path.isfile(args.configfile):
+            print('Cannot find configfile "%s". Quitting.' % args.configfile, file=sys.stderr)
+            exit(1)
+        try:
+            ConfigFileDoc(args.configfile)
+        except XMLDocError as xmle:
+            print('%s. Quitting.' % str(xmle), file=sys.stderr)
+            exit(1)
 
     if args.envfile:
         if not args.envfile[0] == os.path.sep:
-            print('envfile argument must be an absolute path. Quitting', sys.stderr)
+            print('envfile argument must be an absolute path. Quitting', file=sys.stderr)
             exit(1)
 
     workdir = config.get('etce', 'WORK_DIRECTORY')
@@ -309,7 +318,7 @@ def run_test(args):
             args.kill = 'none'
             print('Ignoring kill argument "after" used ' \
                   'in conjunction with runtostep. Using "none" instead.\n',
-                  sys.stderr)
+                  file=sys.stderr)
         elif args.kill == 'both':
             args.kill = 'before'
             print('Ignoring kill argument "both" used ' \
@@ -393,15 +402,6 @@ def run_test(args):
             try:
                 # run test trials
                 for i in range(args.numtrials):
-                    # create connection to all nodes
-                    if client is None:
-                        client = ClientBuilder().build(allnodes,
-                                                       user=args.user,
-                                                       port=args.port,
-                                                       policy=args.policy,
-                                                       sshkey=args.sshkey,
-                                                       envfile=args.envfile)
-                    
                     print(testdivider)
 
                     print('BEGIN "%s" trial %d' % (test.name(), i+1))
@@ -414,21 +414,6 @@ def run_test(args):
                     localtesttemplatedir = os.path.join(localtestresultsdir, 'template')
 
                     remoteresultssubdir = os.path.join('data', testdir)
-
-                    # prepare test template directory - copy it to fixed
-                    # location and add config file and hostsfile
-                    extrafiles = [(args.hostfile, 
-                                   TestDirectory.HOSTFILENAME)]
-
-                    if args.configfile is not None:
-                        extrafiles.append((args.configfile,
-                                           TestDirectory.CONFIGFILENAME))
-
-                    publisher = Publisher(test.location())
-
-                    publisher.merge_with_base(mergedir=localtesttemplatedir,
-                                              extrafiles=extrafiles,
-                                              absbasedir_override=args.basedirectory)
 
                     if hookscript_format:
                         print(stepdivider)
@@ -446,6 +431,31 @@ def run_test(args):
                                         stderr=sys.stderr).retvalue())
 
                         print()
+
+                    # create connection to all nodes
+                    if client is None:
+                        client = ClientBuilder().build(allnodes,
+                                                       user=args.user,
+                                                       port=args.port,
+                                                       policy=args.policy,
+                                                       sshkey=args.sshkey,
+                                                       envfile=args.envfile)
+                    
+
+                    # prepare test template directory - copy it to fixed
+                    # location and add config file and hostsfile
+                    extrafiles = [(args.hostfile, 
+                                   TestDirectory.HOSTFILENAME)]
+
+                    if args.configfile is not None:
+                        extrafiles.append((args.configfile,
+                                           TestDirectory.CONFIGFILENAME))
+
+                    publisher = Publisher(test.location())
+
+                    publisher.merge_with_base(mergedir=localtesttemplatedir,
+                                              extrafiles=extrafiles,
+                                              absbasedir_override=args.basedirectory)
 
                     stepsfiledoc = \
                         StepsFileDoc(os.path.join(localtesttemplatedir,
@@ -574,7 +584,7 @@ def run_test(args):
                       file=sys.stderr)
                 print(e, file=sys.stderr)
 
-                if args.verbose:
+                if not args.quiet:
                     print(e.traceback, file=sys.stderr)
 
                 if args.quitonerror:
@@ -588,8 +598,8 @@ def run_test(args):
     except FieldConnectionError as fce:
         print('\n' + str(fce) + '\n', file=sys.stderr)
     except Exception as e:
-        print('\n' + str(e) + '\n', sys.stderr)
-        if args.verbose:
+        print('\n' + str(e) + '\n', file=sys.stderr)
+        if not args.quiet:
             print(traceback.format_exc())
 
     finally:

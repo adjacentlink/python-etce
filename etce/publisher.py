@@ -222,7 +222,7 @@ class Publisher(object):
             subdirectory_map.update(self._build_subdirectory_map(srcdir))
 
         subdirectory_map = self._prune_unused_template_directories(subdirectory_map)
-        
+
         etce_config_overlays, env_overlays = self._get_host_and_env_overlays()
 
         testfile_global_overlays = self._testdoc.global_overlays(subdirectory_map)
@@ -289,7 +289,6 @@ class Publisher(object):
         all_template_directory_keys = set([ entry.root_sub_entry for entry in subdirectory_map.values()
                                             if entry.template_directory_member ])
 
-
         directory_templates_not_used_by_test = \
             all_template_directory_keys.difference(directory_templates_used_by_test)
 
@@ -300,7 +299,7 @@ class Publisher(object):
                 if subpath.startswith(unused + '/'):
                     rmpaths.append(subpath)
 
-        map(subdirectory_map.pop, rmpaths)
+        list(map(subdirectory_map.pop, rmpaths))
 
         return subdirectory_map
 

@@ -107,7 +107,7 @@ parser.add_argument('hostfile',
 args = parser.parse_args()
 
 if not os.path.exists(args.hostfile):
-   print('Cannot find hostfile "%s". Quitting' % args.hostfile, sys.stderr)
+   print('Cannot find hostfile "%s". Quitting' % args.hostfile, file=sys.stderr)
    exit(1)
    
 hosts = Field(args.hostfile).leaves()

@@ -68,10 +68,11 @@ class ARPCache(Wrapper):
             
             interface,ipaddress,ethaddress = line.split()
             # arp -i emane0 -s 172.30.1.2 02:02:00:00:00:02
+            # ip neigh add ipaddr lladdr dev
 
-            argstr = '-i %s -s %s %s' % (interface, ipaddress, ethaddress)
+            argstr = 'neigh add %s lladdr %s dev %s' % (ipaddress, ethaddress, interface)
 
-            ctx.run('arp', argstr, genpidfile=False)
+            ctx.run('ip', argstr, genpidfile=False)
 
             
     def stop(self, ctx):

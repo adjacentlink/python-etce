@@ -32,7 +32,7 @@
 
 from pkg_resources import resource_filename
 from lxml import etree
-from lxml.etree import DocumentInvalid
+from lxml.etree import DocumentInvalid,XMLSyntaxError
 
 from etce.xmldocerror import XMLDocError
 
@@ -42,7 +42,14 @@ class XMLDoc(object):
 
 
     def parse(self, xmlfile):
-        xml_doc = etree.parse(xmlfile)
+        xml_doc = None
+
+        try:
+            xml_doc = etree.parse(xmlfile)
+        except XMLSyntaxError as xmle:
+            err = '%s failed to parse with error:\n\t%s' %(xmlfile, str(xmle))
+            raise XMLDocError(err)
+
         try:
             self._schema.assertValid(xml_doc)
         except DocumentInvalid as e:
