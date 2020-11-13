@@ -140,8 +140,17 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
             self.runcommand('ip link set %s up' % interface)
             
         if enablemulticastsnooping:
-            with open('/sys/devices/virtual/net/%s/bridge/multicast_snooping' % bridgename, 'w') as sf:
-                sf.write('0')
+
+            if os.path.exists('/sys/devices/virtual/net/%s/bridge/multicast_snooping' % bridgename):
+
+                with open('/sys/devices/virtual/net/%s/bridge/multicast_snooping' % bridgename, 'w') as sf:
+    
+                    sf.write('0')
+            else:
+                warning = 'Warning: /sys/devices/virtual/net/%s/bridge/multicast_snooping does not exist, ' \
+                    'cannot disable multicast_snooping.' % bridgename
+
+                print(warning, file=sys.stderr)
 
 
     def bridgedown(self, bridgename, addifs):
