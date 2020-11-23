@@ -195,6 +195,7 @@ class EmanePhyInit(Wrapper):
 
         events = defaultdict(lambda: LocationEvent())
 
+        # all events are sent to nemid 0 - ie, received by every nem
         events[0].append(location_nem, latitude=lat, longitude=lon, altitude=alt)
 
         return events
@@ -206,14 +207,15 @@ class EmanePhyInit(Wrapper):
         # -Inf   nem:4 fadingselection nem:1,none nem:2,nakagami
         nem = int(moduleid.split(':')[1])
 
-        e = FadingSelectionEvent()
+        events = defaultdict(lambda: FadingSelectionEvent())
         
         for eventarg in eventargs:
             m = re.match('nem:(?P<nem>\d+),(?P<model>\w+)', eventarg)
 
-            e.append(int(m.group('nem')), model=m.group('model'))
+            # all events are sent to nemid 0 - ie, received by every nem
+            events[0].append(int(m.group('nem')), model=m.group('model'))
 
-        return { nem: e }
+        return events
 
 
     def pathloss(self, moduleid, eventtype, eventargs):
@@ -247,14 +249,14 @@ class EmanePhyInit(Wrapper):
         # TIME nem:ID antennaprofile profileid,azimuth,elevation
         nem = int(moduleid.split(':')[1])
 
-        e = AntennaProfileEvent()
+        events = defaultdict(lambda: AntennaProfileEvent())
         
         for eventarg in eventargs:
             profileid,azimuth,elevation = eventarg.split(',')
 
-            e.append(profile=int(profileid), azimuth=float(azimuth), elevation=float(elevation))
+            events[0].append(nemId=nem, profile=int(profileid), azimuth=float(azimuth), elevation=float(elevation))
 
-        return { nem: e }
+        return events
 
 
 
