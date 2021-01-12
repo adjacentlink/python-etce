@@ -34,7 +34,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import shlex
-import signal
+from signal import SIGQUIT
 import subprocess
 import sys
 
@@ -171,10 +171,10 @@ class WrapperContextImpl(ArgRegistrar):
         self.stop(pidfilename)
 
         # run the command
-        pid,subprocess = etce.utils.daemonize_command(commandstr,
-                                                      stdout,
-                                                      stderr,
-                                                      starttime)
+        pid,subproc = etce.utils.daemonize_command(commandstr,
+                                                   stdout,
+                                                   stderr,
+                                                   starttime)
 
         # return on parent
         if pid > 0:
@@ -188,10 +188,10 @@ class WrapperContextImpl(ArgRegistrar):
         # 3. write the pid to pidfilename
         if genpidfile:
             with open(pidfilename, 'w') as pidfile:
-                pidfile.write(str(subprocess.pid+pidincrement))
+                pidfile.write(str(subproc.pid+pidincrement))
 
         # 4. wait on subprocess
-        subprocess.wait()
+        subproc.wait()
 
         # 5. exit, do not return, because returning
         #    will cause any subsequent wrappers in this
@@ -249,7 +249,7 @@ class WrapperContextImpl(ArgRegistrar):
         sp.wait()
 
 
-    def stop(self, pidfilename=None, signal=signal.SIGQUIT, sudo=True):
+    def stop(self, pidfilename=None, signal=SIGQUIT, sudo=True):
         # use default pidfilename if None specified
         if pidfilename is None:
             pidfilename = self._default_pidfilename

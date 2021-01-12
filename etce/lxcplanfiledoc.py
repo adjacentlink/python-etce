@@ -830,8 +830,6 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
 
 
 def main():
-    import sys
-
     if len(sys.argv) != 2:
         print('usage: lxcplanfiledoc.py lxcplanfile')
         exit(1)

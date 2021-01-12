@@ -108,8 +108,8 @@ def prepfiles(srcsubdir):
         os.chdir(parentdir)
         if not os.path.exists(child):
             return None
-        tarfile = tarzip([child])
-        return os.path.join(parentdir, tarfile)
+
+        return os.path.join(parentdir, tarzip([child]))
     finally:
         os.chdir(cwd)
 

@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import signal
+from signal import SIGQUIT
 from etce.argregistrar import ArgRegistrar
 
 
@@ -321,7 +321,7 @@ class WrapperContext(ArgRegistrar):
                        extra_paths)
 
 
-    def stop(self, pidfilename=None, signal=signal.SIGQUIT, sudo=True):
+    def stop(self, pidfilename=None, signal=SIGQUIT, sudo=True):
         """
         Stop the process associated with the PID in the specified file.
 

@@ -33,13 +33,13 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import signal
+from signal import SIGQUIT
 from etce.platform import Platform
 from etce.config import ConfigDictionary
 
 
 class Kill(object):
-    def kill(self, signal=signal.SIGQUIT, sudo=True):
+    def kill(self, signal=SIGQUIT, sudo=True):
         p = Platform()
 
         my_pidfile_toks = ('etce', p.hostname())

@@ -141,18 +141,3 @@ class EELSequencer(object):
             events.append((eventtime, (moduleid, eventtype, eventargs)))
 
         return events
-
-
-if __name__=='__main__':
-
-    import sys
-    if len(sys.argv) < 4:
-        print('usage: python eelsequencer.py eelfile starttime [eventtype]+')
-        exit(1)
-
-    eelfile = sys.argv[1]
-    starttime = sys.argv[2]
-    eventlist = tuple(sys.argv[3:])
-
-    for eventtuple in EELSequencer(eelfile, starttime, eventlist):
-        print(eventtuple)

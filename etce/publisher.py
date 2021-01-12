@@ -457,8 +457,6 @@ def add_publish_arguments(parser):
 
 
 def publish_test(args):
-    import sys
-
     if not os.path.exists(args.testdirectory):
         print()
         print('testdirectory "%s" does not exist. Quitting.' % args.testdirectory)

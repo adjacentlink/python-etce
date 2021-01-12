@@ -58,9 +58,9 @@ def datetimetostrtime(dtime, truncate=True):
 
 
 def strtimetodatetime(referencetime, truncatesecs=True):
-    date,time = referencetime.split('T')
-    yr,mn,dy = date.split('-')
-    hr,mt,sc = time.split(':')
+    dt,tm = referencetime.split('T')
+    yr,mn,dy = dt.split('-')
+    hr,mt,sc = tm.split(':')
     seconds = float(sc)
     if truncatesecs:
         seconds=int(seconds)

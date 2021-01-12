@@ -31,7 +31,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
-import signal
+from signal import SIGQUIT
 import platform
 import etce.loader
 
@@ -172,10 +172,10 @@ class Platform:
     def readpid(self, pidfile):
         return self._impl.readpid(pidfile)
 
-    def kill(self, pidfile, signal=signal.SIGQUIT, sudo=True):
+    def kill(self, pidfile, signal=SIGQUIT, sudo=True):
         return self._impl.kill(pidfile, signal, sudo)
 
-    def killall(self, applicationname, signal=signal.SIGQUIT, sudo=True):
+    def killall(self, applicationname, signal=SIGQUIT, sudo=True):
         self._impl.killall(applicationname, signal, sudo)
 
     def rmdir(self, subdir):
