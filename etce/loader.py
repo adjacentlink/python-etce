@@ -130,5 +130,3 @@ Load the named python module, None if unsuccessful
 '''
 def load_module(modulename):
     return importlib.import_module(modulename)
-
-

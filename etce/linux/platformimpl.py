@@ -310,5 +310,3 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
                 ipaddrs.append(match.group(1))
 
         return ipaddrs
-
-

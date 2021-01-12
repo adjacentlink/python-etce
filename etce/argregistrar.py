@@ -60,4 +60,3 @@ class ArgRegistrar(object):
         elevated privileges are required.
         """
         raise NotImplementedError('ArgRegistrar.run_sudo')
-

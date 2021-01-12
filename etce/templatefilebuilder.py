@@ -216,4 +216,3 @@ class TemplateFileBuilder(object):
         retstr += self.name + '\n'
         retstr += ' '.join(map(str, self._indices))
         return retstr
-

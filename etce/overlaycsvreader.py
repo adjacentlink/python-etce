@@ -78,4 +78,3 @@ class OverlayCSVReader(object):
             column_dict[name] = vals
 
         return column_dict
-

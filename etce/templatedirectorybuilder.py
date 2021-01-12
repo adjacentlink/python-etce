@@ -251,4 +251,3 @@ class TemplateDirectoryBuilder(object):
         retstr += self._name + '\n'
         retstr += ' '.join(map(str, self._indices))
         return retstr
-

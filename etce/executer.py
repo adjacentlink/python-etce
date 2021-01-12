@@ -102,5 +102,3 @@ class Executer(object):
                     wrapperinstance.postrun(ctx)
                 else:
                     wrapperinstance.stop(ctx)
-
-

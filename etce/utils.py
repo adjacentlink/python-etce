@@ -321,4 +321,3 @@ def configstrtoval(valstr, argtype=None):
         return False
     # string
     return valstr
-

@@ -85,5 +85,3 @@ class SysCtlUtil(Wrapper):
         if 'stop' in parser.sections():
             for name,val in parser.items('stop'):
                 os.system('sysctl -w %s=%s' % (name,val))
-
-

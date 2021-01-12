@@ -788,4 +788,3 @@ class SSHClient(etce.fieldclient.FieldClient):
     def close(self):
         for host in self._connection_dict:
             self._connection_dict[host].close()
-

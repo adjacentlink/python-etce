@@ -66,4 +66,3 @@ class Top(Wrapper):
 
     def stop(self, ctx):
         ctx.stop()
-
