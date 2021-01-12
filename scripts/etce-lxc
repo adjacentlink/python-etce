@@ -76,7 +76,7 @@ def main():
                               action='store_true',
                               default=False,
                               help='''Add an /etc/hosts entry for interface elements in the
-                              LXCPLANFILE that contain a hosts_entry_ipv4 or hosts_entry_ipv6 
+                              LXCPLANFILE that contain a hosts_entry_ipv4 or hosts_entry_ipv6
                               attribute. The has form "lxc.network.ipv4 hosts_entry_ipv4" or
                               "lxc.netowrk.ipv6 hosts_entry_ipv6".''')
     parser_start.add_argument('lxcplanfile',

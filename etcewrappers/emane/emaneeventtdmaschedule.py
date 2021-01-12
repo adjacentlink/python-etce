@@ -37,12 +37,12 @@ from etce.wrapper import Wrapper
 
 class EmaneEventTDMASchedule(Wrapper):
     """
-    Issue TDMA schedule events using emaneevent-tdmaschedule based on events 
+    Issue TDMA schedule events using emaneevent-tdmaschedule based on events
     listed in the input EEL file. EEL lines require this format:
 
        TIME NEMIDS tdmaschedule SCHEDULEXMLFILE
 
-    Example: Issue schedule events at time 3.0 and 47.0 to different NEM 
+    Example: Issue schedule events at time 3.0 and 47.0 to different NEM
              groups.
 
        3.0  nem:1-5,7 tdmaschedule schedule-003.xml

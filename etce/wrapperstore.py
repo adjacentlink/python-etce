@@ -59,7 +59,7 @@ class WrapperStore(object):
         store = {}
 
         if os.path.exists(self._backingfile):
-            with open(self._backingfile, 'r') as fd:    
+            with open(self._backingfile, 'r') as fd:
                 # read out
                 try:
                     store = json.load(fd)

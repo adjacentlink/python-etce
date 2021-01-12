@@ -65,7 +65,7 @@ class OvsCtl(Wrapper):
           TIME openvswitch ovs-ofctl OVS-OFCTL-COMMAND [OVS-OFCTL-ARGS]
 
           example:
-             At time T=0.0, delete all flows for bridge ovsbr0 then 
+             At time T=0.0, delete all flows for bridge ovsbr0 then
              at time T=1.0, add a default flow rule to drop all packets.
 
               0.0  openvswitch ovs-ofctl del-flows ovsbr0
@@ -101,7 +101,7 @@ class OvsCtl(Wrapper):
     def _build_ovs_vsctl_argstr(self, ctx, eventargline):
         return '--db=tcp:127.0.0.1:%d %s' % (ctx.args.db_server_port, eventargline)
 
-    
+
     def _build_ovs_ofctl_argstr(self, ctx, eventargline):
         toks = eventargline.split()
 
@@ -137,7 +137,7 @@ class OvsCtl(Wrapper):
                                  ('ovs-vsctl', 'ovs-ofctl'))
 
         builders = {'ovs-vsctl': self._build_ovs_vsctl_argstr,
-                    'ovs-ofctl': self._build_ovs_ofctl_argstr} 
+                    'ovs-ofctl': self._build_ovs_ofctl_argstr}
 
         with open(ctx.args.outfile, 'w') as logf:
             for moduleid, eventtype, eventargline in sequencer:
@@ -147,11 +147,11 @@ class OvsCtl(Wrapper):
                 if not eventtype in builders:
                     print('wrapper ovsctl.py: Warning, skipping unsupported event type "%s"')
                     continue
-                
+
                 argstr = builders[eventtype](ctx, eventargline)
 
                 logf.write('%0.6f %s\n' % (time.time(), command))
-                
+
                 ctx.run(eventtype, argstr, genpidfile=False)
 
 

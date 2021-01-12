@@ -32,8 +32,6 @@
 
 import shlex
 import subprocess
-import syslog
-import threading
 from threading import Thread, Event
 
 

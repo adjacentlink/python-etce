@@ -31,7 +31,6 @@
 #
 
 
-from etce.wrapperloader import WrapperLoader
 from etce.argregistrar import ArgRegistrar
 
 

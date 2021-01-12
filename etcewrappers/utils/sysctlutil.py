@@ -44,7 +44,7 @@ from etce.wrapper import Wrapper
 class SysCtlUtil(Wrapper):
     """
     Configure Linux kernel parameters.
-    The input file should have format: 
+    The input file should have format:
 
       [run]
       kernelparamname=val

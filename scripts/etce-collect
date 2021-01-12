@@ -40,22 +40,22 @@ from etce.clientbuilder import ClientBuilder
 
 
 usagestr = '''
-description: Many to one copy function. Copies remotesrc from hosts specified 
-             in the hostfile to the localdst directory on the local machine. 
-             remotesrc names a file or subdirectory that exists under the 
+description: Many to one copy function. Copies remotesrc from hosts specified
+             in the hostfile to the localdst directory on the local machine.
+             remotesrc names a file or subdirectory that exists under the
              directory named by the etce.conf WORK_DIRECTORY value on
              the remote nodes. localsrc specifies an absolute or relative path
-             to a directory on the local host. remotesrc is only copied from the 
+             to a directory on the local host. remotesrc is only copied from the
              root nodes of the two-level hostfile tree structure.
 
-             Note, etcecollect does not attempt to resolve file collisions - 
+             Note, etcecollect does not attempt to resolve file collisions -
              the case where remotesrc names a file that exists on multiple
              hosts, or names a directory that contains an identically named
              file anywhere in its subdirectories on multiple hosts. The usual
              case for etcecollect is to collect remote directories where
-             care has been taken to name all contained files with a unique 
+             care has been taken to name all contained files with a unique
              prefix to avoid collision.
- 
+
 Examples:    For hostfile:
              -----------------
              server1 {
@@ -69,8 +69,8 @@ Examples:    For hostfile:
              And WORK_DIRECTORY=/tmp/etce on both server1 and server2:
 
              1. etcecollect foo/bar . hostfile
-                Recursively copies the directory rooted at 
-                /tmp/etce/foo/bar on the remote hosts to current working 
+                Recursively copies the directory rooted at
+                /tmp/etce/foo/bar on the remote hosts to current working
                 directory.
 '''
 
@@ -96,7 +96,7 @@ def main():
                         test hosts. If KEYFILE is not an absolute filename
                         it is assumed to be a keyfile in ~/.ssh. When not
                         specified ETCE tries to determine the appropriate
-                        key to use for each host by inspecting 
+                        key to use for each host by inspecting
                         ~/.ssh/config.''')
     parser.add_argument('--policy',
                         action='store',
@@ -127,8 +127,8 @@ def main():
                         metavar='HOSTFILE',
                         action='store',
                         default=None,
-                        help='''The ETCE Host file containing the 
-                        node names from which the remote source 
+                        help='''The ETCE Host file containing the
+                        node names from which the remote source
                         directories are collected.''')
 
     args = parser.parse_args()

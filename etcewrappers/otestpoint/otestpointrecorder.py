@@ -47,11 +47,11 @@ class OTestpointRecorder(Wrapper):
 
         registrar.register_outfile_name('otestpoint-recorder.log')
 
-    
+
     def run(self, ctx):
         if not ctx.args.infile:
             return
-        
+
         argstr = '%s ' \
                  '--daemonize ' \
                  '--loglevel %d ' \

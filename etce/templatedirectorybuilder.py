@@ -32,10 +32,9 @@
 
 from __future__ import absolute_import, division, print_function
 
-import copy
 import os
 
-from etce.utils import nodestr_to_nodelist,configstrtoval
+from etce.utils import configstrtoval
 from etce.templateutils import format_file,format_string
 from etce.chainmap import ChainMap
 from etce.config import ConfigDictionary
@@ -53,13 +52,13 @@ class TemplateDirectoryBuilder(object):
         self._templates_global_overlaylists = templates_global_overlaylists
 
         template_suffix = ConfigDictionary().get('etce', 'TEMPLATE_DIRECTORY_SUFFIX')
-        
+
         self._name = templatedirelem.attrib['name']
 
         self._template_directory_name = '.'.join([self._name, template_suffix])
-        
+
         self._indices = indices
-        
+
         self._relative_path, \
         self._hostname_format = self._read_attributes(templatedirelem)
 
@@ -169,7 +168,7 @@ class TemplateDirectoryBuilder(object):
                                     self._template_local_overlays,
                                     self._templates_global_overlaylists[index],
                                     self._global_overlays)
-        
+
         reserved_overlays['etce_hostname'] = format_string(self._hostname_format, etce_hostname_cm)
 
         if logdir:
@@ -184,8 +183,8 @@ class TemplateDirectoryBuilder(object):
                                   self._template_local_overlays,
                                   self._templates_global_overlaylists[index],
                                   self._global_overlays,
-                                  etce_config_overlays ] 
-        
+                                  etce_config_overlays ]
+
         other_keys = set([])
 
         for some_overlays in non_reserved_overlays:

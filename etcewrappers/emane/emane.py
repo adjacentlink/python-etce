@@ -43,8 +43,8 @@ class Emane(Wrapper):
     def register(self, registrar):
         registrar.register_argument('loglevel', 2, 'log level - [0,4]')
 
-        registrar.register_argument('priority', 
-                                    None, 
+        registrar.register_argument('priority',
+                                    None,
                                     'realtime priority level')
 
         registrar.register_infile_name('platform.xml')

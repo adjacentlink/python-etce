@@ -44,7 +44,7 @@ class EELSequencerIterator(object):
         self._events = events
         self._starttime = starttime
         self._index = 0
-        
+
     def next(self):
         return self.__next__()
 
@@ -56,7 +56,7 @@ class EELSequencerIterator(object):
             self._index += 1
             self._wait(item[0], self._starttime)
             return item[1]
-    
+
     def _wait(self, eventtime, starttime):
         if math.isinf(eventtime) and eventtime < 0:
             return
@@ -90,18 +90,18 @@ class EELSequencer(object):
 
     eventtimes are expected to be non-decreasing.
 
-    Each iteration returns a tuple (moduleid, eventtype, eventargs*) 
+    Each iteration returns a tuple (moduleid, eventtype, eventargs*)
     extracted from the EEL file for the corresponding matching line.
     '''
     def __init__(self, eelfile, starttime, eventlist):
         self._starttime = etce.timeutils.strtimetodatetime(starttime)
         self._events = self._parsefile(eelfile, eventlist)
 
-        
+
     def __iter__(self):
         return EELSequencerIterator(self._events, self._starttime)
 
-    
+
     def _parsefile(self, eelfile, eventlist):
         events = []
 
@@ -118,7 +118,7 @@ class EELSequencer(object):
             # skip blank lines
             if len(line) == 0:
                 continue
-            
+
             # skip comment lines
             if line[0] == '#':
                 continue

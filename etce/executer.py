@@ -30,12 +30,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import copy
 import os
 import os.path
 
-import etce.loader
-import etce.timeutils
 from etce.testdirectory import TestDirectory
 from etce.stepsfiledoc import StepsFileDoc
 from etce.config import ConfigDictionary
@@ -84,7 +81,7 @@ class Executer(object):
                 wrapperinstance = \
                     wldr.loadwrapper(wrapperentry.name,
                                      self._stepsfiledoc.getpackageprefixes())
-                
+
                 # ensure each wrapper is called with the testdirectory as
                 # the current working directory, and with it's own
                 # instance of the wrapper context

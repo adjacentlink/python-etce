@@ -31,7 +31,6 @@
 #
 
 import importlib
-import imp
 import os
 import pkgutil
 import sys
@@ -93,7 +92,7 @@ class WrapperLoader(object):
             if not os.path.isdir(wrapperspath):
                 continue
             for cwd,dirnames,filenames in os.walk(wrapperspath):
-                
+
                 for wrapperfile in filenames:
                     try:
                         wrapperfile = os.path.join(cwd, wrapperfile.split('.')[0])
@@ -116,7 +115,7 @@ class WrapperLoader(object):
                         continue
         return wrapperinstances
 
-                     
+
     def loadwrapper(self,
                     wrappername,
                     packageprefixfilter=(None,)):
@@ -131,12 +130,12 @@ class WrapperLoader(object):
                 candidateclassname = basename.upper()
 
                 classinstance = None
-                
+
                 for key in wrapper.__dict__:
                     if key.upper() == candidateclassname:
-                        
+
                         candidateclass = wrapper.__dict__[key]
-                        
+
                         if callable(candidateclass):
                             return candidateclass()
 

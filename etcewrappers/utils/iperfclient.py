@@ -91,7 +91,7 @@ class IPerfClient(Wrapper):
             try:
                 argsstr += ' -b %d' % ctx.args.bandwidth
             except:
-                argsstr += ' -b %s' % ctx.args.bandwidth                
+                argsstr += ' -b %s' % ctx.args.bandwidth
 
         if ctx.args.transmittime is not None:
             argsstr += ' -t %d' % ctx.args.transmittime

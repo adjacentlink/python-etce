@@ -43,9 +43,9 @@ class NRLSMF(Wrapper):
     merge emane0,lan0 hash MD5
 
     Comment lines, beginning with '#' are permitted. The
-    line should not contain 'log', 'debug' or 'instance' arguments. 
+    line should not contain 'log', 'debug' or 'instance' arguments.
     Debug level is passed as a wrapper argument to allow manipulation
-    without altering configuration. Logs are written to the wrapper 
+    without altering configuration. Logs are written to the wrapper
     outfile. A control socket is created in the output directory. Use
     the 'socketdirectory' parameter to change location.
     """
@@ -84,7 +84,7 @@ class NRLSMF(Wrapper):
 
         if ctx.args.socketdirectory:
             socketdirectory = ctx.args.socketdirectory
-            
+
         argstr += \
             ' instance %s' % \
             os.path.join(socketdirectory,

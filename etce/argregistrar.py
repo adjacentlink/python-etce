@@ -32,16 +32,16 @@
 
 class ArgRegistrar(object):
     def register_argument(self, argname, defaultval, description):
-        """ 
-        Register an application argument. 
+        """
+        Register an application argument.
         """
         raise NotImplementedError('ArgRegistrar.register_argument')
 
 
     def register_infile_name(self, name):
-        """ 
+        """
         Register the name of the input file that triggers
-        application execution. 
+        application execution.
         """
         raise NotImplementedError('ArgRegistrar.register_infile_name')
 
@@ -60,4 +60,4 @@ class ArgRegistrar(object):
         elevated privileges are required.
         """
         raise NotImplementedError('ArgRegistrar.run_sudo')
-    
+

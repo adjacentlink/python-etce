@@ -152,9 +152,9 @@ class Bridge(object):
         for ipv6 in bridgeelem.findall('./ipaddress/ipv6'):
             self._ipv6 = ipv6.text
 
-        self._addifs = [ str(addif.text) 
+        self._addifs = [ str(addif.text)
                          for addif in bridgeelem.findall('./addif') ]
-        
+
     def __str__(self):
         s  = 'Bridge:\n'
         s += 'name=%s\n' % self._name
@@ -196,7 +196,7 @@ class BridgeImplicit(object):
     @property
     def addifs(self):
         return self._addifs
-                
+
     def __str__(self):
         s  = 'Bridge:\n'
         s += 'name=%s\n' % self._name
@@ -292,11 +292,11 @@ class ContainerTemplate(object):
 
 
 class Container(object):
-    def __init__(self, 
+    def __init__(self,
                  containerelem,
                  overlays,
-                 commonparams, 
-                 containertemplate, 
+                 commonparams,
+                 containertemplate,
                  bridges,
                  hostname,
                  parameterconverter):
@@ -312,10 +312,10 @@ class Container(object):
         self._interfaces, \
         self._hosts_entries_ipv4, \
         self._hosts_entries_ipv6, \
-        self._initscript = self._parse(containerelem, 
-                                       overlays, 
-                                       commonparams, 
-                                       containertemplate, 
+        self._initscript = self._parse(containerelem,
+                                       overlays,
+                                       commonparams,
+                                       containertemplate,
                                        bridges,
                                        hostname)
 
@@ -348,29 +348,29 @@ class Container(object):
     def hosts_entries_ipv6(self):
         return self._hosts_entries_ipv6
 
-    def _parse(self, 
-               containerelem, 
-               overlays, 
-               commonparams, 
-               containertemplate, 
+    def _parse(self,
+               containerelem,
+               overlays,
+               commonparams,
+               containertemplate,
                bridges,
                hostname):
         # assemble common (non-interface) params in order
         # 1. common template params
-        # 2. commonparams passed in 
+        # 2. commonparams passed in
         # 3. params from containerelem
         #
         # and overwrite all of them with overlays
         containerparams = \
-            self._collate_container_params(containertemplate, 
-                                           commonparams, 
-                                           containerelem, 
+            self._collate_container_params(containertemplate,
+                                           commonparams,
+                                           containerelem,
                                            overlays)
 
         # get all interface params and host names
         interfaces,hosts_entries_ipv4,hosts_entries_ipv6 = \
-            self._process_interfaces(containertemplate, 
-                                     containerelem, 
+            self._process_interfaces(containertemplate,
+                                     containerelem,
                                      overlays)
 
         # get initscript
@@ -399,10 +399,10 @@ class Container(object):
         return params
 
 
-    def _collate_container_params(self, 
-                                  containertemplate, 
-                                  commonparams, 
-                                  containerelem, 
+    def _collate_container_params(self,
+                                  containertemplate,
+                                  commonparams,
+                                  containerelem,
                                   overlays):
 
         containerparams = [ ('lxc.utsname', self.lxc_name) ]
@@ -474,7 +474,7 @@ class Container(object):
 
                 entry_name_ipv4 = \
                     interfaceelem.attrib.get(
-                        'hosts_entry_ipv4', 
+                        'hosts_entry_ipv4',
                         bridge_entry_ipv4.get(bridgename, None))
 
                 if entry_name_ipv4:
@@ -483,7 +483,7 @@ class Container(object):
 
                 entry_name_ipv6 = \
                     interfaceelem.attrib.get(
-                        'hosts_entry_ipv6', 
+                        'hosts_entry_ipv6',
                         bridge_entry_ipv6.get(bridgename, None))
 
                 if entry_name_ipv6:
@@ -504,7 +504,7 @@ class Container(object):
                         'value for the interface. Quitting.' \
                         % (bridgename, self.lxc_name)
                 raise LXCError(error)
-                    
+
             addr = interfaces[bridgename]['lxc.network.ipv4']
 
             hosts_entries_ipv4.append((entry_name_ipv4,  addr.split('/')[0]))
@@ -588,7 +588,7 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
 
         if not os.path.isfile(lxcplanfile):
             raise LXCError('Cannot find lxcplanfile "%s". Quitting.' % lxcplanfile)
-        
+
         self._lxcplanfile = lxcplanfile
 
         # just xml parse first
@@ -635,7 +635,7 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
         return self._containers.get('localhost', [])
 
 
-    def _parseplan(self, lxcplanfile): 
+    def _parseplan(self, lxcplanfile):
         lxcplanelem = self.parse(lxcplanfile)
 
         paramconverter = ParamConverter()
@@ -669,9 +669,9 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
                     containertemplates[containertemplate_parent_name]
 
             containertemplates[containertemplate_name] = \
-                ContainerTemplate(containertemplateelem, 
+                ContainerTemplate(containertemplateelem,
                                   containertemplate_parent)
-                                            
+
         hostelems = lxcplanelem.findall('./hosts/host')
 
         bridges = {}
@@ -684,7 +684,7 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
             hostname = hostelem.attrib.get('hostname')
 
             hostnames.append(hostname)
-            
+
             # 'localhost' is permitted as a catchall hostname to mean the
             # local machine only when one host is specified in the file
             if hostname == 'localhost':
@@ -716,7 +716,7 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
 
             root_directory = \
                 os.path.join(ConfigDictionary().get('etce', 'WORK_DIRECTORY'), 'lxcroot')
-            
+
             rootdirectories[hostname] = root_directory
 
             # ensure no repeated lxc_indices
@@ -825,7 +825,7 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
                 for iname,iparams in container.interfaces.items():
                     if not iname in bridges[hostname]:
                         bridges[hostname][iname] = BridgeImplicit(iname)
-            
+
         return hostnames,kernelparameters,bridges,containers,rootdirectories
 
 

@@ -40,7 +40,6 @@ import shlex
 import shutil
 import subprocess
 import sys
-import syslog
 import tarfile
 import tempfile
 
@@ -60,7 +59,7 @@ def generate_tempfile_name(directory=None, prefix=None):
             fd,name = tempfile.mkstemp(dir=directory, prefix=prefix)
         else:
             fd,name = tempfile.mkstemp(dir=directory)
-            
+
         os.close(fd)
         os.remove(name)
     else:
@@ -92,8 +91,8 @@ def tarzip(srclist, dstarchive=None):
         for src in srclist:
             t.add(src, os.path.basename(src))
     finally:
-        t.close()    
-    
+        t.close()
+
     return dstarchive
 
 
@@ -223,7 +222,7 @@ def daemonize():
 
     # double fork
     pid = os.fork()
-    if pid > 0:            
+    if pid > 0:
         sys.exit(0)
 
     for fd in range(0,hardlimit):
@@ -250,7 +249,7 @@ def hostsfromarg(hostlist):
         else:
             hosts.append(entry)
 
-    return hosts  
+    return hosts
 
 
 def timestamp():

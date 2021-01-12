@@ -30,13 +30,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import os.path
 import etce.loader
 
 
 """
 Return an instance of the FieldClient implementation
-coded in modulename 
+coded in modulename
 """
 
 

@@ -59,7 +59,7 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
     def name(self):
         return self._name
 
-    
+
     @property
     def tags(self):
         return copy.copy(self._tags)
@@ -79,10 +79,10 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
 
     def global_overlays(self, subdirectory_map):
         global_overlays = copy.copy(self._global_overlays)
-        
+
         for csvfile,column in self._global_overlay_csvfiles:
             csvfileabs = subdirectory_map[csvfile].full_name
-            
+
             global_overlays.update(OverlayCSVReader,csvfileabs).values(column)
 
         return global_overlays
@@ -126,7 +126,7 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
 
         # preserve our root
         doc_copy = copy.deepcopy(self._rootelem)
-        
+
         for elem in doc_copy:
             new_root.append(elem)
 
@@ -141,7 +141,7 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
         doc_copy = copy.deepcopy(self._rootelem)
 
         remove_tags = ( 'overlays', 'templates' )
-        
+
         for elem in doc_copy:
             if elem.tag in remove_tags:
                 continue
@@ -151,7 +151,7 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
         with open(outfile, 'w') as outf:
             outf.write(lxml.etree.tostring(new_root, pretty_print=True).decode())
 
-            
+
     def _parsefile(self, testfile):
         rootelem = self.parse(testfile)
 
@@ -207,7 +207,7 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
             indices = etce.utils.nodestr_to_nodelist(templateselem.get('indices'))
 
             indices_set = set(indices)
-            
+
             templates_global_overlaylists = \
                 OverlayListChainFactory().make(templateselem.findall("./overlaylist"),
                                                indices)
@@ -231,12 +231,12 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
                     raise RuntimeError(message)
 
                 if elem.tag == 'directory':
-                    templates.append(TemplateDirectoryBuilder(elem, 
+                    templates.append(TemplateDirectoryBuilder(elem,
                                                               template_indices,
                                                               self._global_overlays,
                                                               templates_global_overlaylists))
                 elif elem.tag == 'file':
-                    templates.append(TemplateFileBuilder(elem, 
+                    templates.append(TemplateFileBuilder(elem,
                                                          template_indices,
                                                          self._global_overlays,
                                                          templates_global_overlaylists))

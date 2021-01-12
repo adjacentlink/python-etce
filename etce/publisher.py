@@ -33,7 +33,6 @@
 from __future__ import absolute_import, division, print_function
 from collections import defaultdict
 import os
-import re
 import shutil
 import sys
 import traceback
@@ -46,7 +45,6 @@ from etce.templateutils import format_file
 from etce.testdirectory import TestDirectory
 from etce.config import ConfigDictionary
 
-from lxml.etree import DocumentInvalid
 
 class Publisher(object):
     def __init__(self, test_directory):
@@ -213,7 +211,7 @@ class Publisher(object):
                 srcdirs.insert(0, self._testdoc.base_directory)
             else:
                 srcdirs.insert(0, os.path.join(self._test_directory, self._testdoc.base_directory))
-            
+
         templates = self._testdoc.templates
 
         subdirectory_map = {}
@@ -265,7 +263,7 @@ class Publisher(object):
         # Assemble overlays from
         # 1. etce.conf
         etce_config_overlays = {}
-        
+
         for k,v in self._config.items('overlays'):
             etce_config_overlays[k] = etce.utils.configstrtoval(v)
 
@@ -281,7 +279,7 @@ class Publisher(object):
                     env_overlays[overlay] = etce.utils.configstrtoval(os.environ[overlay])
 
         return (etce_config_overlays, env_overlays)
-    
+
 
     def _prune_unused_template_directories(self, subdirectory_map):
         directory_templates_used_by_test = self._testdoc.template_directory_names
@@ -293,7 +291,7 @@ class Publisher(object):
             all_template_directory_keys.difference(directory_templates_used_by_test)
 
         rmpaths = []
-        
+
         for unused in directory_templates_not_used_by_test:
             for subpath in subdirectory_map:
                 if subpath.startswith(unused + '/'):
@@ -346,7 +344,7 @@ class Publisher(object):
                                 runtime_overlays,
                                 env_overlays,
                                 testfile_global_overlays,
-                                etce_config_overlays)   
+                                etce_config_overlays)
 
             fulldstfile = os.path.join(publishdir, relname)
 
@@ -418,20 +416,20 @@ class Publisher(object):
 
         return subfiles
 
-    
+
 def add_publish_arguments(parser):
     parser.add_argument('--basedirectory',
                         default=None,
-                        help='''Specify a path to a test base 
+                        help='''Specify a path to a test base
                         directory, overridding the (optional) value
                         defined in the test test.xml file. The value
-                        may be an absolute path or a relative path 
-                        to the current working directory. 
+                        may be an absolute path or a relative path
+                        to the current working directory.
                         default: None''')
     parser.add_argument('--logdirectory',
                         default=None,
                         help='''The ETCE reserved overlay 'etce_log_path'
-                        names a location for wrappers to write output files. 
+                        names a location for wrappers to write output files.
                         When running a test, etce_log_path is automatically
                         derived using the etce.conf WORK_DIRECTORY value.
                         Use the logdirectory argument to pass a location
@@ -441,8 +439,8 @@ def add_publish_arguments(parser):
                         default=None,
                         help='''File name containing NAME=VALUE pairs,
                         one per line, to use as overlays
-                        for publishing. These overlay values 
-                        override those specified in the local etce.conf file. 
+                        for publishing. These overlay values
+                        override those specified in the local etce.conf file.
                         default: None''')
     parser.add_argument('--verbose',
                         default=False,
@@ -477,7 +475,7 @@ def publish_test(args):
     # to the current working directory
     if args.basedirectory and not args.basedirectory[0] == os.path.sep:
         args.basedirectory = os.path.join(os.getcwd(), args.basedirectory)
-        
+
     runtime_overlays = {}
     if args.overlayfile is not None:
         if not os.path.isfile(args.overlayfile):
@@ -492,7 +490,7 @@ def publish_test(args):
 
     try:
         publisher = Publisher(args.testdirectory)
-        
+
         publisher.publish(publishdir=args.outdirectory,
                           logdir=args.logdirectory,
                           runtime_overlays=runtime_overlays,

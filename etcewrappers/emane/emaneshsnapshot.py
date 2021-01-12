@@ -130,7 +130,7 @@ class EmaneshSnapshot(Wrapper):
                         for tablename,data in sorted(cp.getStatisticTable(buildid).items()):
                             tf.write('nem %d   %s %s\n' % (nemid, layertype, tablename))
                             self.write_table_cells(tf, data)
-                        
+
                 # emulator
                 for tablename,data in sorted(cp.getStatisticTable(0).items()):
                     tf.write('emulator %s\n' % tablename)
@@ -152,7 +152,7 @@ class EmaneshSnapshot(Wrapper):
         rows = []
         for rowtuple in rowtuples:
             rows.append(list(map(str, list(zip(*rowtuple))[0])))
-            
+
         for row in rows:
             for i,value in enumerate(row):
                 widths[i] = max(widths[i],len(value))
@@ -162,7 +162,7 @@ class EmaneshSnapshot(Wrapper):
             line += '|' + label.ljust(widths[i])
         line += "|\n"
         tf.write(line)
-        
+
         for row in rows:
             line = ''
             for i,value in enumerate(row):

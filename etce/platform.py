@@ -75,7 +75,7 @@ def platform_suffix_list():
             suffixes.append('%s' % os)
 
     elif os == 'windows':
-        osversion = platform.release().lower()        
+        osversion = platform.release().lower()
         suffixes.append('%s.%s.%s' % (os,osversion,arch))
         suffixes.append('%s.%s' % (os,osversion))
         suffixes.append('%s' % os)
@@ -94,7 +94,7 @@ def linux_distribution():
 
 def platform_architecture():
     # standardize the arch string across os's - use linux naming convention
-    buswidth = platform.architecture()[0].lower()        
+    buswidth = platform.architecture()[0].lower()
     arch = 'i686'
     if buswidth == '64bit':
         arch = 'x86_64'
@@ -153,7 +153,7 @@ class Platform:
 
     def get_date_now(self):
         return self._impl.get_date_now()
-        
+
     def getallpids(self):
         return self._impl.getallpids()
 

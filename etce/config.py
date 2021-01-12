@@ -80,7 +80,7 @@ class ConfigDictionary(object):
                 error = 'User configured WORK_DIRECTORY "%s" is not an ' \
                         'absolue path. Quitting.' % user_specified_workdir
                 raise ValueError(error)
-                
+
             # and at least 2 levels deep
             if len(user_specified_workdir.split('/')) < 3:
                 error = 'User configured WORK_DIRECTORY "%s" must be ' \
@@ -108,7 +108,7 @@ class ConfigDictionary(object):
             return self.parser.get(section, key)
         return default
 
-    
+
     def sections(self):
         return self.parser.sections()
 
@@ -116,7 +116,7 @@ class ConfigDictionary(object):
     def items(self, section):
         return self.parser.items(section)
 
-    
+
     def asdict(self):
         retdict = {}
         for section in self.sections():

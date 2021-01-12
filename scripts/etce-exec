@@ -46,9 +46,9 @@ description: runs the python function
 
              modulename.methodname(methodarg1, methodarg2, ...).
 
-             on the specified field. modulename is a module found in 
-             the python etce package subdirectory tree in the field 
-             members' python library path. 
+             on the specified field. modulename is a module found in
+             the python etce package subdirectory tree in the field
+             members' python library path.
 '''
 
 parser = argparse.ArgumentParser(description=usagestr,
@@ -63,7 +63,7 @@ parser.add_argument('--envfile',
 parser.add_argument('--user',
                     action='store',
                     default=None,
-                    help='''Execute the command as user. This defaults to 
+                    help='''Execute the command as user. This defaults to
                     the value of "SSH_USER" specified in the [etce]
                     section of the etceconf file, if specified. If
                     not, the current user is used.''')
@@ -71,14 +71,14 @@ parser.add_argument('--port',
                     action='store',
                     type=int,
                     default=None,
-                    help='''Connect to remote field via specified port. 
+                    help='''Connect to remote field via specified port.
                     This defaults to the etce.conf "SSH_PORT" value.''')
 parser.add_argument('--workingdir',
                     action='store',
                     default='.',
-                    help='''Specifies the subdirectory under the 
-                    "WORK_DIRECTORY" on the remote to before 
-                    executing the command. The default 
+                    help='''Specifies the subdirectory under the
+                    "WORK_DIRECTORY" on the remote to before
+                    executing the command. The default
                     "." means switch to WORK_DIRECTORY.''')
 parser.add_argument('modulename',
                     metavar='MODULENAME',
@@ -100,8 +100,8 @@ parser.add_argument('methodargs',
 parser.add_argument('hostfile',
                     metavar='HOSTFILE',
                     action='store',
-                    help='''The ETCE Host file containing the 
-                    node names from which the remote source 
+                    help='''The ETCE Host file containing the
+                    node names from which the remote source
                     directories are collected.''')
 
 args = parser.parse_args()
@@ -109,7 +109,7 @@ args = parser.parse_args()
 if not os.path.exists(args.hostfile):
    print('Cannot find hostfile "%s". Quitting' % args.hostfile, file=sys.stderr)
    exit(1)
-   
+
 hosts = Field(args.hostfile).leaves()
 
 commandstr = '%s %s %s' % (args.modulename, args.methodname, ' '.join(args.methodargs))

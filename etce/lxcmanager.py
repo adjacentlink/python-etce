@@ -40,7 +40,6 @@ import time
 import etce.utils
 
 from etce.platform import Platform
-from etce.config import ConfigDictionary
 from etce.lxcplanfiledoc import LXCPlanFileDoc
 from etce.lxcerror import LXCError
 
@@ -87,7 +86,7 @@ class LXCManagerImpl(object):
         if not containers:
             print('No containers assigned to "%s". Skipping.' % hostname)
             return
-        
+
         if not lxcrootdir[0] == '/':
             print('root_directory "%s" for hostname "%s" is not an absolute path. ' \
                   'Quitting.' % \
@@ -153,7 +152,7 @@ class LXCManagerImpl(object):
 
 
                     time.sleep(0.1)
-                        
+
                 elif not self._platform.isdeviceup(bridge.devicename):
                     raise RuntimeError('Bridge %s marked persistent is not up. Quitting.')
 
@@ -181,7 +180,7 @@ class LXCManagerImpl(object):
                 with open(scriptfile, 'w') as sf:
                     sf.write(initscripttext)
 
-                    os.chmod(scriptfile, 
+                    os.chmod(scriptfile,
                              stat.S_IRWXU | stat.S_IRGRP | \
                              stat.S_IXGRP | stat.S_IROTH | \
                              stat.S_IXOTH)
@@ -243,7 +242,7 @@ class LXCManagerImpl(object):
                 sys.exit(0)
 
             time.sleep(0.1)
-            
+
 
     def _waitstart(self, nodecount, lxcroot):
         numstarted = 0
@@ -261,7 +260,7 @@ class LXCManagerImpl(object):
         print('Continuing with %d of %d running lxc containers.' % \
               (numstarted, nodecount))
 
-        
+
     def _writehosts(self, containers):
         opentag = '#### Start auto-generated ETCE control mappings\n'
         closetag = '#### Stop auto-generated ETCE control mappings\n'
@@ -272,7 +271,7 @@ class LXCManagerImpl(object):
                 if line.startswith(opentag):
                     searchstate = 1
                 else:
-                    etcehostlines.append(line)   
+                    etcehostlines.append(line)
             elif searchstate == 1:
                 if line.startswith(closetag):
                     searchstate == 2
@@ -293,7 +292,7 @@ class LXCManagerImpl(object):
 
             ofd.write('\n')
             ofd.write(opentag)
-            
+
             # ipv4
             ipv4_entries = []
             for container in containers:

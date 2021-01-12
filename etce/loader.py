@@ -67,7 +67,7 @@ def load_etce_class_instance(modulename, root='etce', args=[], kwargs={}):
 
 
 '''Search for a class with the same classname as the module.
-Capitalization doesn't matter. If there are more than one class 
+Capitalization doesn't matter. If there are more than one class
 definitions with the module name, but differeing only by capitalization,
 then not well defined which one will be instantiated'''
 def load_class_instance_from_module(module, args=[], kwargs={}):
@@ -83,12 +83,12 @@ def load_class_instance_from_module(module, args=[], kwargs={}):
                     return o
     except KeyError:
         return None
-    
+
     return None
 
 
 '''
-Return the module method based on etce search path. 
+Return the module method based on etce search path.
 '''
 def load_etce_method(modulename, methodname):
     mod = load_etce_module(modulename)

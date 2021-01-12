@@ -32,7 +32,6 @@
 
 import os
 import re
-import shutil 
 
 from etce.config import ConfigDictionary
 from etce.configfiledoc import ConfigFileDoc
@@ -41,7 +40,6 @@ from etce.testfiledoc import TestFileDoc
 from etce.platform import Platform
 from etce.templateutils import get_file_overlays
 from etce.testdirectoryerror import TestDirectoryError
-import etce.utils
 
 
 class TestDirectory(object):
@@ -53,7 +51,7 @@ class TestDirectory(object):
 
     def __init__(self, rootdir, basedir_override):
         self._rootdir = rootdir
-        
+
         self._platform = Platform()
 
         self._testdoc = TestFileDoc(
@@ -61,7 +59,7 @@ class TestDirectory(object):
                          TestDirectory.TESTFILENAME))
 
         self._merged = not self._testdoc.has_base_directory
-        
+
         self._basedir = self._testdoc.base_directory
 
         if not basedir_override is None:
@@ -73,7 +71,7 @@ class TestDirectory(object):
 
         # add the hostfile to the test directory
         # before copying it to hostfile's root nodes
-        hostfile = os.path.join(self._rootdir, 
+        hostfile = os.path.join(self._rootdir,
                                 TestDirectory.HOSTFILENAME)
         self._verified_nodes = []
         if os.path.exists(hostfile) or os.path.isfile(hostfile):
@@ -91,7 +89,7 @@ class TestDirectory(object):
     def location(self):
         return self._rootdir
 
-    
+
     def info(self):
         return { 'name':self.name(),
                  'description':self.description() }
@@ -108,7 +106,7 @@ class TestDirectory(object):
     def description(self):
         return self._testdoc.description
 
-    
+
     def overlay_names(self):
         return self._find_overlay_names()
 
@@ -149,7 +147,7 @@ class TestDirectory(object):
         hostnames = set([])
 
         # if this is already a merged test directory, ignore base directory
-        # search 
+        # search
         if not self._merged:
             for entry in os.listdir(os.path.join(self.location(), self._basedir)):
                 abs_entry = os.path.join(self.location(), self._basedir, entry)
@@ -190,7 +188,7 @@ class TestDirectory(object):
                          'found in nodefile "%s". Quitting.' \
                          % (nodename, nodefile)
                 raise TestDirectoryError(errstr)
-                
+
         return nodenames
 
 
@@ -230,15 +228,15 @@ class TestDirectory(object):
             if entry == name:
                 if os.path.isfile(entry):
                     return os.path.join(self._rootdir, self.nodename(), entry)
-                    
+
         return None
 
 
     def _find_this_host_names(self, namelist):
-        ''' Determine which names in namelist map to an 
+        ''' Determine which names in namelist map to an
             ip address on this host.
         '''
-        return [ other for other in namelist 
+        return [ other for other in namelist
                  if self._platform.hostname_has_local_address(other) ]
 
 
@@ -249,7 +247,7 @@ class TestDirectory(object):
 
         if not self._merged:
             # push the basedirectory if this directory is not already merged
-            search_dirs.insert(0, 
+            search_dirs.insert(0,
                                os.path.join(self.location(), self._basedir))
 
         for search_dir in search_dirs:

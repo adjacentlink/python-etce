@@ -32,8 +32,6 @@
 
 import os
 
-from etce.testdirectory import TestDirectory
-from etce.platform import Platform
 from etce.config import ConfigDictionary
 from etce.publisher import Publisher
 

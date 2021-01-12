@@ -55,7 +55,7 @@ class ConfigFileDoc(etce.xmldoc.XMLDoc):
                 etce.utils.configstrtoval(argelem.attrib['value'])
 
         for wrapperelem in configelem.findall('./wrapper'):
-            wrappername = wrapperelem.attrib['name'] 
+            wrappername = wrapperelem.attrib['name']
             for argelem in wrapperelem.findall('./arg'):
                 config[(wrappername, argelem.attrib['name'])] = \
                     etce.utils.configstrtoval(argelem.attrib['value'])

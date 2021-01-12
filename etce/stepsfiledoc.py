@@ -63,7 +63,7 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
                            'stepname in steps file. steps are\n%s' \
                            % (runfromstep,
                               '\n'.join(steplist))
-            
+
                 raise ValueError(errorstr)
 
             steplist = steplist[steplist.index(runfromstep):]
@@ -75,7 +75,7 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
                            'stepname in steps file. steps are\n%s' \
                            % (runtostep,
                               '\n'.join(steplist))
-                
+
                 raise ValueError(errorstr)
 
             steplist = steplist[:steplist.index(runtostep) + 1]
@@ -86,7 +86,7 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
             for stepname in steplist:
                 if stepname.startswith(step_prefix):
                     filtermatches.append(stepname)
-        
+
         return tuple([step for step in steplist if not step in filtermatches])
 
 
@@ -143,7 +143,7 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
                     'Stepname "%s" appears more thane once in steps file "%s". Quitting.' % \
                     (stepname, stepsfile)
                 raise RuntimeError(errstr)
-            
+
             steplist.append(stepname)
 
             if filtername:

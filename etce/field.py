@@ -78,7 +78,7 @@ class Field(object):
     def nodefile(self):
         return self._nodefile
 
-        
+
     def roots(self):
         return tuple(self._roots)
 
@@ -128,7 +128,7 @@ class Field(object):
             return newlines,nexttok
 
         # is the found char valid
-        if not nextchar in self._validnamechars + ('{','}'): 
+        if not nextchar in self._validnamechars + ('{','}'):
             raise FieldParseException('Impermissable node character %s' %
                                       nextchar)
 
@@ -149,13 +149,13 @@ class Field(object):
                 return newlines,nexttok
             elif nextchar in self._validnamechars:
                 nexttok += nextchar
-            else: 
+            else:
                 raise FieldParseException('Impermissable node character %s' %
                                           nextchar)
             nextchar = filedescriptor.read(1)
-            
+
         return newlines,nexttok
-        
+
 
     def _parse(self, nodefile):
         with open(nodefile, 'r') as nf:
@@ -187,7 +187,7 @@ class Field(object):
                     if len(tok) == 0:
                         raise FieldParseException(
                             'Unexpected end of file without matching "}"')
-                        
+
                     elif tok == '{':
                         raise FieldParseException(
                             'Unexpected "{" at line %s, %d. Field depth cannot exceed one level' % (nodefile, line))

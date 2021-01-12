@@ -36,14 +36,13 @@ import copy
 import os.path
 
 from etce.chainmap import ChainMap
-from etce.config import ConfigDictionary
 from etce.templateutils import format_file,format_string
-from etce.utils import nodestr_to_nodelist,configstrtoval
+from etce.utils import configstrtoval
 from etce.overlaylistchainfactory import OverlayListChainFactory
 
 
 class TemplateFileBuilder(object):
-    def __init__(self, 
+    def __init__(self,
                  templatefileelem,
                  indices,
                  testfile_global_overlays,
@@ -52,17 +51,17 @@ class TemplateFileBuilder(object):
         self._global_overlays = testfile_global_overlays
 
         self._templates_global_overlaylists = templates_global_overlaylists
-        
+
         self._name = templatefileelem.attrib['name']
 
         self._indices = copy.copy(indices)
-        
+
         self._hostname_format, \
         self._output_file_name = self._read_attributes(templatefileelem)
 
         # build local overlay chain
         self._template_local_overlays = {}
-        
+
         for overlayelem in templatefileelem.findall('./overlay'):
             oname = overlayelem.attrib['name']
 
@@ -71,7 +70,7 @@ class TemplateFileBuilder(object):
             otype = overlayelem.attrib.get('type', None)
 
             self._template_local_overlays[oname] = configstrtoval(oval, argtype=otype)
-        
+
         self._template_local_overlaylists = \
             OverlayListChainFactory().make(templatefileelem.findall('./overlaylist'),
                                            self._indices)
@@ -116,7 +115,7 @@ class TemplateFileBuilder(object):
 
         return subdirectory_map
 
-                                                 
+
     def instantiate(self,
                     subdirectory_map,
                     publishdir,
@@ -128,10 +127,10 @@ class TemplateFileBuilder(object):
 
         if not os.path.exists(templatefilenameabs) or \
            not os.path.isfile(templatefilenameabs):
-            raise ValueError('ERROR: %s templatefile does not exist' 
+            raise ValueError('ERROR: %s templatefile does not exist'
                              % templatefilenameabs)
         self._absname = templatefilenameabs
-        
+
         for index in self._indices:
             self._createfile(publishdir,
                              logdir,
@@ -149,7 +148,7 @@ class TemplateFileBuilder(object):
                     env_overlays,
                     etce_config_overlays):
         reserved_overlays = {}
-        
+
         reserved_overlays['etce_index'] = index
 
         # etce_hostname formats are limited to the index and the
@@ -159,15 +158,15 @@ class TemplateFileBuilder(object):
                                     self._template_local_overlays,
                                     self._templates_global_overlaylists[index],
                                     self._global_overlays)
-            
+
         reserved_overlays['etce_hostname'] = format_string(self._hostname_format, etce_hostname_cm)
 
         if logdir:
             reserved_overlays['etce_log_path'] = \
                 os.path.join(logdir, reserved_overlays['etce_hostname'])
 
-        publishfile = os.path.join(publishdir, 
-                                   reserved_overlays['etce_hostname'], 
+        publishfile = os.path.join(publishdir,
+                                   reserved_overlays['etce_hostname'],
                                    self._output_file_name)
 
         other_keys = set([])
@@ -178,7 +177,7 @@ class TemplateFileBuilder(object):
                                   self._template_local_overlays,
                                   self._templates_global_overlaylists[index],
                                   self._global_overlays,
-                                  etce_config_overlays ] 
+                                  etce_config_overlays ]
 
         for some_overlays in non_reserved_overlays:
             other_keys.update(some_overlays)
@@ -206,7 +205,7 @@ class TemplateFileBuilder(object):
             templatefileelem.attrib['hostname_format']
 
         outputfilename = \
-            templatefileelem.attrib.get('output_file_name', 
+            templatefileelem.attrib.get('output_file_name',
                                         templatefileelem.attrib['name'])
 
         return (hostname_format, outputfilename)

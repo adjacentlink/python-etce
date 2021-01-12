@@ -55,7 +55,7 @@ class Top(Wrapper):
             return
 
         periodsecs = ctx.args.periodsecs
-        
+
         argstr = '-b -d%s' % periodsecs
 
         ctx.daemonize('top',

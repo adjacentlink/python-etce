@@ -54,7 +54,7 @@ import io
 from threading import Thread, Lock
 import tarfile
 
-import etce.fieldclient 
+import etce.fieldclient
 import etce.utils
 
 from etce.fieldconnectionerror import FieldConnectionError
@@ -160,7 +160,7 @@ class ExecuteThread(Thread):
     ReturnObject = namedtuple('ReturnObject', ['keyboard_interrupt', 'retval'])
 
     lock = Lock()
-    
+
     def __init__(self, connection, command, host):
         Thread.__init__(self, name=host)
         self._connection = connection
@@ -186,8 +186,8 @@ class ExecuteThread(Thread):
     def run(self):
         stdi, stdo, stde = self._connection.exec_command(self._command)
 
-        readers = { stdo.channel.fileno():Reader(stdo, 
-                                                 ExecuteThread.lock, 
+        readers = { stdo.channel.fileno():Reader(stdo,
+                                                 ExecuteThread.lock,
                                                  self.name + '-stdo',
                                                  self._banner,
                                                  False) }
@@ -199,8 +199,8 @@ class ExecuteThread(Thread):
         ep.register(stdo.channel, select.EPOLLIN | select.EPOLLONESHOT)
 
         if stde.channel.fileno() != stdo.channel.fileno():
-            readers[stde.channel.fileno()] = Reader(stde, 
-                                                    ExecuteThread.lock, 
+            readers[stde.channel.fileno()] = Reader(stde,
+                                                    ExecuteThread.lock,
                                                     self.name + '-stde',
                                                     self._banner,
                                                     True)
@@ -414,16 +414,16 @@ class SSHClient(etce.fieldclient.FieldClient):
 
     def sourceisdestination(self, host, srcfilename, dstfilename):
         if srcfilename == dstfilename:
-            p = Platform()        
+            p = Platform()
             if p.hostname_has_local_address(host):
                 return True
         return False
 
 
-    def put(self, 
-            localsrc, 
-            remotedst, 
-            hosts, 
+    def put(self,
+            localsrc,
+            remotedst,
+            hosts,
             doclobber=False,
             minclobberdepth=2):
         # this is intended to work like 'cp -R src dstdir' where src
@@ -438,10 +438,10 @@ class SSHClient(etce.fieldclient.FieldClient):
         # src is a directory
         #  src=./foo/bar, dst='bar': moves bar to WORK_DIRECTORY/bar/bar
         #  src=/opt/foo/bar, dst='bar': moves bar to WORK_DIRECTORY/bar/bar
-        # 
+        #
         remotesubdir = self._normalize_remotedst(remotedst)
         srcdir,srcbase = self._normalize_split_localsubdir(localsrc)
-            
+
         if not os.path.exists(localsrc):
             raise RuntimeError('Error: "%s" doesn\'t exist. Quitting.' % srcbase)
 
@@ -456,7 +456,7 @@ class SSHClient(etce.fieldclient.FieldClient):
             # this is local directory that we are putting
             tmppath = os.getcwd()
             abssrc = os.path.join(tmppath, srcbase)
-            # this is where this node would resolve the put location if it 
+            # this is where this node would resolve the put location if it
             # were a receiver
             etcedir = self._config.get('etce', 'WORK_DIRECTORY')
             tmpsubdir = remotesubdir
@@ -510,7 +510,7 @@ class SSHClient(etce.fieldclient.FieldClient):
         for thread in self._execute_threads:
             thread.interrupt()
 
-            
+
     def execute(self, commandstr, hosts, workingdir=None):
         # execute an etce command over ssh
         self._execute_threads = []
@@ -538,7 +538,7 @@ class SSHClient(etce.fieldclient.FieldClient):
 
         # collect the return objects and monitor for exception
         returnobjs = {}
-        
+
         exception = False
 
         keyboard_interrupt = False
@@ -548,14 +548,14 @@ class SSHClient(etce.fieldclient.FieldClient):
             # to occur immediately
             while t.isAlive():
                 t.join(5.0)
-            
+
             returnobjs[t.name] = t.returnobject()
-            
+
             if returnobjs[t.name].retval['isexception']:
                 exception = True
             elif returnobjs[t.name].keyboard_interrupt:
                 keyboard_interrupt = True
-                
+
         # raise an exception if any return object is an exception
         if exception:
             raise ETCEExecuteException(returnobjs)
@@ -584,7 +584,7 @@ class SSHClient(etce.fieldclient.FieldClient):
         else:
             # eliminate cases where src and dst are same path on same host
             # abssrc is where transfer would come from is this host is
-            # among the remote hosts 
+            # among the remote hosts
             etcedir = self._config.get('etce', 'WORK_DIRECTORY')
             abssrc = os.path.join(etcedir, remotesubdir)
             # figure out absolute name of local destination
@@ -704,7 +704,7 @@ class SSHClient(etce.fieldclient.FieldClient):
             subdir == subdir[:-1]
         if subdir[0] == '.':
             subdir = subdir[2:]
-        # '..' not permitted in destination 
+        # '..' not permitted in destination
         if '..' in subdir.split('/'):
             raise ValueError('Error: ".." not permitted in destination path')
         # for simplicity, disallow '.' in remotedst also
@@ -788,4 +788,4 @@ class SSHClient(etce.fieldclient.FieldClient):
     def close(self):
         for host in self._connection_dict:
             self._connection_dict[host].close()
-        
+

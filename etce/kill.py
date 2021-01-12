@@ -60,7 +60,7 @@ class Kill(object):
 
             if my_pidfile_toks == (toks[0], toks[1]):
                 fullpidfile = os.path.join(lockfiledir, pidfile)
-                
+
                 pid = p.kill(fullpidfile, signal, sudo)
 
                 if pid:

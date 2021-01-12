@@ -118,7 +118,7 @@ def stopfield(args):
 
     other_hosts = set(plandoc.hostnames()).difference(
         ['localhost', Platform().hostname()])
-    
+
     # stop containers on other hosts, if any
     try:
         if other_hosts:

@@ -41,7 +41,7 @@ class IGMPBridge(Wrapper):
 
     emane0 lan0
 
-    Comment lines, beginning with '#' are permitted. 
+    Comment lines, beginning with '#' are permitted.
     """
     def register(self, registrar):
         registrar.register_infile_name('igmpbridge.conf')

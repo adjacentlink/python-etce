@@ -42,7 +42,7 @@ class TestCollectionIterator(object):
     def __init__(self, wrapped):
         self.wrapped = wrapped
         self.index = 0
-        
+
     def next(self):
         return self.__next__()
 
@@ -61,7 +61,7 @@ class TestCollection(object):
     collections may be build in different ways. Two ways that are forseen,
     building a TestCollection by parsing a subdirectory tree of test files,
     building a TestCollection by a generator.'''
-    
+
     def __init__(self):
         self._tests = {}
 
@@ -130,10 +130,10 @@ class TestCollection(object):
                 test = TestDirectory(dirpath, basedir_override)
 
                 if test.name() in self._tests:
-                    err = '''ERROR: tests must have unique names. Test at 
-                             %s 
-                             and 
-                             %s 
+                    err = '''ERROR: tests must have unique names. Test at
+                             %s
+                             and
+                             %s
                              are both named %s''' % (self._tests[test.name()].location(),
                                                      test.location(),
                                                      test.name())

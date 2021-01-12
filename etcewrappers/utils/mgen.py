@@ -39,7 +39,7 @@ from etce.wrapper import Wrapper
 class Mgen(Wrapper):
     """
     Execute mgen with the specified script. This wrapper blocks
-    until mgen completes. 
+    until mgen completes.
     """
 
     def register(self, registrar):
@@ -55,15 +55,15 @@ class Mgen(Wrapper):
         hourminsec = ctx.args.starttime.split('T')[1]
 
         argstr = 'input %s txlog output %s start %s' % \
-            (ctx.args.infile, 
+            (ctx.args.infile,
              ctx.args.outfile,
              hourminsec)
 
         if self._isipv6(ctx.args.infile):
             argstr = 'ipv6 input %s txlog output %s start %s' % \
-                (ctx.args.infile, 
+                (ctx.args.infile,
                  ctx.args.outfile,
-                 hourminsec)                
+                 hourminsec)
 
         ctx.run('mgen', argstr)
 

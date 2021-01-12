@@ -47,7 +47,7 @@ class OverlayCSVReader(object):
 
         overlay_dict = {}
 
-        for n,v in zip(self._column_dict['name'], 
+        for n,v in zip(self._column_dict['name'],
                          self._column_dict[column_name]):
             overlay_dict[n] = v
 
@@ -62,7 +62,7 @@ class OverlayCSVReader(object):
         if len(rowlens) > 1:
             raise ValueError('"%s" file rows not the same length. Quitting.' \
                              % (csvfile))
-        
+
         names = rows[0]
 
         if not 'NAME' in [ n.upper() for n in names ]:

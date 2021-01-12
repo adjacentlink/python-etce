@@ -57,7 +57,7 @@ class OverlayListChainFactory(object):
                       'number of values (%d) do not match for overlaylist ' \
                       'name "%s"' % (len(indiceslist), len(values), name)
                 raise OverlayError(err)
-                
+
             for index,value in zip(indiceslist,values):
                 valsmap[index][name] = configstrtoval(value.strip(), argtype=argtype)
 

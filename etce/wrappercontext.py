@@ -37,7 +37,7 @@ from etce.argregistrar import ArgRegistrar
 class WrapperContext(ArgRegistrar):
     """
     WrapperContext aims to help eliminate repetitive, boilerplate
-    Wrapper code and standardize Wrapper workflow. Specifically, 
+    Wrapper code and standardize Wrapper workflow. Specifically,
     WrapperContext:
 
     * Standardizes the way Wrapper arguments are specified, searched
@@ -46,7 +46,7 @@ class WrapperContext(ArgRegistrar):
     * Standardizes the way input and output files are searched and
       presented to Wrappers.
 
-    * Provides helper methods for running/daemonizing and stopping wrapped 
+    * Provides helper methods for running/daemonizing and stopping wrapped
       applications.
 
     * Provides a uniform way for Wrappers to store meta information.
@@ -78,15 +78,15 @@ class WrapperContext(ArgRegistrar):
 
         Besides user registered arguments, ETCE reserves a small
         set of arguments, also passed in through ctx.args, that
-        cannot be overwritten by the user - 
+        cannot be overwritten by the user -
 
-           default_pidfilename: 
+           default_pidfilename:
               Absolute (default) pidfile name. Many Wrappers write
               they PID of the wrapped application they launch to a
               file with this name. Pidfiles are placed in the `lock`
               subdirectory of the etce.conf WORK_DIRECTORY.
 
-           logdirectory: 
+           logdirectory:
               the absolute path to the output directory.  The
               logdirectory is a scoped path name that includes the
               name of the current test, a date time stamp and the name
@@ -94,24 +94,24 @@ class WrapperContext(ArgRegistrar):
               use this path for any output files they produce that are
               to be collected with the test results.
 
-           nodename: 
+           nodename:
               the hostname where the current wrapper is executing
 
-           nodeid: 
+           nodeid:
               if nodename contains an integer value, it is passed
               as an int in this member, otherwise None
 
-           starttime: 
-              the current test's T=0 scenario time in format 
+           starttime:
+              the current test's T=0 scenario time in format
               YYYY-MM-DDTHH:MM:SS
 
-           stepname: 
+           stepname:
               the current step name as defined in the steps.xml file
 
-           testname: 
+           testname:
               the current test name as defined in the test.xml file
 
-           wrappername: 
+           wrappername:
               this wrapper's name
         """
         self._impl.register_argument(argname, defaultval, description)
@@ -119,7 +119,7 @@ class WrapperContext(ArgRegistrar):
 
     def register_infile_name(self, name):
         """
-        Register the input file name used by the wrapper. 
+        Register the input file name used by the wrapper.
 
         When a Wrapper registers in input file name, the context
         searches for a matching file name in the hosts's configuration
@@ -135,7 +135,7 @@ class WrapperContext(ArgRegistrar):
 
     def register_outfile_name(self, name):
         """
-        Register the output file name used by the Wrapper. 
+        Register the output file name used by the Wrapper.
 
         Wrapper conventionally register a log file as thier output
         file. This method is a convenience method that passes back the
@@ -216,7 +216,7 @@ class WrapperContext(ArgRegistrar):
 
         genpidfile:
            Do generate a PID file (True: default) or not (False).
-       
+
         pidincrement:
            Some commands fork and exec further subprocesses in a
            manner where the original parent process is not the long
@@ -285,7 +285,7 @@ class WrapperContext(ArgRegistrar):
 
         genpidfile:
            Do generate a PID file (True: default) or not (False).
-       
+
         pidincrement:
            Some commands fork and exec further subprocesses in a
            manner where the original parent process is not the long
@@ -326,8 +326,8 @@ class WrapperContext(ArgRegistrar):
         Stop the process associated with the PID in the specified file.
 
         This function sends the specified signal to the process associated
-        associated with the PID contained in pidfilename and then removes 
-        the file. If pidfilename is not specified, default_pidfilename 
+        associated with the PID contained in pidfilename and then removes
+        the file. If pidfilename is not specified, default_pidfilename
         is used.
         """
         self._impl.stop(pidfilename, signal, sudo)

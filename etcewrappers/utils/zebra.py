@@ -30,9 +30,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import os
-
-from etce.preconditionerror import PreconditionError
 from etce.wrapper import Wrapper
 
 
