@@ -170,6 +170,10 @@ def list_tests(args):
     import sys
     from etce.xmldocerror import XMLDocError
 
+    if not os.path.isdir(args.testrootdir):
+        print('Cannot find test directory "%s". Quitting.' % args.testrootdir, file=sys.stderr)
+        exit(1)
+
     collection = TestCollection()
 
     try:
