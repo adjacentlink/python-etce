@@ -31,7 +31,7 @@
 #
 
 import copy
-from collections import defaultdict,namedtuple
+from collections import defaultdict, namedtuple
 
 import etce.utils
 import etce.xmldoc
@@ -104,7 +104,7 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
     def _parsesteps(self, stepsfile):
         stepselem = self.parse(stepsfile)
 
-        packageprefixes = [ None ]
+        packageprefixes = [None]
         for usingelem in stepselem.findall('./using'):
             packageprefixes.append(usingelem.attrib['package'])
 
@@ -133,8 +133,8 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
                     continue
 
                 stepwrappers.append(
-                    (StepsFileDoc.WrapperEntry(name = child.attrib['wrapper'],
-                                               decorator = None),
+                    (StepsFileDoc.WrapperEntry(name=child.attrib['wrapper'],
+                                               decorator=None),
                      child.tag,
                      argdict))
 
@@ -151,4 +151,4 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
 
             wrapperlist.append(tuple(stepwrappers))
 
-        return packageprefixes,steplist,filterdict,wrapperlist
+        return (packageprefixes, steplist, filterdict, wrapperlist)

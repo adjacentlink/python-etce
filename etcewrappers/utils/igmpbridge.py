@@ -55,10 +55,10 @@ class IGMPBridge(Wrapper):
 
         argstr = ''
 
-        conflines = [ line.strip() for line
-                      in open(ctx.args.infile).readlines()
-                      if len(line.strip()) > 0
-                      and line[0] != '#']
+        conflines = [line.strip() for line
+                     in open(ctx.args.infile).readlines()
+                     if len(line.strip()) > 0
+                     and line[0] != '#']
 
         # take the last non-comment line as the argument string
         if len(conflines) > 0:

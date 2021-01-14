@@ -36,7 +36,7 @@ import copy
 import os.path
 
 from etce.chainmap import ChainMap
-from etce.templateutils import format_file,format_string
+from etce.templateutils import format_file, format_string
 from etce.utils import configstrtoval
 from etce.overlaylistchainfactory import OverlayListChainFactory
 
@@ -171,22 +171,22 @@ class TemplateFileBuilder(object):
 
         other_keys = set([])
 
-        non_reserved_overlays = [ runtime_overlays,
-                                  env_overlays,
-                                  self._template_local_overlaylists[index],
-                                  self._template_local_overlays,
-                                  self._templates_global_overlaylists[index],
-                                  self._global_overlays,
-                                  etce_config_overlays ]
+        non_reserved_overlays = [runtime_overlays,
+                                 env_overlays,
+                                 self._template_local_overlaylists[index],
+                                 self._template_local_overlays,
+                                 self._templates_global_overlaylists[index],
+                                 self._global_overlays,
+                                 etce_config_overlays]
 
         for some_overlays in non_reserved_overlays:
             other_keys.update(some_overlays)
 
-        key_clashes =  other_keys.intersection(set(reserved_overlays.keys()))
+        key_clashes = other_keys.intersection(set(reserved_overlays.keys()))
 
         if key_clashes:
             raise ValueError('Overlay keys {%s} are reserved. Quitting.' % \
-                             ','.join(map(str,key_clashes)))
+                             ','.join(map(str, key_clashes)))
 
         overlays = ChainMap(reserved_overlays, *non_reserved_overlays)
 

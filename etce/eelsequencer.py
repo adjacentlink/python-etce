@@ -125,7 +125,7 @@ class EELSequencer(object):
             toks = line.split()
 
             # skip non-blank lines with too few tokens
-            if len(toks)>0 and len(toks)<3:
+            if len(toks) > 0 and len(toks) < 3:
                 raise RuntimeError('Malformed EEL line %s:%d' %
                                    (eelfile, lineno))
 

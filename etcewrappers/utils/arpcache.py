@@ -66,7 +66,7 @@ class ARPCache(Wrapper):
             if line[0] == '#':
                 continue
 
-            interface,ipaddress,ethaddress = line.split()
+            interface, ipaddress, ethaddress = line.split()
             # arp -i emane0 -s 172.30.1.2 02:02:00:00:00:02
             # ip neigh add ipaddr lladdr dev
 

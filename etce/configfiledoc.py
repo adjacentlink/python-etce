@@ -51,7 +51,7 @@ class ConfigFileDoc(etce.xmldoc.XMLDoc):
 
         configelem = self.parse(configfile)
         for argelem in configelem.findall('./arg'):
-            config[('default',argelem.attrib['name'])] = \
+            config[('default', argelem.attrib['name'])] = \
                 etce.utils.configstrtoval(argelem.attrib['value'])
 
         for wrapperelem in configelem.findall('./wrapper'):
@@ -66,14 +66,14 @@ class ConfigFileDoc(etce.xmldoc.XMLDoc):
     def hasconfig(self, wrappername, argname):
         if (wrappername, argname) in self._config:
             return True
-        if ('default',argname) in self._config:
+        if ('default', argname) in self._config:
             return True
         return False
 
 
     def getconfig(self, wrappername, argname, default):
         if (wrappername, argname) in self._config:
-            return self._config[(wrappername,argname)]
-        if ('default',argname) in self._config:
-            return self._config[('default',argname)]
+            return self._config[(wrappername, argname)]
+        if ('default', argname) in self._config:
+            return self._config[('default', argname)]
         return default

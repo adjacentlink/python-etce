@@ -57,9 +57,9 @@ class OTAPublisher(Wrapper):
 
         hourminsec = ctx.args.starttime.split('T')[1]
 
-        argstr =  '--device %s ' \
-                  '--starttime %s %s' % \
-                  (otadevice, hourminsec, ctx.args.infile)
+        argstr = '--device %s ' \
+            '--starttime %s %s' % \
+            (otadevice, hourminsec, ctx.args.infile)
 
         ctx.daemonize('emaneota-publisher', argstr)
 

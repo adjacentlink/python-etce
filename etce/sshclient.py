@@ -43,7 +43,7 @@ import getpass
 import os
 import json
 import paramiko
-from paramiko.client import RejectPolicy,WarningPolicy,AutoAddPolicy
+from paramiko.client import RejectPolicy, WarningPolicy, AutoAddPolicy
 from paramiko.pkey import PasswordRequiredException
 from paramiko.rsakey import RSAKey
 import re
@@ -102,9 +102,9 @@ class Reader(Thread):
         self._state = Reader.State(False, '', '', '', io.StringIO())
 
         # Initialize return object
-        self._remote_returnobject = { 'isexception':False,
-                                      'result': None,
-                                      'traceback':None }
+        self._remote_returnobject = {'isexception':False,
+                                     'result': None,
+                                     'traceback':None}
 
     def read(self, ep, evt):
         haveretstr, read, partial_line, line, retstrio = self._state
@@ -186,13 +186,13 @@ class ExecuteThread(Thread):
     def run(self):
         stdi, stdo, stde = self._connection.exec_command(self._command)
 
-        readers = { stdo.channel.fileno():Reader(stdo,
-                                                 ExecuteThread.lock,
-                                                 self.name + '-stdo',
-                                                 self._banner,
-                                                 False) }
+        readers = {stdo.channel.fileno():Reader(stdo,
+                                                ExecuteThread.lock,
+                                                self.name + '-stdo',
+                                                self._banner,
+                                                False)}
 
-        readers_finished = { stdo.channel.fileno(): False }
+        readers_finished = {stdo.channel.fileno(): False}
 
         ep = select.epoll()
 
@@ -215,7 +215,7 @@ class ExecuteThread(Thread):
         try:
             while not all(readers_finished.values()):
                 results = ep.poll()
-                for fd,evt in results:
+                for fd, evt in results:
                     if fd == self._read_pipe:
                         raise KeyboardInterrupt
                     else:
@@ -240,8 +240,8 @@ class ExecuteThread(Thread):
 
 
 class SSHClient(etce.fieldclient.FieldClient):
-    RETURNVALUE_OPEN_DEMARCATOR='***********ETCESSH_RETURN_VALUE_START********************'
-    RETURNVALUE_CLOSE_DEMARCATOR='***********ETCESSH_RETURN_VALUE_STOP********************'
+    RETURNVALUE_OPEN_DEMARCATOR = '***********ETCESSH_RETURN_VALUE_START********************'
+    RETURNVALUE_CLOSE_DEMARCATOR = '***********ETCESSH_RETURN_VALUE_STOP********************'
 
     def __init__(self, hosts, **kwargs):
         etce.fieldclient.FieldClient.__init__(self, hosts)
@@ -328,20 +328,23 @@ class SSHClient(etce.fieldclient.FieldClient):
                 host_config = ssh_config.lookup(host)
 
             host_user = os.path.basename(os.path.expanduser('~'))
+
             if user:
                 host_user = user
             elif host_config:
                 host_user = host_config.get('user', host_user)
 
             host_port = 22
+
             if port:
                 host_port = port
             elif host_config:
                 host_port = host_config.get('port', host_port)
 
             host_key_filenames = []
+
             if user_specified_key_file:
-                host_key_filenames = [ user_specified_key_file ]
+                host_key_filenames = [user_specified_key_file]
             elif host_config:
                 host_key_filenames = host_config.get('identityfile', host_key_filenames)
 
@@ -440,7 +443,7 @@ class SSHClient(etce.fieldclient.FieldClient):
         #  src=/opt/foo/bar, dst='bar': moves bar to WORK_DIRECTORY/bar/bar
         #
         remotesubdir = self._normalize_remotedst(remotedst)
-        srcdir,srcbase = self._normalize_split_localsubdir(localsrc)
+        srcdir, srcbase = self._normalize_split_localsubdir(localsrc)
 
         if not os.path.exists(localsrc):
             raise RuntimeError('Error: "%s" doesn\'t exist. Quitting.' % srcbase)
@@ -619,7 +622,7 @@ class SSHClient(etce.fieldclient.FieldClient):
 
         # Retrieve and extract data from each remote host
         removers = []
-        for host,tfile in tarfiles.items():
+        for host, tfile in tarfiles.items():
             host_is_local = False
 
             if os.path.exists(tfile):
@@ -628,7 +631,7 @@ class SSHClient(etce.fieldclient.FieldClient):
 
             getter = GetThread(self._connection_dict[host],
                                tfile,
-                               os.path.join('/tmp',os.path.basename(tfile)),
+                               os.path.join('/tmp', os.path.basename(tfile)),
                                host)
 
             getter.start()
@@ -645,8 +648,8 @@ class SSHClient(etce.fieldclient.FieldClient):
                     command = '. %s; %s' % (self._envfile, command)
                 # also set up a thread to remove the tarfile on remotes
                 removers.append(ExecuteThread(self._connection_dict[host],
-                                             command,
-                                             host))
+                                              command,
+                                              host))
 
                 absolute_localdstdir = localdstdir
                 if not absolute_localdstdir[0] == '/':
@@ -726,7 +729,7 @@ class SSHClient(etce.fieldclient.FieldClient):
         if '.' in srcdir.split('/'):
             raise ValueError('Error: "." not permitted is src')
 
-        return srcdir,srcbase
+        return (srcdir, srcbase)
 
 
     def _set_unknown_hosts_policy(self, hosts, port, ssh_config, policy):

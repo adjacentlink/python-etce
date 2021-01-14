@@ -129,12 +129,12 @@ class LXCManagerImpl(object):
         if len(kernelparameters) > 0:
             print('Setting kernel parameters:')
 
-            for kernelparamname,kernelparamval in kernelparameters.items():
-                os.system('sysctl %s=%s' % (kernelparamname,kernelparamval))
+            for kernelparamname, kernelparamval in kernelparameters.items():
+                os.system('sysctl %s=%s' % (kernelparamname, kernelparamval))
 
         # bring up bridge
         if not dryrun:
-            for _,bridge in plandoc.bridges(hostname).items():
+            for _, bridge in plandoc.bridges(hostname).items():
                 if not bridge.persistent:
                     print('Bringing up bridge: %s' % bridge.devicename)
 
@@ -172,7 +172,7 @@ class LXCManagerImpl(object):
                 configf.write(str(container))
 
             # make init script
-            filename,initscripttext = container.initscript
+            filename, initscripttext = container.initscript
 
             if initscripttext:
                 scriptfile = os.path.join(lxc_directory, filename)
@@ -201,7 +201,7 @@ class LXCManagerImpl(object):
             print(command)
             os.system(command)
 
-        for _,bridge in plandoc.bridges(hostname).items():
+        for _, bridge in plandoc.bridges(hostname).items():
             if not bridge.persistent:
                 print('Bringing down bridge: %s' % bridge.devicename)
                 self._platform.bridgedown(bridge.devicename, bridge.addifs)
@@ -234,7 +234,7 @@ class LXCManagerImpl(object):
                        container.lxc_directory,
                        container.lxc_directory)
 
-            pid,sp = etce.utils.daemonize_command(command)
+            pid, sp = etce.utils.daemonize_command(command)
 
             if pid == 0:
                 # child
@@ -280,10 +280,12 @@ class LXCManagerImpl(object):
 
         # strip off trailing white spaces
         etcehostlines.reverse()
-        for i,line in enumerate(etcehostlines):
+
+        for i, line in enumerate(etcehostlines):
             if len(line.strip()) > 0:
                 etcehostlines = etcehostlines[i:]
                 break
+
         etcehostlines.reverse()
 
         with open('/etc/hosts', 'w') as ofd:
@@ -291,22 +293,27 @@ class LXCManagerImpl(object):
                 ofd.write(line)
 
             ofd.write('\n')
+
             ofd.write(opentag)
 
             # ipv4
             ipv4_entries = []
-            for container in containers:
-                for hostentry,hostaddr in container.hosts_entries_ipv4:
-                    ipv4_entries.append((hostentry,hostaddr))
-            for hostentry,hostaddr in sorted(ipv4_entries):
-                ofd.write('%s %s\n' % (hostaddr,hostentry))
 
-            #ipv6 = []
-            ipv6_entries = []
             for container in containers:
-                for hostentry,hostaddr in container.hosts_entries_ipv6:
-                    ipv6_entries.append((hostaddr,hostentry))
-            for hostentry,hostaddr in sorted(ipv6_entries):
-                ofd.write('%s %s\n' % (hostaddr,hostentry))
+                for hostentry, hostaddr in container.hosts_entries_ipv4:
+                    ipv4_entries.append((hostentry, hostaddr))
+
+            for hostentry, hostaddr in sorted(ipv4_entries):
+                ofd.write('%s %s\n' % (hostaddr, hostentry))
+
+            #ipv6
+            ipv6_entries = []
+
+            for container in containers:
+                for hostentry, hostaddr in container.hosts_entries_ipv6:
+                    ipv6_entries.append((hostaddr, hostentry))
+
+            for hostentry, hostaddr in sorted(ipv6_entries):
+                ofd.write('%s %s\n' % (hostaddr, hostentry))
 
             ofd.write(closetag)

@@ -65,7 +65,7 @@ class OvsVSwitchd(Wrapper):
         if not ctx.args.infile:
             return
 
-        ovs_rundir =  os.environ.get('OVS_RUNDIR', None)
+        ovs_rundir = os.environ.get('OVS_RUNDIR', None)
 
         if not ovs_rundir:
             message = 'wrapper ovsvswitchd.py: OVS_RUNDIR environment variable must be specified ' \
@@ -81,9 +81,10 @@ class OvsVSwitchd(Wrapper):
         if not ctx.args.infile:
             return
 
-        ovsvsctlfile=os.path.join(ctx.args.logdirectory,'ovs-vswitchd.ctl')
+        ovsvsctlfile = os.path.join(ctx.args.logdirectory,
+                                    'ovs-vswitchd.ctl')
 
-        ovsvspidfile=ctx.args.default_pidfilename
+        ovsvspidfile = ctx.args.default_pidfilename
 
         argstr = 'tcp:127.0.0.1:%d ' \
                  '-vsyslog:err ' \

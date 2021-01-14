@@ -54,7 +54,7 @@ class WrapperLoader(object):
 
 
     def returnmembers(self, modpath, module, wrapperdict):
-        for instance,name,ispkg in pkgutil.walk_packages(module.__path__):
+        for instance, name, ispkg in pkgutil.walk_packages(module.__path__):
             if ispkg:
                 try:
                     thismodpath = '.'.join([modpath, name])
@@ -73,7 +73,7 @@ class WrapperLoader(object):
                                 o = candidateclass()
                                 if not thismodpath in wrapperdict:
                                     relative_wrapperpath = '.'.join(thismodpath.split('.')[1:])
-                                    wrapperdict[relative_wrapperpath] = (thisclass.__file__,o)
+                                    wrapperdict[relative_wrapperpath] = (thisclass.__file__, o)
 
                 except Exception as e:
                     pass
@@ -91,7 +91,7 @@ class WrapperLoader(object):
             wrapperspath = os.path.join(syspath, 'etcewrappers')
             if not os.path.isdir(wrapperspath):
                 continue
-            for cwd,dirnames,filenames in os.walk(wrapperspath):
+            for cwd, dirnames, filenames in os.walk(wrapperspath):
 
                 for wrapperfile in filenames:
                     try:
@@ -108,9 +108,9 @@ class WrapperLoader(object):
                                 if key.upper() == candidateclassname:
                                     candidateclass = wrapper.__dict__[key]
                                     if callable(candidateclass):
-                                        wkey = relwrappername.replace(os.sep,'.')
+                                        wkey = relwrappername.replace(os.sep, '.')
                                         if not wkey in wrapperinstances:
-                                            wrapperinstances[wkey] = (wrapperspath,candidateclass())
+                                            wrapperinstances[wkey] = (wrapperspath, candidateclass())
                     except:
                         continue
         return wrapperinstances
@@ -122,7 +122,7 @@ class WrapperLoader(object):
         wrapper = None
 
         for packagename in packageprefixfilter:
-            wrapper = self._load_module(wrappername,packagename)
+            wrapper = self._load_module(wrappername, packagename)
 
             if wrapper is not None:
                 basename = wrapper.__name__.split('.')[-1]

@@ -91,8 +91,8 @@ class TestDirectory(object):
 
 
     def info(self):
-        return { 'name':self.name(),
-                 'description':self.description() }
+        return {'name':self.name(),
+                'description':self.description()}
 
 
     def name(self):
@@ -236,8 +236,8 @@ class TestDirectory(object):
         ''' Determine which names in namelist map to an
             ip address on this host.
         '''
-        return [ other for other in namelist
-                 if self._platform.hostname_has_local_address(other) ]
+        return [other for other in namelist
+                if self._platform.hostname_has_local_address(other)]
 
 
     def _find_overlay_names(self):
@@ -251,12 +251,12 @@ class TestDirectory(object):
                                os.path.join(self.location(), self._basedir))
 
         for search_dir in search_dirs:
-            for dirname,dirnames,filenames in os.walk(search_dir):
+            for dirname, dirnames, filenames in os.walk(search_dir):
                 if TestDirectory.DOCSUBDIRNAME in dirname.split('/'):
                     # ignore doc sub directory
                     continue
                 for filename in filenames:
                     overlays.update(
-                        get_file_overlays(os.path.join(dirname,filename)))
+                        get_file_overlays(os.path.join(dirname, filename)))
 
         return tuple(sorted(overlays))

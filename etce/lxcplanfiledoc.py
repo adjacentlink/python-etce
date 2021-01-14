@@ -42,7 +42,7 @@ import etce.xmldoc
 from etce.apprunner import AppRunner
 from etce.config import ConfigDictionary
 from etce.lxcerror import LXCError
-from etce.templateutils import format_string,TemplateError
+from etce.templateutils import format_string, TemplateError
 
 
 
@@ -78,7 +78,7 @@ class ParamConverter(object):
 
         updated_paramname = ParamConverter.lxc_param_translation_2_to_3.get(paramname, paramname)
 
-        if (updated_paramname != paramname):
+        if updated_paramname != paramname:
             print('Warning: updating LXC parameter name "%s" to "%s" ' \
                   'for detected LXC version 3' \
                   % (paramname, updated_paramname),
@@ -141,7 +141,7 @@ class Bridge(object):
         self._name = str(bridgeelem.attrib['name'])
 
         self._persistent = True \
-            if str(bridgeelem.attrib.get('persistent','False')).upper() == 'TRUE' \
+            if str(bridgeelem.attrib.get('persistent', 'False')).upper() == 'TRUE' \
                else False
 
         self._ipv4 = None
@@ -152,11 +152,11 @@ class Bridge(object):
         for ipv6 in bridgeelem.findall('./ipaddress/ipv6'):
             self._ipv6 = ipv6.text
 
-        self._addifs = [ str(addif.text)
-                         for addif in bridgeelem.findall('./addif') ]
+        self._addifs = [str(addif.text)
+                        for addif in bridgeelem.findall('./addif')]
 
     def __str__(self):
-        s  = 'Bridge:\n'
+        s = 'Bridge:\n'
         s += 'name=%s\n' % self._name
         s += 'persistent=%s\n' % str(self._persistent)
         s += 'ipv4s=%s\n' % self._ipv4
@@ -198,7 +198,7 @@ class BridgeImplicit(object):
         return self._addifs
 
     def __str__(self):
-        s  = 'Bridge:\n'
+        s = 'Bridge:\n'
         s += 'name=%s\n' % self._name
         s += 'persistent=%s\n' % str(self._persistent)
         s += 'ipv4s=%s\n' % self._ipv4
@@ -242,7 +242,7 @@ class ContainerTemplate(object):
 
         interfaces = parent.interfaces if parent else defaultdict(lambda: {})
 
-        initscript = parent.initscript if parent else (None,None)
+        initscript = parent.initscript if parent else (None, None)
 
         hosts_entries_ipv4 = parent.hosts_entries_ipv4 if parent else {}
 
@@ -250,7 +250,7 @@ class ContainerTemplate(object):
 
         for paramelem in containertemplateelem.findall('./parameters/parameter'):
             # lxc.utsname set by container element attribute
-            if(str(paramelem.attrib['name']) == 'lxc.utsname'):
+            if str(paramelem.attrib['name']) == 'lxc.utsname':
                 print('Found lxc.utsname in containertemplate. Ignoring',
                       file=sys.stderr)
                 continue
@@ -368,7 +368,7 @@ class Container(object):
                                            overlays)
 
         # get all interface params and host names
-        interfaces,hosts_entries_ipv4,hosts_entries_ipv6 = \
+        interfaces, hosts_entries_ipv4, hosts_entries_ipv6 = \
             self._process_interfaces(containertemplate,
                                      containerelem,
                                      overlays)
@@ -389,10 +389,10 @@ class Container(object):
 
         params = []
 
-        for k,v in paramdict.items():
+        for k, v in paramdict.items():
             if not k in names:
                 names.append(k)
-                params.append((k,v))
+                params.append((k, v))
 
         params.reverse()
 
@@ -405,16 +405,16 @@ class Container(object):
                                   containerelem,
                                   overlays):
 
-        containerparams = [ ('lxc.utsname', self.lxc_name) ]
+        containerparams = [('lxc.utsname', self.lxc_name)]
 
         if containertemplate:
             containerparams.extend(containertemplate.params)
 
-        for k,v in commonparams:
-            containerparams.append((k,v))
+        for k, v in commonparams:
+            containerparams.append((k, v))
 
         for paramelem in containerelem.findall('./parameters/parameter'):
-            if(str(paramelem.attrib['name']) == 'lxc.utsname'):
+            if str(paramelem.attrib['name']) == 'lxc.utsname':
                 # the lxc_name is set by the container element atribute
                 print('Found lxc.utsname in containertemplate. Ignoring',
                       file=sys.stderr)
@@ -423,11 +423,11 @@ class Container(object):
             containerparams.append((str(paramelem.attrib['name']),
                                     str(paramelem.attrib['value'])))
 
-        for i,parampair in enumerate(containerparams):
-            k,v = parampair
+        for i, parampair in enumerate(containerparams):
+            k, v = parampair
 
             try:
-                containerparams[i] = (k,format_string(v, overlays))
+                containerparams[i] = (k, format_string(v, overlays))
             except TemplateError as ne:
                 raise LXCError(str(ne))
 
@@ -443,9 +443,9 @@ class Container(object):
 
         try:
             if containertemplate:
-                for bridgename,paramdict in containertemplate.interfaces.items():
+                for bridgename, paramdict in containertemplate.interfaces.items():
                     bridgename = format_string(bridgename, overlays)
-                    for iname,ival in paramdict.items():
+                    for iname, ival in paramdict.items():
                         interfaces[bridgename][format_string(iname, overlays)] = \
                             format_string(ival, overlays)
 
@@ -470,7 +470,7 @@ class Container(object):
 
                     ival = format_string(str(iparamelem.attrib['value']), overlays)
 
-                    interfaceparams[iname] =  ival
+                    interfaceparams[iname] = ival
 
                 entry_name_ipv4 = \
                     interfaceelem.attrib.get(
@@ -496,7 +496,7 @@ class Container(object):
 
         hosts_entries_ipv4 = []
 
-        for bridgename,entry_name_ipv4 in bridge_entry_ipv4.items():
+        for bridgename, entry_name_ipv4 in bridge_entry_ipv4.items():
             if not 'lxc.network.ipv4' in interfaces[bridgename]:
                 error = 'Found hosts_entry_ipv4 attribute for ' \
                         'bridge "%s" for container "%s" but ' \
@@ -507,11 +507,11 @@ class Container(object):
 
             addr = interfaces[bridgename]['lxc.network.ipv4']
 
-            hosts_entries_ipv4.append((entry_name_ipv4,  addr.split('/')[0]))
+            hosts_entries_ipv4.append((entry_name_ipv4, addr.split('/')[0]))
 
         hosts_entries_ipv6 = []
 
-        for bridgename,entry_name_ipv6 in bridge_entry_ipv6.items():
+        for bridgename, entry_name_ipv6 in bridge_entry_ipv6.items():
             if not 'lxc.network.ipv6' in interfaces[bridgename]:
                 error = 'Found hosts_entry_ipv6 attribute for ' \
                         'bridge "%s" for container "%s" but ' \
@@ -522,14 +522,14 @@ class Container(object):
 
             addr = interfaces[bridgename]['lxc.network.ipv6']
 
-            hosts_entries_ipv6.append((entry_name_ipv6,  addr))
+            hosts_entries_ipv6.append((entry_name_ipv6, addr))
 
-        return interfaces,hosts_entries_ipv4,hosts_entries_ipv6
+        return (interfaces, hosts_entries_ipv4, hosts_entries_ipv6)
 
 
 
     def _get_initscript(self, containertemplate, containerelem, overlays):
-        initscript= ('',None)
+        initscript = ('', None)
 
         if containertemplate:
             initscript = containertemplate.initscript
@@ -554,20 +554,20 @@ class Container(object):
 
     def __str__(self):
         s = ''
-        for k,v in self._params:
-            s += '%s=%s\n' % (self._pc.check_version3_param_change(k),v)
+        for k, v in self._params:
+            s += '%s=%s\n' % (self._pc.check_version3_param_change(k), v)
         inum = 0
-        for bridgename,interfaceparams in self._interfaces.items():
+        for bridgename, interfaceparams in self._interfaces.items():
             s += '\n# %s interface\n' % bridgename
 
             lxc_network_type_param = self._pc.check_version3_network_param_change('lxc.network.type', inum)
             lxc_network_link_param = self._pc.check_version3_network_param_change('lxc.network.link', inum)
 
             s += '%s=%s\n' % (lxc_network_type_param, interfaceparams['lxc.network.type'])
-            for k,v in sorted(interfaceparams.items()):
+            for k, v in sorted(interfaceparams.items()):
                 if k == 'lxc.network.type':
                     continue
-                s += '%s=%s\n' % (self._pc.check_version3_network_param_change(k, inum),v)
+                s += '%s=%s\n' % (self._pc.check_version3_network_param_change(k, inum), v)
             s += '%s=%s\n' % (lxc_network_link_param, self._bridges[bridgename].name)
             inum += 1
         s += '\n# loopback interface\n'
@@ -611,7 +611,7 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
         if hostname in self._kernelparameters:
             return self._kernelparameters[hostname]
 
-        return self._kernelparameters.get('localhost',{})
+        return self._kernelparameters.get('localhost', {})
 
 
     def bridges(self, hostname):
@@ -730,7 +730,7 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
 
                 if len(repeatedids) > 0:
                     error = 'Duplicate lxc_indices {%s} found in LXC Plan File "%s" are not permitted. Quitting.' % \
-                            (','.join([ str(nid) for nid in list(repeatedids) ]),
+                            (','.join([str(nid) for nid in list(repeatedids)]),
                              lxcplanfile)
 
                     raise LXCError(error)
@@ -767,7 +767,7 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
                 for overlaylistelem in containerelem.findall('./overlays/overlaylist'):
                     oname = overlaylistelem.attrib['name']
 
-                    separator = overlaylistelem.attrib.get('separator',',')
+                    separator = overlaylistelem.attrib.get('separator', ',')
 
                     ovalues = overlaylistelem.attrib['values'].split(separator)
 
@@ -775,11 +775,11 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
 
                 # treat all values for each name as an int if possible,
                 # else all strings
-                for oname,ovals in overlaylists.items():
+                for oname, ovals in overlaylists.items():
                     converted_vals = []
                     try:
-                        converted_vals = [ etce.utils.configstrtoval(oval)
-                                           for oval in ovals ]
+                        converted_vals = [etce.utils.configstrtoval(oval)
+                                          for oval in ovals]
 
                         overlaylists[oname] = converted_vals
                     except ValueError:
@@ -788,13 +788,13 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
 
                 # Why must a default value be supplied here when
                 # schema declares this attribute with a default value?
-                for i,lxcid in enumerate(lxcids):
+                for i, lxcid in enumerate(lxcids):
                     # start with overlays
                     lxcoverlays = copy.copy(overlays)
 
                     # then add list items for this node
                     try:
-                        for oname,ovals in overlaylists.items():
+                        for oname, ovals in overlaylists.items():
                             lxcoverlays[oname] = ovals[i]
                     except IndexError as ie:
                         raise LXCError('No value found for overlay "%s" for lxc_index "%d". Quitting.' \
@@ -822,11 +822,11 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
             # from the container interface bridge names and augment
             # the bridges list
             for container in containers[hostname]:
-                for iname,iparams in container.interfaces.items():
+                for iname, iparams in container.interfaces.items():
                     if not iname in bridges[hostname]:
                         bridges[hostname][iname] = BridgeImplicit(iname)
 
-        return hostnames,kernelparameters,bridges,containers,rootdirectories
+        return (hostnames, kernelparameters, bridges, containers, rootdirectories)
 
 
 def main():
@@ -842,8 +842,8 @@ def main():
         # get containers and bridges for this host. Use only
         # machine name
         hostname = socket.gethostname().split('.')[0]
-        for kernelparamname,kernelparamval in plandoc.kernelparameters(hostname).items():
-            print(kernelparamname,kernelparamval)
+        for kernelparamname, kernelparamval in plandoc.kernelparameters(hostname).items():
+            print(kernelparamname, kernelparamval)
         for bridge in plandoc.bridges(hostname):
             print(bridge)
         for container in plandoc.containers(hostname):
@@ -851,8 +851,8 @@ def main():
 
     except LXCError as e:
         print(str(e))
-        exit (1)
+        exit(1)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

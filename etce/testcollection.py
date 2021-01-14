@@ -110,7 +110,7 @@ class TestCollection(object):
 
 
     def __iter__(self):
-        return TestCollectionIterator([ self._tests[k] for k in sorted(self._tests)])
+        return TestCollectionIterator([self._tests[k] for k in sorted(self._tests)])
 
 
     def __len__(self):
@@ -125,7 +125,7 @@ class TestCollection(object):
 
 
     def _parsetestroot(self, testroot, basedir_override):
-        for dirpath,dirnames,filenames in os.walk(testroot):
+        for dirpath, dirnames, filenames in os.walk(testroot):
             if self._istestdirectory(filenames):
                 test = TestDirectory(dirpath, basedir_override)
 

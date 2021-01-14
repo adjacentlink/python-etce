@@ -45,7 +45,7 @@ class OverlayListChainFactory(object):
         for overlaylistelem in overlaylistelems:
             name = overlaylistelem.attrib['name']
 
-            separator=overlaylistelem.attrib.get('separator',',')
+            separator = overlaylistelem.attrib.get('separator', ',')
 
             values = overlaylistelem.attrib['values'].split(separator)
 
@@ -58,7 +58,7 @@ class OverlayListChainFactory(object):
                       'name "%s"' % (len(indiceslist), len(values), name)
                 raise OverlayError(err)
 
-            for index,value in zip(indiceslist,values):
+            for index, value in zip(indiceslist, values):
                 valsmap[index][name] = configstrtoval(value.strip(), argtype=argtype)
 
         return valsmap

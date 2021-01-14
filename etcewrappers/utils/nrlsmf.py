@@ -53,12 +53,12 @@ class NRLSMF(Wrapper):
         registrar.register_argument('debuglevel', 0, 'log level')
 
         registrar.register_argument(
-                'socketdirectory',
-                None,
-                """Directory where the nrlsmf Unix control socket
-                is written for runtime control. Default is
-                the host output directory for the test trial.
-                The socket is named "HOSTNAME_nrlsmf_unix_socket.""")
+            'socketdirectory',
+            None,
+            """Directory where the nrlsmf Unix control socket
+            is written for runtime control. Default is
+            the host output directory for the test trial.
+            The socket is named "HOSTNAME_nrlsmf_unix_socket.""")
 
         registrar.register_infile_name('nrlsmf.conf')
 
@@ -71,10 +71,10 @@ class NRLSMF(Wrapper):
 
         argstr = ''
 
-        conflines = [ line.strip() for line
-                      in open(ctx.args.infile).readlines()
-                      if len(line.strip()) > 0
-                      and line[0] != '#']
+        conflines = [line.strip() for line
+                     in open(ctx.args.infile).readlines()
+                     if len(line.strip()) > 0
+                     and line[0] != '#']
 
         # take the last non-comment line as the argument string
         if len(conflines) > 0:

@@ -171,10 +171,10 @@ class WrapperContextImpl(ArgRegistrar):
         self.stop(pidfilename)
 
         # run the command
-        pid,subproc = etce.utils.daemonize_command(commandstr,
-                                                   stdout,
-                                                   stderr,
-                                                   starttime)
+        pid, subproc = etce.utils.daemonize_command(commandstr,
+                                                    stdout,
+                                                    stderr,
+                                                    starttime)
 
         # return on parent
         if pid > 0:
@@ -263,7 +263,8 @@ class WrapperContextImpl(ArgRegistrar):
 
         existing_paths = filter(os.path.isdir, all_paths)
 
-        found_paths=[]
+        found_paths = []
+
         for existing_path in existing_paths:
             if command in os.listdir(existing_path):
                 found_paths.append(existing_path)

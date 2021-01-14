@@ -51,8 +51,8 @@ class ArgProxy(object):
 
     def __str__(self):
         s = '{'
-        s += ', '.join(['%s:%s' % (k,v)
-                        for k,v in sorted(self.__dict__['_argdict'].items())])
+        s += ', '.join(['%s:%s' % (k, v)
+                        for k, v in sorted(self.__dict__['_argdict'].items())])
         s += '}'
 
         return s

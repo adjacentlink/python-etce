@@ -63,21 +63,21 @@ def platform_suffix_list():
     if os == 'linux':
         distname = linux_distribution()
         if distname == 'amzn1':
-            suffixes.append('%s.%s.%s' % (os,distname,arch))
-            suffixes.append('%s.%s' % (os,distname))
+            suffixes.append('%s.%s.%s' % (os, distname, arch))
+            suffixes.append('%s.%s' % (os, distname))
             suffixes.append('%s' % os)
         else:
             # insure no '.' in distver (ubuntu does this, for one)
-            distver = platform_dist()[1].lower().replace('.','_')
-            suffixes.append('%s.%s.v%s.%s' % (os,distname,distver,arch))
-            suffixes.append('%s.%s.v%s' % (os,distname,distver))
-            suffixes.append('%s.%s' % (os,distname))
+            distver = platform_dist()[1].lower().replace('.', '_')
+            suffixes.append('%s.%s.v%s.%s' % (os, distname, distver, arch))
+            suffixes.append('%s.%s.v%s' % (os, distname, distver))
+            suffixes.append('%s.%s' % (os, distname))
             suffixes.append('%s' % os)
 
     elif os == 'windows':
         osversion = platform.release().lower()
-        suffixes.append('%s.%s.%s' % (os,osversion,arch))
-        suffixes.append('%s.%s' % (os,osversion))
+        suffixes.append('%s.%s.%s' % (os, osversion, arch))
+        suffixes.append('%s.%s' % (os, osversion))
         suffixes.append('%s' % os)
 
     return suffixes

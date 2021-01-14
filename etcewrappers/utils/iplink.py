@@ -84,7 +84,7 @@ class IpLink(Wrapper):
 
         interfaces = []
         for line in open(ctx.args.infile):
-            interface,txqueuelen,mtu = line.strip().split(',')
+            interface, txqueuelen, mtu = line.strip().split(',')
 
             interfaces.append(interface)
 

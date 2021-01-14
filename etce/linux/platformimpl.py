@@ -103,7 +103,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         e = AppRunner(command)
 
         for line in e.stdout():
-            match =  devicematcher.match(line.decode())
+            match = devicematcher.match(line.decode())
             if match:
                 attributes = match.group(1).split(',')
                 return 'UP' in attributes
@@ -129,7 +129,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
 
         self.networkinterfaceup(bridgename)
 
-        self.runcommand('iptables -I INPUT -i %s -j ACCEPT' % bridgename )
+        self.runcommand('iptables -I INPUT -i %s -j ACCEPT' % bridgename)
 
         self.runcommand('iptables -I FORWARD -i %s -j ACCEPT' % bridgename)
 
@@ -187,7 +187,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         for line in runner.stdout():
             toks = line.decode().strip().split()
 
-            pids.append( (int(toks[0]), toks[1]) )
+            pids.append((int(toks[0]), toks[1]))
 
         return pids
 
@@ -226,10 +226,10 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         # find all files matching regex
         matcher = re.compile(fileregex)
 
-        allmatches = [ f for f in os.listdir(abspath) if matcher.match(f) ]
+        allmatches = [f for f in os.listdir(abspath) if matcher.match(f)]
 
         # if regex was just a simple file name, only return it
-        exactmatches = [ f for f in allmatches if f == fileregex ]
+        exactmatches = [f for f in allmatches if f == fileregex]
 
         if len(exactmatches) > 0:
             return exactmatches
@@ -283,7 +283,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
             command = \
                 "kill -%d $(ps -eo pid,command | " \
                 "awk '/%s[%s] /{print $1}') > /dev/null 2>&1" \
-                % (signal, applicationname[:-1],applicationname[-1])
+                % (signal, applicationname[:-1], applicationname[-1])
 
             if sudo:
                 command = 'sudo ' + command
@@ -301,7 +301,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
 
         runner = AppRunner('ip addr show')
 
-        lines = [ line.decode().strip() for line in runner.stdout() ]
+        lines = [line.decode().strip() for line in runner.stdout()]
 
         for line in lines:
             match = matcher.match(line)

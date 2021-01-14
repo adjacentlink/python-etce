@@ -58,12 +58,14 @@ def datetimetostrtime(dtime, truncate=True):
 
 
 def strtimetodatetime(referencetime, truncatesecs=True):
-    dt,tm = referencetime.split('T')
-    yr,mn,dy = dt.split('-')
-    hr,mt,sc = tm.split(':')
+    dt, tm = referencetime.split('T')
+    yr, mn, dy = dt.split('-')
+    hr, mt, sc = tm.split(':')
     seconds = float(sc)
+
     if truncatesecs:
-        seconds=int(seconds)
+        seconds = int(seconds)
+
     return datetime.datetime(year=int(yr),
                              month=int(mn),
                              day=int(dy),

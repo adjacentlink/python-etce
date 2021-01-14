@@ -35,61 +35,61 @@ import os
 
 
 class OvsdbServer(Wrapper):
-   """
-   Run an instance of ovsdb-server. The input file is an
-   empty file (a "flag"). The wrapper runs ovsdb-server
-   when the file is present.
-   """
+    """
+    Run an instance of ovsdb-server. The input file is an
+    empty file (a "flag"). The wrapper runs ovsdb-server
+    when the file is present.
+    """
 
-   def register(self, registrar):
-      registrar.register_infile_name('ovsdb-server.flag')
+    def register(self, registrar):
+        registrar.register_infile_name('ovsdb-server.flag')
 
-      registrar.register_outfile_name('ovsdb-server.log')
+        registrar.register_outfile_name('ovsdb-server.log')
 
-      registrar.register_argument('db_server_port',
-                                  9099,
-                                  'Listen for commands on the given port. ' \
-                                  'Configures the "--remote" option using ' \
-                                  'ptcp.')
+        registrar.register_argument('db_server_port',
+                                    9099,
+                                    'Listen for commands on the given port. ' \
+                                    'Configures the "--remote" option using ' \
+                                    'ptcp.')
 
-   def prerun(self, ctx):
-      ctx.stop()
-
-
-
-   def run(self, ctx):
-      if not ctx.args.infile:
-         return
-
-      dbfile=os.path.join(ctx.args.logdirectory, "ovs.db")
-
-      os.system('ovsdb-tool create %s' % dbfile)
-
-      ovsdbctlfile=os.path.join(ctx.args.logdirectory,'ovsdb-server.ctl')
-
-      ovsdbpidfile=ctx.args.default_pidfilename
-
-      argstr = \
-      '%s  ' \
-      '-vsyslog:err ' \
-      '-vfile:info ' \
-      '--remote=ptcp:%d ' \
-      '--private-key=db:Open_vSwitch,SSL,private_key ' \
-      '--certificate=db:Open_vSwitch,SSL,certificate ' \
-      '--bootstrap-ca-cert=db:Open_vSwitch,SSL,ca_cert ' \
-      '--no-chdir ' \
-      '--log-file=%s ' \
-      '--pidfile=%s ' \
-      '--unixctl=%s ' \
-      '--detach ' \
-      % (dbfile,
-         ctx.args.db_server_port,
-         ctx.args.outfile,
-         ovsdbpidfile,
-         ovsdbctlfile)
-
-      ctx.run('ovsdb-server', argstr, genpidfile=False)
+    def prerun(self, ctx):
+        ctx.stop()
 
 
-   def stop(self, ctx):
-      ctx.stop()
+
+    def run(self, ctx):
+        if not ctx.args.infile:
+            return
+
+        dbfile = os.path.join(ctx.args.logdirectory, 'ovs.db')
+
+        os.system('ovsdb-tool create %s' % dbfile)
+
+        ovsdbctlfile = os.path.join(ctx.args.logdirectory, 'ovsdb-server.ctl')
+
+        ovsdbpidfile = ctx.args.default_pidfilename
+
+        argstr = \
+           '%s  ' \
+           '-vsyslog:err ' \
+           '-vfile:info ' \
+           '--remote=ptcp:%d ' \
+           '--private-key=db:Open_vSwitch,SSL,private_key ' \
+           '--certificate=db:Open_vSwitch,SSL,certificate ' \
+           '--bootstrap-ca-cert=db:Open_vSwitch,SSL,ca_cert ' \
+           '--no-chdir ' \
+           '--log-file=%s ' \
+           '--pidfile=%s ' \
+           '--unixctl=%s ' \
+           '--detach ' \
+           % (dbfile,
+              ctx.args.db_server_port,
+              ctx.args.outfile,
+              ovsdbpidfile,
+              ovsdbctlfile)
+
+        ctx.run('ovsdb-server', argstr, genpidfile=False)
+
+
+    def stop(self, ctx):
+        ctx.stop()

@@ -60,7 +60,7 @@ class Executer(object):
             return
 
         logdirectory = os.path.join(
-            self._config.get('etce','WORK_DIRECTORY'),
+            self._config.get('etce', 'WORK_DIRECTORY'),
             logsubdirectory,
             hostname)
 
@@ -77,7 +77,7 @@ class Executer(object):
 
             wldr = WrapperLoader()
 
-            for wrapperentry,methodname,testargs in wrappers:
+            for wrapperentry, methodname, testargs in wrappers:
                 wrapperinstance = \
                     wldr.loadwrapper(wrapperentry.name,
                                      self._stepsfiledoc.getpackageprefixes())

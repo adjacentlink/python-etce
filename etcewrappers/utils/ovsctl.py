@@ -90,7 +90,7 @@ class OvsCtl(Wrapper):
     def prerun(self, ctx):
         ctx.stop()
 
-        ovs_rundir =  os.environ.get('OVS_RUNDIR', None)
+        ovs_rundir = os.environ.get('OVS_RUNDIR', None)
 
         if not ovs_rundir:
             message = 'wrapper ovsctl.py: OVS_RUNDIR environment variable must be specified ' \
@@ -110,9 +110,9 @@ class OvsCtl(Wrapper):
                       'after the command'
             raise RuntimeError(message)
 
-        ovs_rundir =  os.environ.get('OVS_RUNDIR', None)
+        ovs_rundir = os.environ.get('OVS_RUNDIR', None)
 
-        ofcommand,switch = toks[0:2]
+        ofcommand, switch = toks[0:2]
 
         argstr = '%s %s/%s.mgmt' % (ofcommand, ovs_rundir, switch)
 
@@ -130,7 +130,7 @@ class OvsCtl(Wrapper):
             if daemonize() != 0:
                 return
 
-        ovsvsctlfile=os.path.join(ctx.args.logdirectory,'ovs-vswitchd.ctl')
+        ovsvsctlfile = os.path.join(ctx.args.logdirectory, 'ovs-vswitchd.ctl')
 
         sequencer = EELSequencer(ctx.args.infile,
                                  ctx.args.starttime,

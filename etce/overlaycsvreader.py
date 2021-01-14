@@ -47,8 +47,8 @@ class OverlayCSVReader(object):
 
         overlay_dict = {}
 
-        for n,v in zip(self._column_dict['name'],
-                         self._column_dict[column_name]):
+        for n, v in zip(self._column_dict['name'],
+                        self._column_dict[column_name]):
             overlay_dict[n] = v
 
         return overlay_dict
@@ -58,14 +58,14 @@ class OverlayCSVReader(object):
         with open(csvfile) as csvf:
             rows = list(csv.reader(csvf))
 
-        rowlens = set([ len(r) for r in rows ])
+        rowlens = set([len(r) for r in rows])
         if len(rowlens) > 1:
             raise ValueError('"%s" file rows not the same length. Quitting.' \
                              % (csvfile))
 
         names = rows[0]
 
-        if not 'NAME' in [ n.upper() for n in names ]:
+        if not 'NAME' in [n.upper() for n in names]:
             message = 'No "name" column header found in "%s" ' \
                       'overlay file. Quitting' % csvfile
             raise ValueError(message)
@@ -74,7 +74,7 @@ class OverlayCSVReader(object):
 
         column_dict = {}
 
-        for name,vals in zip(names,column_vals):
+        for name, vals in zip(names, column_vals):
             column_dict[name] = vals
 
         return column_dict

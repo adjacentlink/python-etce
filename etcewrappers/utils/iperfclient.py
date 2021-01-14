@@ -54,23 +54,27 @@ class IPerfClient(Wrapper):
 
         registrar.register_outfile_name('iperfclient.log')
 
-        registrar.register_argument('interval',
-                           None,
-                           'iperf measurement interval (iperf -i switch ' \
-                           'argument)')
+        registrar.register_argument( \
+            'interval',
+            None,
+            'iperf measurement interval (iperf -i switch ' \
+            'argument)')
 
-        registrar.register_argument('bufferlen',
-                           None,
-                           'iperf buffer length (iperf -l switch argument)')
+        registrar.register_argument( \
+            'bufferlen',
+            None,
+            'iperf buffer length (iperf -l switch argument)')
 
-        registrar.register_argument('bandwidth',
-                           None,
-                           'iperf bandwidth (iperf client -b switch argument)')
+        registrar.register_argument( \
+            'bandwidth',
+            None,
+            'iperf bandwidth (iperf client -b switch argument)')
 
-        registrar.register_argument('transmittime',
-                           None,
-                           'iperf transmit time (iperf client -t switch ' \
-                           'argument)')
+        registrar.register_argument( \
+            'transmittime',
+            None,
+            'iperf transmit time (iperf client -t switch ' \
+            'argument)')
 
 
     def run(self, ctx):

@@ -59,13 +59,13 @@ class ConfigDictionary(object):
 
     def __init__(self,
                  configfilename='etce',
-                 defaults = defaults):
+                 defaults=defaults):
         self.parser = configparser.ConfigParser()
         self.parser.optionxform = str # leave case
 
-        config_dir = os.getenv('ETCECONFIGDIR','/etc/etce')
+        config_dir = os.getenv('ETCECONFIGDIR', '/etc/etce')
 
-        configfiles = [ os.path.join(config_dir,'%s.conf' % configfilename) ]
+        configfiles = [os.path.join(config_dir, '%s.conf' % configfilename)]
 
         # read function should not cause error if any of the named files
         # don't exist. Duplicate values are overlayed by values found
@@ -98,7 +98,8 @@ class ConfigDictionary(object):
         for section, namevals in defaults.items():
             if not self.parser.has_section(section):
                 self.parser.add_section(section)
-            for name,val in namevals.items():
+
+            for name, val in namevals.items():
                 if not self.parser.has_option(section, name):
                     self.parser.set(section, name, val)
 
@@ -121,7 +122,7 @@ class ConfigDictionary(object):
         retdict = {}
         for section in self.sections():
             retdict[section] = {}
-            for n,v in sorted(self.parser.items(section)):
+            for n, v in sorted(self.parser.items(section)):
                 retdict[section][n] = v
         return retdict
 
@@ -130,8 +131,8 @@ class ConfigDictionary(object):
         retstr = ''
         for section in self.parser.sections():
             retstr += '\n[ ' + section + ' ]\n'
-            pairs = [ name + ':' + str(value) \
-                          for name,value in sorted(self.parser.items(section)) ]
+            pairs = [name + ':' + str(value) \
+                     for name,value in sorted(self.parser.items(section))]
             retstr += '\n'.join(pairs)
             retstr += '\n'
         return retstr

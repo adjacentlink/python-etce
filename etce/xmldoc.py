@@ -32,7 +32,7 @@
 
 from pkg_resources import resource_filename
 from lxml import etree
-from lxml.etree import DocumentInvalid,XMLSyntaxError
+from lxml.etree import DocumentInvalid, XMLSyntaxError
 
 from etce.xmldocerror import XMLDocError
 

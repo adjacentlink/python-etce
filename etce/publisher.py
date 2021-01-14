@@ -132,7 +132,7 @@ class Publisher(object):
 
 
     def _move_extra_files(self, extrafiles, dstdir):
-        for srcfile,dstfile in extrafiles:
+        for srcfile, dstfile in extrafiles:
             dstfile = os.path.join(dstdir, dstfile)
 
             dirname = os.path.dirname(dstfile)
@@ -201,7 +201,7 @@ class Publisher(object):
             publish combines the files from the test directory and the (optional)
             base directory to the destination.
         '''
-        srcdirs = [ self._test_directory ]
+        srcdirs = [self._test_directory]
 
         if absbasedir_override:
             srcdirs.insert(0, absbasedir_override)
@@ -264,7 +264,7 @@ class Publisher(object):
         # 1. etce.conf
         etce_config_overlays = {}
 
-        for k,v in self._config.items('overlays'):
+        for k, v in self._config.items('overlays'):
             etce_config_overlays[k] = etce.utils.configstrtoval(v)
 
         # 3. overlay set by environment variables, identified by
@@ -284,8 +284,8 @@ class Publisher(object):
     def _prune_unused_template_directories(self, subdirectory_map):
         directory_templates_used_by_test = self._testdoc.template_directory_names
 
-        all_template_directory_keys = set([ entry.root_sub_entry for entry in subdirectory_map.values()
-                                            if entry.template_directory_member ])
+        all_template_directory_keys = set([entry.root_sub_entry for entry in subdirectory_map.values()
+                                           if entry.template_directory_member])
 
         directory_templates_not_used_by_test = \
             all_template_directory_keys.difference(directory_templates_used_by_test)
@@ -315,7 +315,7 @@ class Publisher(object):
 
         omitdirs = (TestDirectory.DOCSUBDIRNAME,)
 
-        for relname,entry in subdirectory_map.items():
+        for relname, entry in subdirectory_map.items():
             if entry.root_sub_entry in omitdirs:
                 continue
 
@@ -326,7 +326,7 @@ class Publisher(object):
 
             # first_level_entry is a nodename if it is a directory
             if entry.root_sub_entry_is_dir:
-                reserved_overlays = { 'etce_hostname':entry.root_sub_entry }
+                reserved_overlays = {'etce_hostname':entry.root_sub_entry}
 
                 if logdir:
                     reserved_overlays['etce_log_path'] = os.path.join(logdir, entry.root_sub_entry)
@@ -392,7 +392,7 @@ class Publisher(object):
     def _get_subfiles(self, directory):
         files = []
 
-        for dirname,dirnames,filenames in os.walk(directory):
+        for dirname, dirnames, filenames in os.walk(directory):
             for filename in filenames:
                 fullpath = os.path.join(dirname, filename)
 
@@ -406,7 +406,7 @@ class Publisher(object):
     def _build_subdirectory_map(self, directory):
         subfiles = {}
 
-        for dirname,dirnames,filenames in os.walk(directory):
+        for dirname, dirnames, filenames in os.walk(directory):
             for filename in filenames:
                 fullpath = os.path.join(dirname, filename)
 
@@ -480,10 +480,10 @@ def publish_test(args):
             print('overlayfile "%s" doesn\'t exist. Quitting' % args.overlayfile,
                   file=sys.stderr)
             exit(1)
-        for line in open(args.overlayfile,'r'):
+        for line in open(args.overlayfile, 'r'):
             line = line.strip()
             if len(line) > 0:
-                n,v = line.split('=')
+                n, v = line.split('=')
                 runtime_overlays[n] = v
 
     try:

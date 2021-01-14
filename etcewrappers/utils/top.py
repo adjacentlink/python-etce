@@ -41,9 +41,9 @@ class Top(Wrapper):
     """
     def register(self, registrar):
         registrar.register_argument('periodsecs',
-                           5,
-                           'the number of seconds to sleep/wait ' \
-                           'between readings.')
+                                    5,
+                                    'the number of seconds to sleep/wait ' \
+                                    'between readings.')
 
         registrar.register_infile_name('top.flag')
 
