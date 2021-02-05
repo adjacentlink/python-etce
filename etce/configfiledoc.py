@@ -36,6 +36,13 @@ import etce.xmldoc
 
 
 class ConfigFileDoc(etce.xmldoc.XMLDoc):
+    """
+    A class for parsing, validating and presenting the information in
+    an ETCE configuration file. The ETCE configuration file is defined
+    by it's schema (configfile.xsd) and provides a way for users to
+    alter Wrapper argument values when running tests.
+    """
+
     def __init__(self, configfile):
         etce.xmldoc.XMLDoc.__init__(self,
                                     'configfile.xsd')

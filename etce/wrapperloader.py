@@ -39,6 +39,11 @@ from etce.config import ConfigDictionary
 
 
 class WrapperLoader(object):
+    """
+    Provides methods for dynamically importing and
+    instantiating ETCE Wrapper instances.
+    """
+
     def __init__(self):
         self._config = ConfigDictionary()
 
@@ -77,43 +82,6 @@ class WrapperLoader(object):
 
                 except Exception as e:
                     pass
-
-
-    def oldloading(self):
-        wrapperinstances = {}
-
-        for syspath in sys.path:
-            if not os.path.exists(syspath) or not os.path.isdir(syspath):
-                continue
-
-            if not 'etcewrappers' in os.listdir(syspath):
-                continue
-            wrapperspath = os.path.join(syspath, 'etcewrappers')
-            if not os.path.isdir(wrapperspath):
-                continue
-            for cwd, dirnames, filenames in os.walk(wrapperspath):
-
-                for wrapperfile in filenames:
-                    try:
-                        wrapperfile = os.path.join(cwd, wrapperfile.split('.')[0])
-                        fullwrappername = \
-                            os.path.relpath(wrapperfile, syspath)
-                        relwrappername = fullwrappername[fullwrappername.index(os.sep)+1:]
-                        wrapper = self._load_module(relwrappername, None)
-                        if wrapper is not None:
-                            basename = wrapper.__name__.split('.')[-1]
-                            candidateclassname = basename.upper()
-                            classinstance = None
-                            for key in wrapper.__dict__:
-                                if key.upper() == candidateclassname:
-                                    candidateclass = wrapper.__dict__[key]
-                                    if callable(candidateclass):
-                                        wkey = relwrappername.replace(os.sep, '.')
-                                        if not wkey in wrapperinstances:
-                                            wrapperinstances[wkey] = (wrapperspath, candidateclass())
-                    except:
-                        continue
-        return wrapperinstances
 
 
     def loadwrapper(self,

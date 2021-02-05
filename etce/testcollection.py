@@ -33,12 +33,18 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import sys
 
 from etce.testdirectory import TestDirectory
 from etce.testcollectionerror import TestCollectionError
+from etce.xmldocerror import XMLDocError
 
 
 class TestCollectionIterator(object):
+    """
+    An iterator over a TestCollection.
+    """
+
     def __init__(self, wrapped):
         self.wrapped = wrapped
         self.index = 0
@@ -56,11 +62,15 @@ class TestCollectionIterator(object):
 
 
 class TestCollection(object):
-    '''TestCollection represents a sequence of tests. It is iterable
+    """
+    TestCollection represents a sequence of tests. It is iterable
     and returns an instance of a Test object on each iteration. Test
-    collections may be build in different ways. Two ways that are forseen,
-    building a TestCollection by parsing a subdirectory tree of test files,
-    building a TestCollection by a generator.'''
+    collections may be built in different ways. A TestCollection is
+    built through calls to the adddirectory method. For each call,
+    TestCollection walks the provided path, parses the directory
+    contents and adds TestDirectory objects for each found valid
+    test directory.
+    """
 
     def __init__(self):
         self._tests = {}
@@ -167,9 +177,6 @@ def add_list_arguments(parser):
 
 
 def list_tests(args):
-    import sys
-    from etce.xmldocerror import XMLDocError
-
     if not os.path.isdir(args.testrootdir):
         print('Cannot find test directory "%s". Quitting.' % args.testrootdir, file=sys.stderr)
         exit(1)

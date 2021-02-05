@@ -40,6 +40,11 @@ from lxml import etree
 
 
 class StepsFileDoc(etce.xmldoc.XMLDoc):
+    """
+    Parses an ETCE Steps file (steps.xml) and provides methods
+    to access step names and wrapper names in each step.
+    """
+
     WrapperEntry = namedtuple('WrapperEntry', ['name', 'decorator'])
 
     def __init__(self, stepsfile):

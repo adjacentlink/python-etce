@@ -42,6 +42,12 @@ from etce.overlaylistchainfactory import OverlayListChainFactory
 
 
 class TemplateFileBuilder(object):
+    """
+    Creates a realized configuration file from a template file
+    using the provided text overlays for each index in the provided
+    indices.
+    """
+
     def __init__(self,
                  templatefileelem,
                  indices,

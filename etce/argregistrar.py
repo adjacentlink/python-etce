@@ -31,6 +31,12 @@
 #
 
 class ArgRegistrar(object):
+    """
+    Defines the argument registrar interface. Wrappers are passed
+    an ArgumentRegistrar instance to their register method and use
+    the registrar to indicate the arguments they accept for execution.
+    """
+
     def register_argument(self, argname, defaultval, description):
         """
         Register an application argument.

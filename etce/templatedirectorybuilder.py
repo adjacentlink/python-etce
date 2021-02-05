@@ -42,6 +42,12 @@ from etce.overlaylistchainfactory import OverlayListChainFactory
 
 
 class TemplateDirectoryBuilder(object):
+    """
+    Creates a realized configuration directory from a template directory
+    using the provided text overlays for each index in the provided
+    indices.
+    """
+
     def __init__(self,
                  templatedirelem,
                  indices,

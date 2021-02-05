@@ -31,5 +31,11 @@
 #
 
 class TestCollectionError(Exception):
+    """
+    General error class for raising an exception when
+    a problem is found while parsing a test directory
+    as part of a test collection.
+    """
+
     def __init__(self, message):
         Exception.__init__(self, message)

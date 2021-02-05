@@ -43,6 +43,16 @@ from etce.testdirectoryerror import TestDirectoryError
 
 
 class TestDirectory(object):
+    """
+    The TestDirectory class represents a single ETCE Test. Each
+    test is associated with a unique path to it's test directory
+    (the path where the required test.xml file resides). The
+    TestDirectory object provides access to information parsed
+    from the associated test.xml file - including node names,
+    template file and directories and overlays associated
+    with the test.
+    """
+
     TESTFILENAME = 'test.xml'
     STEPSFILENAME = 'steps.xml'
     CONFIGFILENAME = 'config.xml'
