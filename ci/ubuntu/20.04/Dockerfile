@@ -1,10 +1,11 @@
 FROM ubuntu:20.04
 
-RUN apt-get -y update
-#RUN apt-get -y upgrade
-#RUN apg-get -f -y install
+# prevent failures due to interactive apt transactions
+ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get -y install libtool make autoconf automake debhelper python3-setuptools python3-stdeb python3-dev git
+RUN apt-get -y update
+
+RUN apt-get -y --no-install-recommends install libtool make autoconf automake debhelper python3-setuptools python3-stdeb python3-dev git
 
 WORKDIR /opt
 RUN git clone https://github.com/eschreiber/python-etce -b develop
