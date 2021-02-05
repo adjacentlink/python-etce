@@ -1,4 +1,4 @@
-FROM fedora:31
+FROM fedora:33
 
 #RUN dnf -y update
 
@@ -14,5 +14,5 @@ RUN ./autogen.sh
 RUN ./configure
 RUN make rpm
 
-RUN echo 'fedora31 complete'
+RUN echo 'fedora33 complete'
 
