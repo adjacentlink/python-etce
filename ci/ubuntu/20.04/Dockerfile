@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get -y update
 
-RUN apt-get -y --no-install-recommends install libtool make autoconf automake debhelper dh-python python3-setuptools python3-stdeb python3-dev git
+RUN apt-get -y --no-install-recommends install libtool make autoconf automake debhelper build-essential dh-python python3-setuptools python3-stdeb python3-dev git
 
 WORKDIR /opt
 RUN git clone https://github.com/eschreiber/python-etce -b develop
