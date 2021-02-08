@@ -13,6 +13,7 @@ WORKDIR python-etce
 RUN ./autogen.sh
 RUN ./configure
 RUN make rpm
+RUN dnf -y install $(find .rpmbuild/RPMS -name "*\.rpm")
 
 RUN echo 'fedora33 complete'
 

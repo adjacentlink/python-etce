@@ -13,6 +13,8 @@ WORKDIR python-etce
 RUN ./autogen.sh
 RUN ./configure
 RUN make deb
+RUN dpkg -i $(find .debbuild -name "*\.deb")
+RUN apt-get install -f
 
 RUN echo 'ubuntu18.04 complete'
 

@@ -14,6 +14,8 @@ WORKDIR python-etce
 RUN ./autogen.sh
 RUN ./configure
 RUN make deb
+RUN dpkg -i $(find .debbuild -name "*\.deb")
+RUN apt-get install -f
 
 RUN echo 'ubuntu20.04 complete'
 

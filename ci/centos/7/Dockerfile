@@ -13,6 +13,7 @@ WORKDIR python-etce
 RUN ./autogen.sh
 RUN ./configure --with-python2
 RUN make rpm
+RUN yum -y install $(find .rpmbuild/RPMS -name "*\.rpm")
 
 RUN echo 'centos7 complete'
 
