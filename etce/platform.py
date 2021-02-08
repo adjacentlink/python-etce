@@ -103,7 +103,7 @@ def platform_architecture():
 
 class Platform:
     def __init__(self):
-        module = etce.loader.load_etce_module('platformimpl')
+        module = etce.loader.load_etce_module('platformimpl', platform_suffix_list())
         self._impl = etce.loader.load_class_instance_from_module(module)
 
     def getnetworkdevicenames(self):

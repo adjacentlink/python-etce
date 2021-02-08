@@ -65,9 +65,9 @@ def generate_tempfile_name(directory=None, prefix=None):
         os.remove(name)
     else:
         if prefix:
-            fd,name = tempfile.mkstemp(prefix=prefix)
+            fd, name = tempfile.mkstemp(prefix=prefix)
         else:
-            fd,name = tempfile.mkstemp()
+            fd, name = tempfile.mkstemp()
 
         os.close(fd)
 

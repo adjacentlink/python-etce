@@ -32,13 +32,14 @@
 
 from __future__ import absolute_import, division, print_function
 import importlib
-import etce.platform
 
 
 '''load a the most specialized mode with the given name
 from with the etce hierarchy'''
-def load_etce_module(modulename, root='etce'):
-    for suffix in etce.platform.platform_suffix_list():
+def load_etce_module(modulename,
+                     platform_suffix_list,
+                     root='etce'):
+    for suffix in platform_suffix_list:
         module = None
         try:
             module = load_module(root + '.' + suffix + '.' + modulename)

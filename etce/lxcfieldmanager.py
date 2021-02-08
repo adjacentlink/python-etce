@@ -38,7 +38,7 @@ import shutil
 from etce.clientbuilder import ClientBuilder
 from etce.config import ConfigDictionary
 from etce.lxcerror import LXCError
-from etce.lxcmanager import startlxcs,stoplxcs
+from etce.lxcmanager import startlxcs, stoplxcs
 from etce.lxcplanfiledoc import LXCPlanFileDoc
 from etce.platform import Platform
 

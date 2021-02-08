@@ -132,7 +132,7 @@ class ConfigDictionary(object):
         for section in self.parser.sections():
             retstr += '\n[ ' + section + ' ]\n'
             pairs = [name + ':' + str(value) \
-                     for name,value in sorted(self.parser.items(section))]
+                     for name, value in sorted(self.parser.items(section))]
             retstr += '\n'.join(pairs)
             retstr += '\n'
         return retstr
