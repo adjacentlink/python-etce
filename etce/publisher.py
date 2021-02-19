@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2021 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -427,14 +427,14 @@ def add_publish_arguments(parser):
                         to the current working directory.
                         default: None''')
     parser.add_argument('--logdirectory',
-                        default=None,
+                        default='/tmp',
                         help='''The ETCE reserved overlay 'etce_log_path'
                         names a location for wrappers to write output files.
                         When running a test, etce_log_path is automatically
                         derived using the etce.conf WORK_DIRECTORY value.
                         Use the logdirectory argument to pass a location
                         for output files when publishing a test outside
-                        of running it. Default: None.''')
+                        of running it. Default: "/tmp".''')
     parser.add_argument('--overlayfile',
                         default=None,
                         help='''File name containing NAME=VALUE pairs,

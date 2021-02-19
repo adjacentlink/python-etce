@@ -1,6 +1,6 @@
 AC_COPYRIGHT([
  
-  Copyright (c) 2013-2020 - Adjacent Link LLC, Bridgewater, New Jersey
+  Copyright (c) 2013-2021 - Adjacent Link LLC, Bridgewater, New Jersey
   All rights reserved.
  
   Redistribution and use in source and binary forms, with or without
