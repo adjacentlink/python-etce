@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2021 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,9 @@ class Mgen(Wrapper):
 
         registrar.register_outfile_name('mgen.log')
 
+        registrar.register_argument('epochtimestamp',
+                                    False,
+                                    'run with mgen epochtimestamp option')
 
     def run(self, ctx):
         if not ctx.args.infile:
@@ -54,16 +57,21 @@ class Mgen(Wrapper):
 
         hourminsec = ctx.args.starttime.split('T')[1]
 
-        argstr = 'input %s txlog output %s start %s' % \
-            (ctx.args.infile,
-             ctx.args.outfile,
-             hourminsec)
+        argstr = ''
+
+        if ctx.args.epochtimestamp:
+            argstr = 'epochtimestamp '
 
         if self._isipv6(ctx.args.infile):
-            argstr = 'ipv6 input %s txlog output %s start %s' % \
-                (ctx.args.infile,
-                 ctx.args.outfile,
-                 hourminsec)
+            argstr += 'ipv6 input %s txlog output %s start %s' % \
+                      (ctx.args.infile,
+                       ctx.args.outfile,
+                       hourminsec)
+        else:
+            argstr += 'input %s txlog output %s start %s' % \
+                      (ctx.args.infile,
+                       ctx.args.outfile,
+                       hourminsec)
 
         ctx.run('mgen', argstr)
 

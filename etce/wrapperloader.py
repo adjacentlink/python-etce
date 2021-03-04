@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2015-2021 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -105,7 +105,7 @@ class WrapperLoader(object):
                         candidateclass = wrapper.__dict__[key]
 
                         if callable(candidateclass):
-                            return candidateclass()
+                            return ('%s.%s' % (packagename, wrappername), candidateclass())
 
         message = 'No wrapper "%s" found' % wrappername
         raise RuntimeError(message)

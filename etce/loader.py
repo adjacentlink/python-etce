@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2021 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,11 +34,13 @@ from __future__ import absolute_import, division, print_function
 import importlib
 
 
-'''load a the most specialized mode with the given name
-from with the etce hierarchy'''
 def load_etce_module(modulename,
                      platform_suffix_list,
                      root='etce'):
+    """
+    load a the most specialized mode with the given name
+    from with the etce hierarchy
+    """
     for suffix in platform_suffix_list:
         module = None
         try:
@@ -61,17 +63,14 @@ def load_etce_module(modulename,
     return None
 
 
-'''load a class instance from the etce hierarchy'''
-def load_etce_class_instance(modulename, root='etce', args=[], kwargs={}):
-    module = load_etce_module(modulename, root)
-    return load_class_instance_from_module(module, args, kwargs)
 
-
-'''Search for a class with the same classname as the module.
-Capitalization doesn't matter. If there are more than one class
-definitions with the module name, but differeing only by capitalization,
-then not well defined which one will be instantiated'''
 def load_class_instance_from_module(module, args=[], kwargs={}):
+    """
+    Search for a class with the same classname as the module.
+    Capitalization doesn't matter. If there are more than one class
+    definitions with the module name, but differeing only by capitalization,
+    then not well defined which one will be instantiated
+    """
     basename = module.__name__.split('.')[-1]
     candidateclassname = basename.upper()
 
@@ -88,11 +87,11 @@ def load_class_instance_from_module(module, args=[], kwargs={}):
     return None
 
 
-'''
-Return the module method based on etce search path.
-'''
-def load_etce_method(modulename, methodname):
-    mod = load_etce_module(modulename)
+def load_etce_method(modulename, methodname, platform_suffix_list):
+    """
+    Return the module method based on etce search path.
+    """
+    mod = load_etce_module(modulename, platform_suffix_list)
 
     if mod:
         # first try to find a class based on the modulename (modulename)
@@ -118,16 +117,17 @@ def load_etce_method(modulename, methodname):
 
 
 def load_class_instance(modulename, args=[], kwargs={}):
-    '''from the passed modulename, return an instance of the class
+    """
+    From the passed modulename, return an instance of the class
     (named same as module basename, constructed with the passed args
     and kwargs - it's __init__ method is called with these
-    '''
+    """
     return load_class_instance_from_module(load_module(modulename),
                                            args,
                                            kwargs)
 
-'''
-Load the named python module, None if unsuccessful
-'''
 def load_module(modulename):
+    """
+    Load the named python module, None if unsuccessful
+    """
     return importlib.import_module(modulename)
