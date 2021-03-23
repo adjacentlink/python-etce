@@ -41,6 +41,8 @@ Requires: python-mako
 Requires: python-paramiko
 Requires: python-lxml
 Requires: python-emane
+Requires: python-pandas
+Requires: python-matplotlib
 Requires: lxc
 Conflicts: python3-etce
 Obsoletes: python-etce
@@ -52,6 +54,9 @@ Requires: python2-mako
 Requires: python2-paramiko
 Requires: python2-lxml
 Requires: python2-emane
+Requires: python2-pandas
+Requires: python2-matplotlib
+Requires: python2-matplotlib
 Requires: lxc
 Conflicts: python3-etce
 %define use_python2_sitelib %{python2_sitelib}
@@ -66,6 +71,9 @@ Requires: python3-mako
 Requires: python3-paramiko
 Requires: python3-lxml
 Requires: python3-emane
+Requires: python3-pandas
+Requires: python3-matplotlib
+Requires: python3-seaborn
 Requires: lxc
 Conflicts: python-etce
 Conflicts: python2-etce

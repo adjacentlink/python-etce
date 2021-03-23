@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2015-2021 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,34 +30,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
+class Analyzer(object):
+    @property
+    def file_fields(self):
+        raise NotImplementedError('Analyzer.file_fields')
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers', 'etceanalyzers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example'],
-                    'etceanalytics' : ['*.xsd']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-check-connection',
-                'scripts/etce-test',
-                'scripts/etce-wrapper',
-                'scripts/etce-analyze-file',
-                'scripts/etce-analyze-session',
-                'scripts/etce-mgen-completions-by-flow',
-                'scripts/etce-mgen-latency-vs-time',
-                'scripts/etce-mgen-network-receptions-stripchart',
-                'scripts/etce-mgen-offered-load-vs-time',
-                'scripts/etce-mgen-receive-throughput-vs-time',
-                'scripts/etce-mgen-receptions-vs-time',
-                'scripts/etce-mgen-transmissions-vs-time',
-                'scripts/etce-system-cpu-vs-time'
-      ])
+    def analyzefile(self, pathinfo, resultfile):
+        raise NotImplementedError('Analyzer.analyzefile')
 
+    def combinetrialresults(self, trialfiles, combinedtrialfile, starttime):
+        raise NotImplementedError('Analyzer.combinetrialresults')
+
+    def combinesessionresults(self, combinedtrialfiles, sessionresultfile):
+        raise NotImplementedError('Analyzer.combinesessionresults')

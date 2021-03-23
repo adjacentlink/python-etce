@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2015 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,34 +30,61 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
+from __future__ import absolute_import, division, print_function
+import os
+import re
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers', 'etceanalyzers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example'],
-                    'etceanalytics' : ['*.xsd']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-check-connection',
-                'scripts/etce-test',
-                'scripts/etce-wrapper',
-                'scripts/etce-analyze-file',
-                'scripts/etce-analyze-session',
-                'scripts/etce-mgen-completions-by-flow',
-                'scripts/etce-mgen-latency-vs-time',
-                'scripts/etce-mgen-network-receptions-stripchart',
-                'scripts/etce-mgen-offered-load-vs-time',
-                'scripts/etce-mgen-receive-throughput-vs-time',
-                'scripts/etce-mgen-receptions-vs-time',
-                'scripts/etce-mgen-transmissions-vs-time',
-                'scripts/etce-system-cpu-vs-time'
-      ])
 
+class TrialDirectory(object):
+    @staticmethod
+    def istrialdir(sessiondir, subdir):
+        if not os.path.isdir(os.path.join(sessiondir, subdir, 'data')):
+            return False
+
+        if not re.match(r'\S+-\S+-\d{8}T\d{6}', subdir):
+            return False
+
+        return True
+
+
+    def __init__(self, sessiondir, subdir):
+        self._trialdir = os.path.join(sessiondir, subdir)
+
+        self._testname, self._datetime = \
+            (re.match(r'\S+-(\S+)-(\d{8}T\d{6})', subdir)).groups()
+
+        self._datadir = os.path.join(sessiondir, subdir, 'data')
+
+        self._resultsdir = os.path.join(sessiondir, subdir, 'results')
+
+        self._templatedir = os.path.join(sessiondir, subdir, 'template')
+
+
+    @property
+    def trialdir(self):
+        return self._trialdir
+
+
+    @property
+    def testname(self):
+        return self._testname
+
+
+    @property
+    def datetime(self):
+        return self._datetime
+
+
+    @property
+    def datadir(self):
+        return self._datadir
+
+
+    @property
+    def resultsdir(self):
+        return self._resultsdir
+
+
+    @property
+    def templatedir(self):
+        return self._templatedir

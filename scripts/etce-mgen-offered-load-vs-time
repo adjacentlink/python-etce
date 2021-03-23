@@ -1,0 +1,258 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2015-2021 - Adjacent Link LLC, Bridgewater, New Jersey
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+# * Neither the name of Adjacent Link LLC nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+from __future__ import absolute_import, division, print_function
+import argparse
+import matplotlib.pyplot as plt
+import os
+import sys
+import seaborn as sns
+from etceanalyzers.mgen import to_dataframes
+
+
+usagestr = 'Plot offered load vs. time.'
+
+suffix = 'offered_load_vs_time'
+
+parser = argparse.ArgumentParser(description=usagestr)
+
+parser.add_argument('--graphfile',
+                    metavar='GRAPHFILE',
+                    default=None,
+                    help='The output graph file. Default is to rename ' \
+                    'SQLITEFILE with a "-%s_trial-X.png" suffix.' % suffix)
+parser.add_argument('--csvfile',
+                    action='store_true',
+                    default=False,
+                    help='If specified, store the aggregated DataFrame ' \
+                         'to csvfile.')
+parser.add_argument('--txnodeorder',
+                    default=None,
+                    help='Colon separated list of transmitter nodenames. The graph transmitter ' \
+                    'axis (y-axis) will use the provided ordering instead of lexical ordering. ' \
+                    'Transmitters are also limited only to the nodes specified.')
+parser.add_argument('--plotstyle',
+                    metavar='PLOTSTYLE',
+                    action='store',
+                    default='ggplot',
+                    help='Any valid matplotlib.pyplot plot style. ' \
+                    'Default: ggplot.')
+parser.add_argument('--flowposition',
+                    metavar='FLOWPOSITION',
+                    choices=['column', 'hue'],
+                    default='hue',
+                    help='Break out different flows into hues (default) or columns.')
+parser.add_argument('--colormap',
+                    metavar='COLORMAP',
+                    default='tab10',
+                    help='When flowposition is "hue", use the named matplotlib colormap ' \
+                    'for the hue. The hue encodes the FLOWNUM for each transmitter. ' \
+                    'Default: tab10.')
+parser.add_argument('--ymax',
+                    type=int,
+                    action='store',
+                    default=None,
+                    help='Override graph ymax value.')
+parser.add_argument('--kbits',
+                    default = False,
+                    action='store_true',
+                    help='Plot y-axis in Kbits instead of Mbits.')
+parser.add_argument('--height',
+                    type=float,
+                    action='store',
+                    default=None,
+                    help='Override graph height.')
+parser.add_argument('--width',
+                    type=float,
+                    action='store',
+                    default=None,
+                    help='Override graph width.')
+parser.add_argument('--margins',
+                    metavar='MARGINS',
+                    default='0.85:0.15:0.15:0.9',
+                    help='Colon separated value of top:left:bottom:right graph ' \
+                    'margins. Margins are expressed as a decimal from 0.0 to 1.0 ' \
+                    'where the horizontal margin runs from left to right and the ' \
+                    'vertical margin from bottom to top. So a bottom margin of 0.15 ' \
+                    'is 15% from the bottom of the page and a top margin of 0.8 is ' \
+                    '20% from the top of the page. Default: 0.85:0.15:0.15:0.9')
+parser.add_argument('sqlitefile',
+                    metavar='SQLITEFILE',
+                    action='store',
+                    help='An ETCE sqlite database.')
+
+args = parser.parse_args()
+
+plt.style.use(args.plotstyle)
+
+if not os.path.isfile(args.sqlitefile):
+    print('Could not find file "%s". Quitting.' % args.sqlitefile, file=sys.stderr)
+    exit(1)
+
+rx,tx = to_dataframes(args.sqlitefile, False)
+
+tx['txtimesec'] = tx.txtime.apply(int)
+
+# make sure to use tx['size'] here and not tx.size. size is a separate
+# DataFrame property
+if args.kbits:
+    # Kbits
+    tx['offered'] = (tx['size'] * 8) / 1000.0
+else:
+    # Mbits
+    tx['offered'] = (tx['size'] * 8) / 1000000.0
+
+tx = tx.groupby(['txtimesec','txnode','trial','flow']).sum()
+
+tx.reset_index(inplace=True)
+
+tx.drop(['sequence','size','txtime'], axis=1, inplace=True)
+
+xmax = tx.txtimesec.max()
+
+ymax = tx.offered.max()
+
+# override if user specified
+if args.ymax:
+    ymax = args.ymax
+else:
+    ymax = 1.1 * ymax
+
+txers = sorted(tx.txnode.unique())
+
+if args.txnodeorder:
+    # order txers based on txnodeorder and limit output to these txers
+    txers = [nodename.strip() for nodename in args.txnodeorder.split(':')]
+
+    tx = tx[tx.txnode.isin(txers)]
+
+if args.csvfile:
+    csvfile = \
+        '.'.join(os.path.basename(args.sqlitefile).split('.')[:-1]) + \
+        '-%s.csv' % suffix
+
+    tx.to_csv(csvfile)
+
+tx.rename(columns={'txnode':'tx'}, inplace=True)
+
+trials = sorted(tx.trial.unique())
+
+num_trials = len(trials)
+
+facet_height = 1.0
+
+facet_width = 1.5
+
+margin = 6.0
+
+aspect = facet_width / facet_height
+
+height = (num_trials * 2.0 + margin) * facet_height
+
+flows = sorted(tx.flow.unique())
+
+num_flows = len(flows)
+
+num_cols = 1 if args.flowposition == 'hue' else num_flows
+
+width = (num_cols * 2.0 + margin) * facet_width
+
+top_margin, left_margin, bottom_margin, right_margin = \
+    map(float, args.margins.split(':'))
+
+for trial in trials:
+    trial_transmissions = tx[tx.trial == trial]
+
+    print(trial_transmissions)
+
+    g = None
+
+    if args.flowposition == 'column':
+        g = sns.FacetGrid(trial_transmissions,
+                          row='tx',
+                          col='flow',
+                          row_order=txers,
+                          sharex=True,
+                          aspect=aspect,
+                          xlim=(0, xmax),
+                          ylim=(0, ymax))
+
+        g.map_dataframe(sns.scatterplot,
+                        x='txtimesec',
+                        y='offered',
+                        marker='.',
+                        linestyle=(0, (0,3)))
+    else:
+        g = sns.FacetGrid(trial_transmissions,
+                          row='tx',
+                          hue='flow',
+                          row_order=txers,
+                          sharex=True,
+                          legend_out=True,
+                          aspect=aspect,
+                          xlim=(0, xmax),
+                          ylim=(0, ymax),
+                          palette=args.colormap)
+
+        sp = g.map_dataframe(sns.scatterplot,
+                             x='txtimesec',
+                             y='offered',
+                             marker='.',
+                             linestyle=(0, (0,3)))
+
+        sp.add_legend()
+
+    g.set_axis_labels('time (sec)', 'kbits/sec' if args.kbits else 'mbits/sec')
+
+    if args.height:
+        g.fig.set_figheight(float(args.height))
+
+    if args.width:
+        g.fig.set_figwidth(float(args.width))
+
+    g.fig.suptitle('Offered Load vs. Time')
+
+    graphfile = \
+        '.'.join(os.path.basename(args.sqlitefile).split('.')[:-1]) + '-' + \
+        ('trial_%02d-' % trial) + \
+        suffix + '.png'
+
+    if args.graphfile:
+        graphfile = args.graphfile % trial
+
+    g.fig.subplots_adjust(top=top_margin,
+                          left=left_margin,
+                          bottom=bottom_margin,
+                          right=right_margin)
+
+    g.fig.savefig(graphfile)

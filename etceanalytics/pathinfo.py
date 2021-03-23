@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2021 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,35 +29,27 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+import os.path
 
-from setuptools import setup, find_packages
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers', 'etceanalyzers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example'],
-                    'etceanalytics' : ['*.xsd']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-check-connection',
-                'scripts/etce-test',
-                'scripts/etce-wrapper',
-                'scripts/etce-analyze-file',
-                'scripts/etce-analyze-session',
-                'scripts/etce-mgen-completions-by-flow',
-                'scripts/etce-mgen-latency-vs-time',
-                'scripts/etce-mgen-network-receptions-stripchart',
-                'scripts/etce-mgen-offered-load-vs-time',
-                'scripts/etce-mgen-receive-throughput-vs-time',
-                'scripts/etce-mgen-receptions-vs-time',
-                'scripts/etce-mgen-transmissions-vs-time',
-                'scripts/etce-system-cpu-vs-time'
-      ])
+class PathInfo(object):
+    def __init__(self, datadir, hostname, datafile):
+        self._datadir = datadir
+        self._hostname = hostname
+        self._datafile = datafile
 
+    @property
+    def hostname(self):
+        return self._hostname
+
+    @property
+    def hostdir(self):
+        return os.path.join(self._datadir, self._hostname)
+
+    @property
+    def datafile(self):
+        return self._datafile
+
+    @property
+    def absdatafile(self):
+        return os.path.join(self.hostdir, self.datafile)

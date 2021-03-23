@@ -1,0 +1,224 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2020-2021 - Adjacent Link LLC, Bridgewater, New Jersey
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+# * Neither the name of Adjacent Link LLC nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+from __future__ import absolute_import, division, print_function
+import argparse
+from collections import defaultdict
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import os
+import sys
+import pandas as pd
+import sqlite3
+import sys
+import seaborn as sns
+from etce.utils import nodestr_to_nodelist
+import pprint
+
+suffix = 'cpu_utilization_by_process'
+
+usagestr = 'Generate cpu utilization vs. time graphs for each process and node.'
+
+parser = argparse.ArgumentParser(description=usagestr)
+
+parser.add_argument('--nolegend',
+                    action='store_true',
+                    default=False,
+                    help='Do not add a legend to the graph.')
+parser.add_argument('--nodeorder',
+                    default=None,
+                    help='Colon separated list of nodenames. The node axis (y-axis) ' \
+                    'will use the provided ordering instead of lexical ordering. ' \
+                    'Nodes are also limited only to the nodes specified.')
+parser.add_argument('--graphfile',
+                    metavar='GRAPHFILE',
+                    action='store',
+                    default=None,
+                    help='The output graph file. Default is to rename ' \
+                         'SQLITEFILE with a "-top_cpu.png" suffix.')
+parser.add_argument('--plotstyle',
+                    metavar='PLOTSTYLE',
+                    action='store',
+                    default='ggplot',
+                    help='Any valid matplotlib.pyplot plot style. ' \
+                    'Default: ggplot.')
+parser.add_argument('--processnames',
+                    metavar='PROCESSNAME[:PROCESSNAME]*',
+                    action='store',
+                    default='',
+                    help='A colon separated string of process names to include ' \
+                    'in the graph. When not specified, all processes found in the ' \
+                    'top data are plotted. Note, the specified strings must exactly ' \
+                    'match the column titles found in the graph resulting from ' \
+                    'runnning this script without this argument')
+parser.add_argument('--colormap',
+                    metavar='COLORMAP',
+                    default='tab10',
+                    help='Specify the matplotlib colormap name to use for the facetgrid hue. ' \
+                    'The hue encodes the FLOWNUM for each transmitter. Default: tab10.')
+parser.add_argument('--height',
+                    type=float,
+                    action='store',
+                    default=None,
+                    help='Override graph height.')
+parser.add_argument('--width',
+                    type=float,
+                    action='store',
+                    default=None,
+                    help='Override graph width.')
+parser.add_argument('--margins',
+                    metavar='MARGINS',
+                    default='0.85:0.15:0.15:0.9',
+                    help='Colon separated value of top:left:bottom:right graph ' \
+                    'margins. Margins are expressed as a decimal from 0.0 to 1.0 ' \
+                    'where the horizontal margin runs from left to right and the ' \
+                    'vertical margin from bottom to top. So a bottom margin of 0.15 ' \
+                    'is 15% from the bottom of the page and a top margin of 0.8 is ' \
+                    '20% from the top of the page. Default: 0.85:0.15:0.15:0.9')
+parser.add_argument('sqlitefile',
+                    metavar='SQLITEFILE',
+                    action='store',
+                    help='An ETCE sqlite database.')
+
+args = parser.parse_args()
+
+plt.style.use(args.plotstyle)
+
+if not os.path.isfile(args.sqlitefile):
+    print('Could not find file "%s". Quitting.' % args.sqlitefile, file=sys.stderr)
+    exit(1)
+
+con = sqlite3.connect(args.sqlitefile)
+
+dfproc = pd.read_sql('select * from system_processes_processes', con)
+
+dfproc = dfproc[dfproc.pid != 1]
+
+dfproc = dfproc[dfproc.command.str.contains(args.processnames.replace(':','|'))]
+
+dfproc['command'] = dfproc.command.apply(lambda x: x.replace('.','_'))
+
+dfproc['num_cpu'] = dfproc.affinity.apply(lambda x: len(nodestr_to_nodelist(x)))
+
+dfproc['command_runtime'] = (dfproc.system + dfproc.user) / dfproc.num_cpu
+
+dfproc = dfproc.drop(['level_0','index','affinity','system','user','num_cpu'], axis=1)
+
+dfproc.rename(columns={'nodename':'node'}, inplace=True)
+
+# calculate utilization by node, command and pid
+df2 = dfproc.groupby(['trial', 'node', 'command', 'pid']).diff()
+
+dfproc['utilization'] = df2.command_runtime / df2.runtime
+
+dfproc.dropna(inplace=True)
+
+xmin = dfproc.timestamp.min()
+
+xmax = dfproc.timestamp.max()
+
+trials = sorted(dfproc.trial.unique())
+
+nodes = sorted(dfproc.node.unique())
+
+facet_height = 1.0
+
+facet_width = 1.5
+
+aspect = facet_width/facet_height
+
+top_margin, left_margin, bottom_margin, right_margin = \
+    map(float, args.margins.split(':'))
+
+for trial in trials:
+    df = dfproc[dfproc.trial == trial].copy()
+
+    # normalize pid value to an index for each command
+    node_command_pids_map = defaultdict(lambda: [])
+
+    for node, command, pid in sorted(set(zip(df.node, df.command, df.pid))):
+        node_command_pids_map[(node,command)].append(pid)
+
+    df['pid_index'] = [node_command_pids_map[(node,command)].index(pid)+1
+                       for node, command, pid in zip(df.node, df.command, df.pid)]
+
+    print(df)
+
+    g = sns.FacetGrid(df,
+                      row='node',
+                      col='command',
+                      hue='pid_index',
+                      row_order=nodes,
+                      col_order=sorted(df.command.unique()),
+                      sharex=True,
+                      legend_out=True,
+                      aspect=aspect,
+                      xlim=(xmin, xmax),
+                      ylim=(0, 1.0),
+                      palette=args.colormap,
+                      margin_titles=True)
+
+    sp = g.map_dataframe(sns.scatterplot,
+                    x='timestamp',
+                    y='utilization',
+                    marker='.',
+                    linestyle=(0, (0,3)))
+
+    g.set_axis_labels('time (sec)', 'utilization (%)')
+
+    #g.set_titles(col_template="{col_name}", row_template="{row_name}")
+
+    sp.add_legend()
+
+    g.fig.suptitle('CPU Utilization vs. Time')
+
+    if args.height:
+        g.fig.set_figheight(float(args.height))
+
+    if args.width:
+        g.fig.set_figwidth(float(args.width))
+
+    graphfile = \
+        '.'.join(os.path.basename(args.sqlitefile).split('.')[:-1]) + '-' + \
+        ('trial_%02d-' % trial) + \
+        suffix + '.png'
+
+    if args.graphfile:
+        graphfile = args.graphfile % trial
+
+    g.fig.subplots_adjust(top=top_margin,
+                          left=left_margin,
+                          bottom=bottom_margin,
+                          right=right_margin)
+
+    g.fig.savefig(graphfile)

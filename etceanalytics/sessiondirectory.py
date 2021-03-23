@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2015-2021 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,34 +30,50 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
+import os
+from etceanalytics.trialdirectory import TrialDirectory
 
-setup(description='Extendable Test Control Environment',
-      name='python-etce',
-      version='@VERSION@',
-      author='Adjacent Link LLC',
-      author_email='labs at adjacent link doc com',
-      license='BSD',
-      url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
-      namespace_packages=['etcewrappers', 'etceanalyzers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example'],
-                    'etceanalytics' : ['*.xsd']},
-      scripts=[ 'scripts/etce-field-exec',
-                'scripts/etce-list-hosts',
-                'scripts/etce-lxc',
-                'scripts/etce-check-connection',
-                'scripts/etce-test',
-                'scripts/etce-wrapper',
-                'scripts/etce-analyze-file',
-                'scripts/etce-analyze-session',
-                'scripts/etce-mgen-completions-by-flow',
-                'scripts/etce-mgen-latency-vs-time',
-                'scripts/etce-mgen-network-receptions-stripchart',
-                'scripts/etce-mgen-offered-load-vs-time',
-                'scripts/etce-mgen-receive-throughput-vs-time',
-                'scripts/etce-mgen-receptions-vs-time',
-                'scripts/etce-mgen-transmissions-vs-time',
-                'scripts/etce-system-cpu-vs-time'
-      ])
 
+class SessionDirectory(object):
+    def __init__(self, sessiondir):
+        self._sessiondir = sessiondir
+
+        self._resultsdir = os.path.join(sessiondir, 'results')
+
+        trialdirs = [TrialDirectory(sessiondir, entry)
+                     for entry in sorted(os.listdir(sessiondir))
+                     if TrialDirectory.istrialdir(sessiondir, entry)]
+
+        self._testdirsmap = {}
+
+        for trialdir in trialdirs:
+            if not trialdir.testname in self._testdirsmap:
+                self._testdirsmap[trialdir.testname] = []
+
+            self._testdirsmap[trialdir.testname].append(trialdir)
+
+
+    @property
+    def sessiondir(self):
+        return self._sessiondir
+
+
+    @property
+    def resultsdir(self):
+        return self._resultsdir
+
+
+    @property
+    def testdirsmap(self, ):
+        return self._testdirsmap
+
+
+    def __str__(self):
+        s = self.sessiondir + '\n'
+
+        for name, trialdirs in sorted(self.testdirsmap.items()):
+            s += '   ' + name + '\n'
+
+            for trialdir in trialdirs:
+                s += '      ' + trialdir.trialdir + '\n'
+        return s

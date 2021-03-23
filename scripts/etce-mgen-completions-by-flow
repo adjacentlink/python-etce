@@ -1,0 +1,227 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2015-2021 - Adjacent Link LLC, Bridgewater, New Jersey
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+# * Neither the name of Adjacent Link LLC nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+from __future__ import absolute_import, division, print_function
+import argparse
+import matplotlib.pyplot as plt
+import os
+import sys
+import seaborn as sns
+from etceanalyzers.mgen import to_dataframes
+
+
+usagestr = 'Generate a heat map of flow completion percentages. ' \
+           'Transmitter-Flownum is shown along the y-axis and ' \
+           'Receiver-Trial along the x-axis.'
+
+suffix = 'completion_percentage_by_flow'
+
+parser = argparse.ArgumentParser(description=usagestr)
+
+parser.add_argument('--graphfile',
+                    metavar='GRAPHFILE',
+                    action='store',
+                    default=None,
+                    help='The output graph file. Default is to rename ' \
+                    'SQLITEFILE with a "%s.png" suffix.' % suffix)
+parser.add_argument('--csvfile',
+                    action='store_true',
+                    default=False,
+                    help='If specified, store the aggregated DataFrame ' \
+                         'to csvfile.')
+parser.add_argument('--keepselfrxs',
+                    action='store_true',
+                    default=False,
+                    help='Do not remove self receptions from the analysis.')
+parser.add_argument('--rxnodeorder',
+                    default=None,
+                    help='Colon separated list of receiver nodenames. The graph receiver ' \
+                    'axis (x-axis) will use the provided ordering instead of lexical ordering. ' \
+                    'Receivers are also limited only to the nodes specified.')
+parser.add_argument('--txnodeorder',
+                    default=None,
+                    help='Colon separated list of transmitter nodenames. The graph transmitter ' \
+                    'axis (y-axis) will use the provided ordering instead of lexical ordering. ' \
+                    'Transmitters are also limited only to the nodes specified.')
+parser.add_argument('--colormap',
+                    metavar='COLORMAP',
+                    default='viridis',
+                    help='Specify the matplotlib colormap name to use for the facetgrid hue. ' \
+                    'The hue encodes the FLOWNUM for each transmitter. Default: viridis.')
+parser.add_argument('--reversed',
+                    action='store_true',
+                    default=False,
+                    help='Reverse the colormap.')
+parser.add_argument('--height',
+                    type=float,
+                    action='store',
+                    default=None,
+                    help='Override graph height.')
+parser.add_argument('--width',
+                    type=float,
+                    action='store',
+                    default=None,
+                    help='Override graph width.')
+parser.add_argument('--margins',
+                    metavar='MARGINS',
+                    default='0.85:0.15:0.15:0.9',
+                    help='Colon separated value of top:left:bottom:right graph ' \
+                    'margins. Margins are expressed as a decimal from 0.0 to 1.0 ' \
+                    'where the horizontal margin runs from left to right and the ' \
+                    'vertical margin from bottom to top. So a bottom margin of 0.15 ' \
+                    'is 15% from the bottom of the page and a top margin of 0.8 is ' \
+                    '20% from the top of the page. Default: 0.85:0.15:0.15:0.9')
+parser.add_argument('sqlitefile',
+                    metavar='SQLITEFILE',
+                    action='store',
+                    help='An ETCE sqlite database.')
+
+args = parser.parse_args()
+
+if not os.path.isfile(args.sqlitefile):
+    print('Could not find file "%s". Quitting.' % args.sqlitefile, file=sys.stderr)
+    exit(1)
+
+rx,tx = to_dataframes(args.sqlitefile, args.keepselfrxs)
+
+# only count the first reception for purposes of completion percentage
+# (no duplicates)
+rx = rx[rx.occurrence == 1]
+rx.drop(['occurrence'], axis=1)
+
+all_rxers = set(rx.rxnode.unique())
+
+rxg = rx.groupby(['txnode', 'flow', 'rxnode', 'trial'])
+
+rxcounts = rxg.count()['sequence'].unstack('rxnode')
+
+all_txers = set(tx.txnode.unique())
+
+txg = tx.groupby(['txnode', 'flow', 'trial'])
+
+txcounts = txg.count()['sequence']
+
+txcpl = rxcounts.apply(lambda x: x/txcounts).unstack('trial')
+
+if args.txnodeorder:
+    # sort rows based on txnode ordering arg
+    nodeorder = [nodename.strip() for nodename in args.txnodeorder.split(':')]
+
+    # filter out
+    drop_txers = all_txers.difference(nodeorder)
+
+    txcpl.drop(drop_txers, axis=0, level=0, inplace=True)
+
+    # row multi-index is (nodename, flow)
+    flow_max = max(rx.flow)
+
+    def row_keyfunc(multi_index):
+        return flow_max*nodeorder.index(multi_index[0]) + (multi_index[1]-1)
+
+    txcpl = txcpl.reindex(sorted(txcpl.index, key=row_keyfunc), axis=0)
+
+txcpl = txcpl.stack('trial')
+
+if args.rxnodeorder:
+    # sort columns based on rxnode ordering arg
+    nodeorder = [nodename.strip() for nodename in args.rxnodeorder.split(':')]
+
+    # filter out
+    drop_rxers = all_rxers.difference(nodeorder)
+
+    txcpl.drop(drop_rxers, axis=1, inplace=True)
+
+    # column multi-index is (nodename, trial)
+    trial_max = max(rx.trial)
+
+    def column_keyfunc(rxnode):
+        return nodeorder.index(rxnode)
+
+    txcpl = txcpl.reindex(sorted(txcpl.columns, key=column_keyfunc), axis=1)
+
+if args.csvfile:
+    csvfile = \
+        '.'.join(os.path.basename(args.sqlitefile).split('.')[:-1]) + \
+        '-%s.csv' % suffix
+
+    txcpl.to_csv(csvfile)
+
+top_margin, left_margin, bottom_margin, right_margin = \
+    map(float, args.margins.split(':'))
+
+trials = sorted(tx.trial.unique())
+
+for trial in trials:
+    trialcpl = txcpl.loc[(slice(None),slice(None),trial),:]
+
+    rows,cols = trialcpl.shape
+
+    height = rows * 1.0 + 4.0
+    if args.height:
+        height = args.height
+
+    width = cols * 1.0 + 4.0
+    if args.width:
+        width = args.width
+
+    fig = plt.figure(figsize=(width, height))
+
+    ax = fig.add_subplot(111)
+
+    colormap = plt.get_cmap(args.colormap)
+
+    if args.reversed:
+        colormap = colormap.reversed()
+
+    sns.heatmap(trialcpl.droplevel(2), vmin=0.0, vmax=1.0, ax=ax, cmap=colormap)
+
+    ax.set_xticklabels(ax.xaxis.get_majorticklabels(), rotation=90)
+
+    ax.set_yticklabels(ax.yaxis.get_majorticklabels(), rotation=0)
+
+    ax.set_title('Completion Rates by Tx and Rx Node')
+
+    fig.subplots_adjust(top=top_margin,
+                        left=left_margin,
+                        bottom=bottom_margin,
+                        right=right_margin)
+
+    graphfile = args.graphfile
+
+    if not graphfile:
+        graphfile = \
+            '.'.join(os.path.basename(args.sqlitefile).split('.')[:-1]) + '-' + \
+            ('trial_%02d-' % trial) + \
+            suffix + '.png'
+
+    fig.savefig(graphfile)
