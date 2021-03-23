@@ -123,6 +123,16 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/etce-check-connection
 %{_bindir}/etce-test
 %{_bindir}/etce-wrapper
+%{_bindir}/etce-analyze-file
+%{_bindir}/etce-analyze-session
+%{_bindir}/etce-mgen-completions-by-flow
+%{_bindir}/etce-mgen-latency-vs-time
+%{_bindir}/etce-mgen-network-receptions-stripchart
+%{_bindir}/etce-mgen-offered-load-vs-time
+%{_bindir}/etce-mgen-receive-throughput-vs-time
+%{_bindir}/etce-mgen-receptions-vs-time
+%{_bindir}/etce-mgen-transmissions-vs-time
+%{_bindir}/etce-system-cpu-vs-time
 %{use_python2_sitelib}/*
 %doc %{_pkgdocdir}
 %if 0%{?_licensedir:1}
@@ -138,6 +148,16 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/etce-check-connection
 %{_bindir}/etce-test
 %{_bindir}/etce-wrapper
+%{_bindir}/etce-analyze-file
+%{_bindir}/etce-analyze-session
+%{_bindir}/etce-mgen-completions-by-flow
+%{_bindir}/etce-mgen-latency-vs-time
+%{_bindir}/etce-mgen-network-receptions-stripchart
+%{_bindir}/etce-mgen-offered-load-vs-time
+%{_bindir}/etce-mgen-receive-throughput-vs-time
+%{_bindir}/etce-mgen-receptions-vs-time
+%{_bindir}/etce-mgen-transmissions-vs-time
+%{_bindir}/etce-system-cpu-vs-time
 %{python3_sitelib}/*
 %doc %{_pkgdocdir}
 %if 0%{?_licensedir:1}
