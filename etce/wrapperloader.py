@@ -113,7 +113,10 @@ class WrapperLoader(object):
                         candidateclass = wrapper.__dict__[key]
 
                         if callable(candidateclass):
-                            return ('%s.%s' % (packagename, wrappername), candidateclass())
+                            fullname = '%s.%s' % (packagename, wrappername) \
+                                if packagename else wrappername
+
+                            return (fullname, candidateclass())
 
         message = 'No wrapper "%s" found' % wrappername
         raise RuntimeError(message)
