@@ -203,7 +203,13 @@ for trial in trials:
     if args.reversed:
         colormap = colormap.reversed()
 
-    sns.heatmap(trialcpl.droplevel(2), vmin=0.0, vmax=1.0, ax=ax, cmap=colormap)
+    # drop trial index (replicates df.droplevel, added in pandas 0.24.0)
+    # trialcp.droplevel(2)
+    trialcpl.reset_index(inplace=True)
+    trialcpl = trialcpl.drop(columns=['trial'])
+    trialcpl.set_index(['txnode', 'flow'], inplace=True)
+
+    sns.heatmap(trialcpl, vmin=0.0, vmax=1.0, ax=ax, cmap=colormap)
 
     ax.set_xticklabels(ax.xaxis.get_majorticklabels(), rotation=90)
 
