@@ -101,27 +101,28 @@ class Publisher(object):
                          (self._test_directory, base_directory)
                 raise ValueError(errstr)
 
-        # move the files in basedirectory, then test directory
+        subdirectory_map = {}
+
         for srcdir in srcdirs:
-            if srcdir[-1] == '/':
-                srcdir = srcdir[:-1]
+            subdirectory_map.update(self._build_subdirectory_map(srcdir))
 
-            subfiles = self._get_subfiles(srcdir)
+        subdirectory_map = self._prune_unused_template_directories(subdirectory_map)
 
-            for subfile in subfiles:
-                srcfile = os.path.join(srcdir, subfile)
+        # move files to merge directory
+        for _,entry in subdirectory_map.items():
+            srcfile = entry.full_name
 
-                dstfile = os.path.join(mergedir, subfile)
+            dstfile = os.path.join(mergedir, entry.sub_path)
 
-                dirname = os.path.dirname(dstfile)
+            dirname = os.path.dirname(dstfile)
 
-                if not os.path.exists(dirname):
-                    os.makedirs(dirname)
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
 
-                if subfile == TestDirectory.TESTFILENAME:
-                    self._testdoc.rewrite_without_base_directory(dstfile)
-                else:
-                    shutil.copyfile(srcfile, dstfile)
+            if entry.sub_path == TestDirectory.TESTFILENAME:
+                self._testdoc.rewrite_without_base_directory(dstfile)
+            else:
+                shutil.copyfile(srcfile, dstfile)
 
         self._move_extra_files(extrafiles, mergedir)
 
