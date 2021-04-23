@@ -38,6 +38,7 @@ import os
 import sys
 import seaborn as sns
 from etceanalyzers.mgen import to_dataframes
+from etceanalytics.graphutils import scatterplot
 
 
 usagestr = 'Plot packet received throughput per second vs. time.'
@@ -226,7 +227,7 @@ for trial in trials:
                       ylim=(0, ymax),
                       palette=args.colormap)
 
-    sp = g.map_dataframe(sns.scatterplot,
+    sp = g.map_dataframe(scatterplot,
                          x='rxtimesec',
                          y='received',
                          marker='.',
@@ -246,8 +247,8 @@ for trial in trials:
 
     graphfile = \
         '.'.join(os.path.basename(args.sqlitefile).split('.')[:-1]) + '-' + \
-        ('trial_%02d-' % trial) + \
-        suffix + '.png'
+        suffix + \
+        ('-trial_%02d.png' % trial)
 
     if args.graphfile:
         graphfile = args.graphfile % trial

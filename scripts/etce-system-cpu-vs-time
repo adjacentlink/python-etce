@@ -43,7 +43,8 @@ import sqlite3
 import sys
 import seaborn as sns
 from etce.utils import nodestr_to_nodelist
-import pprint
+from etceanalytics.graphutils import scatterplot
+
 
 suffix = 'cpu_utilization_by_process'
 
@@ -188,11 +189,11 @@ for trial in trials:
                       palette=args.colormap,
                       margin_titles=True)
 
-    sp = g.map_dataframe(sns.scatterplot,
-                    x='timestamp',
-                    y='utilization',
-                    marker='.',
-                    linestyle=(0, (0,3)))
+    sp = g.map_dataframe(scatterplot,
+                         x='timestamp',
+                         y='utilization',
+                         marker='.',
+                         linestyle=(0, (0,3)))
 
     g.set_axis_labels('time (sec)', 'utilization (%)')
 
@@ -210,8 +211,8 @@ for trial in trials:
 
     graphfile = \
         '.'.join(os.path.basename(args.sqlitefile).split('.')[:-1]) + '-' + \
-        ('trial_%02d-' % trial) + \
-        suffix + '.png'
+        suffix + \
+        ('-trial_%02d.png' % trial)
 
     if args.graphfile:
         graphfile = args.graphfile % trial

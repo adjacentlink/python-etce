@@ -227,7 +227,7 @@ for trial in trials:
     if not graphfile:
         graphfile = \
             '.'.join(os.path.basename(args.sqlitefile).split('.')[:-1]) + '-' + \
-            ('trial_%02d-' % trial) + \
-            suffix + '.png'
+            suffix + \
+            ('-trial_%02d.png' % trial)
 
     fig.savefig(graphfile)
