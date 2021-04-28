@@ -37,9 +37,7 @@ import matplotlib.pyplot as plt
 import os
 import sys
 import seaborn as sns
-from etceanalyzers.mgen import to_dataframes
 from etceanalytics.graphutils import scatterplot
-
 
 usagestr = 'Plot offered load vs. time.'
 
@@ -51,7 +49,7 @@ parser.add_argument('--graphfile',
                     metavar='GRAPHFILE',
                     default=None,
                     help='The output graph file. Default is to rename ' \
-                    'SQLITEFILE with a "-%s_trial-X.png" suffix.' % suffix)
+                    'SQLITEFILE with a "-%s-trial_X.png" suffix.' % suffix)
 parser.add_argument('--csvfile',
                     action='store_true',
                     default=False,
@@ -81,7 +79,6 @@ parser.add_argument('--colormap',
                     'Default: tab10.')
 parser.add_argument('--ymax',
                     type=int,
-                    action='store',
                     default=None,
                     help='Override graph ymax value.')
 parser.add_argument('--kbits',

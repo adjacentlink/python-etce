@@ -36,56 +36,43 @@ import argparse
 import matplotlib.pyplot as plt
 import os
 import sys
+import pandas as pd
 import seaborn as sns
-from etceanalyzers.mgen import to_dataframes
+import sqlite3
 from etceanalytics.graphutils import scatterplot
 
-usagestr = 'Plot packet receptions per second vs. time.'
+usagestr = 'Plot LTE ENB and UE missed subframes vs time. ' \
+           'This is one measure of LTE experiment fidelity, ' \
+           'similar to TDMA slot errors.'
 
-suffix = 'receptions_vs_time'
+suffix = 'lte_missed_subframes_vs_time'
 
 parser = argparse.ArgumentParser(description=usagestr)
 
+parser.add_argument('--nolegend',
+                    action='store_true',
+                    default=False,
+                    help='Do not add a legend to the graph.')
+parser.add_argument('--nodeorder',
+                    default=None,
+                    help='Colon separated list of nodenames. The node axis (y-axis) ' \
+                    'will use the provided ordering instead of lexical ordering. ' \
+                    'Nodes are also limited only to the nodes specified.')
 parser.add_argument('--graphfile',
                     metavar='GRAPHFILE',
                     default=None,
                     help='The output graph file. Default is to rename ' \
                     'SQLITEFILE with a "-%s-trial_X.png" suffix.' % suffix)
-parser.add_argument('--csvfile',
-                    action='store_true',
-                    default=False,
-                    help='If specified, store the aggregated DataFrame ' \
-                         'to csvfile.')
-parser.add_argument('--keepselfrxs',
-                    action='store_true',
-                    default=False,
-                    help='Do not remove self receptions from the analysis.')
-parser.add_argument('--rxnodeorder',
+parser.add_argument('--ymax',
+                    type=int,
                     default=None,
-                    help='Colon separated list of receiver nodenames. The graph receiver ' \
-                    'axis (x-axis) will use the provided ordering instead of lexical ordering. ' \
-                    'Receivers are also limited only to the nodes specified.')
-parser.add_argument('--txnodeorder',
-                    default=None,
-                    help='Colon separated list of transmitter nodenames. The graph transmitter ' \
-                    'axis (y-axis) will use the provided ordering instead of lexical ordering. ' \
-                    'Transmitters are also limited only to the nodes specified.')
+                    help='Override graph ymax value.')
 parser.add_argument('--plotstyle',
                     metavar='PLOTSTYLE',
                     action='store',
                     default='ggplot',
                     help='Any valid matplotlib.pyplot plot style. ' \
                     'Default: ggplot.')
-parser.add_argument('--colormap',
-                    metavar='COLORMAP',
-                    default='tab10',
-                    help='Specify the matplotlib colormap name to use for the facetgrid hue. ' \
-                    'The hue encodes the FLOWNUM for each transmitter. Default: tab10.')
-parser.add_argument('--ymax',
-                    type=int,
-                    action='store',
-                    default=None,
-                    help='Override graph ymax value.')
 parser.add_argument('--height',
                     type=float,
                     action='store',
@@ -118,103 +105,93 @@ if not os.path.isfile(args.sqlitefile):
     print('Could not find file "%s". Quitting.' % args.sqlitefile, file=sys.stderr)
     exit(1)
 
-rx,tx = to_dataframes(args.sqlitefile, args.keepselfrxs)
+con = sqlite3.connect(args.sqlitefile)
 
-rx['rxtimesec'] = rx.rxtime.apply(int)
+dfenb = pd.read_sql('select * from srslte_enb_tables_counts_subframereceivecounts', con)
 
-all_txers = rx.txnode.unique()
+dfue = pd.read_sql('select * from srslte_ue_tables_counts_subframereceivecounts', con)
 
-num_txers = len(all_txers)
+all_nodes = sorted(list(dfenb.nodename.unique()) + list(dfue.nodename.unique()))
 
-all_rxers = rx.rxnode.unique()
+graph_nodes = all_nodes
 
-num_rxers = len(all_rxers)
+if args.nodeorder:
+    graph_nodes = args.nodeorder.split(':')
 
-rx.drop(['sequence', 'size', 'rxtime', 'txtime', 'occurrence', 'latency'], axis=1, inplace=True)
+    drop_nodes = set(all_nodes).difference(graph_nodes)
 
-rx['rxcount'] = 1
+    if drop_nodes:
+        print('Dropping %s nodes, not included in --nodeorder arg' % ','.join(drop_nodes),
+              file=sys.stderr)
 
-rx = rx.groupby(['trial', 'txnode', 'rxnode', 'flow', 'rxtimesec']).sum()
+num_nodes = len(graph_nodes)
 
-rx.reset_index(inplace=True)
+df_enb = dfenb.groupby(['nodename','trial','timestamp']).sum()
 
-if args.csvfile:
-    csvfile =  \
-        '.'.join(os.path.basename(args.sqlitefile).split('.')[:-1]) + '-' + \
-        suffix + '.csv'
+df_enb = df_enb.unstack(['nodename','trial']).orphans
 
-    tx.to_csv(csvfile)
+df_ue = dfue.groupby(['nodename','trial','timestamp']).sum()
 
-trials = sorted(rx.trial.unique())
+df_ue = df_ue.unstack(['nodename','trial']).orphans
 
-xmax = rx.rxtimesec.max()
+df = pd.merge(df_enb, df_ue, left_index=True, right_index=True).diff()
 
-ymax = 0
+max_orphans = df.max().max()
 
-# override if user specified
-if args.ymax:
-    ymax = args.ymax
-else:
-    ymax = ((rx.rxcount.max() // 10) + 1) * 10
+df = df.stack(['nodename', 'trial']).reset_index()
 
-plt.style.use(args.plotstyle)
+df = df[df.nodename.isin(graph_nodes)]
 
-rxers = sorted(all_rxers)
+df.rename(columns={0:'missed_subframes',
+                        'nodename':'node'}, inplace=True)
 
-txers = sorted(all_txers)
+trials = sorted(df.trial.unique())
 
-if args.rxnodeorder:
-    # order rxers based on rxnodeorder and limit output to these rxers
-    rxers = [nodename.strip() for nodename in args.rxnodeorder.split(':')]
-
-    rx = rx[rx.rxnode.isin(rxers)]
-
-if args.txnodeorder:
-    # order txers based on txnodeorder and limit output to these txers
-    txers = [nodename.strip() for nodename in args.txnodeorder.split(':')]
-
-    rx = rx[rx.txnode.isin(txers)]
-
-rx.rename(columns={'txnode':'tx', 'rxnode':'rx'}, inplace=True)
-
-print(rx)
+num_trials = len(trials)
 
 facet_height = 1.0
 
 facet_width = 1.5
 
-aspect = facet_width/facet_height
+margin = 6.0
+
+aspect = facet_width / facet_height
+
+height = (num_trials * 2.0 + margin) * facet_height
+
+num_cols = 1
+
+width = (num_cols * 2.0 + margin) * facet_width
 
 top_margin, left_margin, bottom_margin, right_margin = \
     map(float, args.margins.split(':'))
 
+show_legend = not args.nolegend
+
+xmax = df.timestamp.max()
+
+ymax = (max_orphans // 10) * 10 + 10
+
 for trial in trials:
-    trial_receptions = rx[rx.trial == trial]
+    trial_orphans = df[df.trial == trial]
 
-    print(trial_receptions)
+    print(trial_orphans)
 
-    g = sns.FacetGrid(trial_receptions,
-                      row='tx',
-                      col='rx',
-                      hue='flow',
-                      row_order=txers,
-                      col_order=rxers,
+    g = sns.FacetGrid(trial_orphans,
+                      row='node',
+                      row_order=graph_nodes,
                       sharex=True,
-                      legend_out=True,
                       aspect=aspect,
                       xlim=(0, xmax),
-                      ylim=(0, ymax),
-                      palette=args.colormap)
+                      ylim=(0, ymax))
 
-    sp = g.map_dataframe(scatterplot,
-                         x='rxtimesec',
-                         y='rxcount',
-                         marker='.',
-                         linestyle=(0, (0,3)))
+    g.map_dataframe(scatterplot,
+                    x='timestamp',
+                    y='missed_subframes',
+                    marker='.',
+                    linestyle=(0, (0,3)))
 
-    sp.add_legend()
-
-    g.set_axis_labels('time (sec)', 'packets')
+    g.set_axis_labels('time (sec)', 'subframes')
 
     if args.height:
         g.fig.set_figheight(float(args.height))
@@ -222,7 +199,7 @@ for trial in trials:
     if args.width:
         g.fig.set_figwidth(float(args.width))
 
-    g.fig.suptitle('Receptions vs. Time')
+    g.fig.suptitle('Missed Subframes vs. Time')
 
     graphfile = \
         '.'.join(os.path.basename(args.sqlitefile).split('.')[:-1]) + '-' + \

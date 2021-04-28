@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2021 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,7 @@ setup(description='Extendable Test Control Environment',
                 'scripts/etce-wrapper',
                 'scripts/etce-analyze-file',
                 'scripts/etce-analyze-session',
+                'scripts/etce-lte-missed-subframes-vs-time',
                 'scripts/etce-mgen-completions-by-flow',
                 'scripts/etce-mgen-latency-vs-time',
                 'scripts/etce-mgen-network-receptions-stripchart',

@@ -51,7 +51,7 @@ parser.add_argument('--graphfile',
                     metavar='GRAPHFILE',
                     default=None,
                     help='The output graph file. Default is to rename ' \
-                    'SQLITEFILE with a "-%s_trial-X.png" suffix.' % suffix)
+                    'SQLITEFILE with a "-%s-trial_X.png" suffix.' % suffix)
 parser.add_argument('--csvfile',
                     action='store_true',
                     default=False,
