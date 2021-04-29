@@ -49,4 +49,4 @@ class TestChainMap(unittest.TestCase):
     def test_miss(self):
         with self.assertRaises(KeyError):
             print self.chainmap['foo7']
-        
+

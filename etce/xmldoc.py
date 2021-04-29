@@ -32,11 +32,16 @@
 
 from pkg_resources import resource_filename
 from lxml import etree
-from lxml.etree import DocumentInvalid,XMLSyntaxError
+from lxml.etree import DocumentInvalid, XMLSyntaxError
 
 from etce.xmldocerror import XMLDocError
 
 class XMLDoc(object):
+    """
+    Base class for parsing and validating ETCE XML
+    documents against the associated schema.
+    """
+
     def __init__(self, schemafile, schemamodule='etce'):
         self._schema = etree.XMLSchema(etree.parse(resource_filename(schemamodule, schemafile)))
 

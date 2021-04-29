@@ -38,7 +38,7 @@ import shutil
 from etce.clientbuilder import ClientBuilder
 from etce.config import ConfigDictionary
 from etce.lxcerror import LXCError
-from etce.lxcmanager import startlxcs,stoplxcs
+from etce.lxcmanager import startlxcs, stoplxcs
 from etce.lxcplanfiledoc import LXCPlanFileDoc
 from etce.platform import Platform
 
@@ -118,7 +118,7 @@ def stopfield(args):
 
     other_hosts = set(plandoc.hostnames()).difference(
         ['localhost', Platform().hostname()])
-    
+
     # stop containers on other hosts, if any
     try:
         if other_hosts:

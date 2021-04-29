@@ -52,7 +52,7 @@ class Olsrd(Wrapper):
 
         ctx.run('olsrd',
                 argstr,
-                stdout=ctx.args.outfile, 
+                stdout=ctx.args.outfile,
                 stderr=ctx.args.outfile,
                 pidincrement=1)
 

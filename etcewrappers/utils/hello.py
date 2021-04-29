@@ -66,6 +66,6 @@ class Hello(Wrapper):
         if ctx.args.verbose:
             argstr = '"%s How ya doing?"' % argstr
         else:
-            argstr = '"%s"' % argstr 
+            argstr = '"%s"' % argstr
 
         ctx.run('echo', argstr, genpidfile=False, stdout=ctx.args.outfile)

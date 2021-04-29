@@ -1,0 +1,99 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2015 - Adjacent Link LLC, Bridgewater, New Jersey
+# All Rights Reserved
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+# * Neither the name of Adjacent Link LLC nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+from __future__ import absolute_import, division, print_function
+import argparse
+import os
+import sys
+from etceanalytics.configdoc import ConfigDoc
+from etceanalytics.analyzermanager import AnalyzerManager
+
+
+if __name__=='__main__':
+
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description='''\
+    Analyze a datafile and place the results in resultdir.
+
+    FileAnalyzer searches the colon separated list of pathnames specified by
+    the ETCEANALYZERSPATH parameter listed in the ~/.etceconf file
+    to locate a python module to analyze the datafile.
+
+    Use the analyzer argument to specify the name of the analyzer to process
+    the datafile. Where no analyzer is specified, the suffix of the datafile,
+    the part of the datafile name after the last hyphen, is used as the
+    analyzer name. For example, the "syslog" analyzer will be evoked to
+    analyze a file named "node-001-syslog".
+
+    The output file is saved to the resultdir with the same name as the input
+    file but with the file extension specified by the analyzer appended.
+    ''')
+
+    parser.add_argument('--analyzer',
+                        help='the datafile to analyze')
+
+    parser.add_argument('--configfile',
+                        default = None,
+                        help='analysis configuration file')
+
+    parser.add_argument('--noreanalyze',
+                        action='store_true',
+                        default=False,
+                        help="Don't recreate an intermediate of final database file if it already exists.")
+
+    parser.add_argument('datafile',
+                        help='the datafile to analyze')
+
+    parser.add_argument('resultdir',
+                        help='the directory to place analysis results')
+
+    args = parser.parse_args()
+
+    if not os.path.exists(args.resultdir):
+        print('Creating result directory "%s"' % args.resultdir)
+        os.makedirs(args.resultdir)
+
+    # default practice is to name the data files with
+    # a suffix that matches the analyzer name. do this
+    # when an analyzer is not specified.
+    if args.analyzer is None:
+        args.analyzer = os.path.basename(args.datafile).split('.')[-2]
+
+    config = ConfigDoc(args.configfile)
+
+    AnalyzerManager(config).analyzefile(None,
+                                        args.datafile,
+                                        args.resultdir,
+                                        args.analyzer,
+                                        args.noreanalyze)

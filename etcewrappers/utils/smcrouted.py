@@ -67,7 +67,7 @@ class SMCRouted(Wrapper):
         ctx.run('smcrouted',
                 argstr,
                 genpidfile=False,
-                stdout=ctx.args.outfile, 
+                stdout=ctx.args.outfile,
                 stderr=ctx.args.outfile)
 
 

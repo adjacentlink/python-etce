@@ -54,7 +54,7 @@ class Ip(Wrapper):
         if not ctx.args.infile:
             return
 
-        with open(ctx.args.outfile,'a') as lfd:
+        with open(ctx.args.outfile, 'a') as lfd:
             for line in open(ctx.args.infile):
                 # skip comments
                 if line.startswith('#'):

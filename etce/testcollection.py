@@ -33,16 +33,22 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import sys
 
 from etce.testdirectory import TestDirectory
 from etce.testcollectionerror import TestCollectionError
+from etce.xmldocerror import XMLDocError
 
 
 class TestCollectionIterator(object):
+    """
+    An iterator over a TestCollection.
+    """
+
     def __init__(self, wrapped):
         self.wrapped = wrapped
         self.index = 0
-        
+
     def next(self):
         return self.__next__()
 
@@ -56,12 +62,16 @@ class TestCollectionIterator(object):
 
 
 class TestCollection(object):
-    '''TestCollection represents a sequence of tests. It is iterable
+    """
+    TestCollection represents a sequence of tests. It is iterable
     and returns an instance of a Test object on each iteration. Test
-    collections may be build in different ways. Two ways that are forseen,
-    building a TestCollection by parsing a subdirectory tree of test files,
-    building a TestCollection by a generator.'''
-    
+    collections may be built in different ways. A TestCollection is
+    built through calls to the adddirectory method. For each call,
+    TestCollection walks the provided path, parses the directory
+    contents and adds TestDirectory objects for each found valid
+    test directory.
+    """
+
     def __init__(self):
         self._tests = {}
 
@@ -110,7 +120,7 @@ class TestCollection(object):
 
 
     def __iter__(self):
-        return TestCollectionIterator([ self._tests[k] for k in sorted(self._tests)])
+        return TestCollectionIterator([self._tests[k] for k in sorted(self._tests)])
 
 
     def __len__(self):
@@ -125,15 +135,15 @@ class TestCollection(object):
 
 
     def _parsetestroot(self, testroot, basedir_override):
-        for dirpath,dirnames,filenames in os.walk(testroot):
+        for dirpath, dirnames, filenames in os.walk(testroot):
             if self._istestdirectory(filenames):
                 test = TestDirectory(dirpath, basedir_override)
 
                 if test.name() in self._tests:
-                    err = '''ERROR: tests must have unique names. Test at 
-                             %s 
-                             and 
-                             %s 
+                    err = '''ERROR: tests must have unique names. Test at
+                             %s
+                             and
+                             %s
                              are both named %s''' % (self._tests[test.name()].location(),
                                                      test.location(),
                                                      test.name())
@@ -167,8 +177,9 @@ def add_list_arguments(parser):
 
 
 def list_tests(args):
-    import sys
-    from etce.xmldocerror import XMLDocError
+    if not os.path.isdir(args.testrootdir):
+        print('Cannot find test directory "%s". Quitting.' % args.testrootdir, file=sys.stderr)
+        exit(1)
 
     collection = TestCollection()
 

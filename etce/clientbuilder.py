@@ -30,13 +30,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import os.path
 import etce.loader
 
 
 """
 Return an instance of the FieldClient implementation
-coded in modulename 
+coded in modulename
 """
 
 
@@ -49,8 +48,8 @@ class ClientBuilder(object):
     def __init__(self):
         # dict of types to implementing modules. These
         # are the clienttypes this builder knows how to build
-        self._clienttypes = { 'SSH_CLIENT':'etce.sshclient',
-                              'DEFAULT_CLIENT':'etce.sshclient'}
+        self._clienttypes = {'SSH_CLIENT':'etce.sshclient',
+                             'DEFAULT_CLIENT':'etce.sshclient'}
 
 
     def clienttypes(self):
@@ -59,7 +58,7 @@ class ClientBuilder(object):
 
     def build(self, hosts, clienttype='DEFAULT_CLIENT', **kwargs):
         m = etce.loader.load_module(self._clienttypes[clienttype])
-        target = getattr(m,'create')
+        target = getattr(m, 'create')
         if callable(target):
             return target(hosts, **kwargs)
 

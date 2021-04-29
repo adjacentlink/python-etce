@@ -44,7 +44,7 @@ from etce.wrapper import Wrapper
 class SysCtlUtil(Wrapper):
     """
     Configure Linux kernel parameters.
-    The input file should have format: 
+    The input file should have format:
 
       [run]
       kernelparamname=val
@@ -71,8 +71,8 @@ class SysCtlUtil(Wrapper):
         parser.read(ctx.args.infile)
 
         if 'run' in parser.sections():
-            for name,val in list(parser.items('run')):
-                os.system('sysctl -w %s=%s' % (name,val))
+            for name, val in list(parser.items('run')):
+                os.system('sysctl -w %s=%s' % (name, val))
 
 
     def stop(self, ctx):
@@ -83,7 +83,5 @@ class SysCtlUtil(Wrapper):
         parser.read(ctx.args.infile)
 
         if 'stop' in parser.sections():
-            for name,val in parser.items('stop'):
-                os.system('sysctl -w %s=%s' % (name,val))
-
-
+            for name, val in parser.items('stop'):
+                os.system('sysctl -w %s=%s' % (name, val))

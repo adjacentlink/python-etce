@@ -31,5 +31,11 @@
 #
 
 class PreconditionError(Exception):
+    """
+    General Error class for raising an exception during
+    the Wrapper prerun method when a Wrapper precondition
+    is not satisfied.
+    """
+
     def __init__(self, message):
         Exception.__init__(self, message)

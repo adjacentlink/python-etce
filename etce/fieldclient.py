@@ -35,10 +35,10 @@ class FieldClient:
     def __init__(self, hosts):
         self.__hosts = hosts
 
-    def put(self, 
-            localsrc, 
-            remotedst, 
-            hosts, 
+    def put(self,
+            localsrc,
+            remotedst,
+            hosts,
             doclobber=False,
             minclobberdepth=2):
         raise NotImplementedError('FieldClient.put')

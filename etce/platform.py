@@ -31,7 +31,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
-import signal
+from signal import SIGQUIT
 import platform
 import etce.loader
 
@@ -63,21 +63,21 @@ def platform_suffix_list():
     if os == 'linux':
         distname = linux_distribution()
         if distname == 'amzn1':
-            suffixes.append('%s.%s.%s' % (os,distname,arch))
-            suffixes.append('%s.%s' % (os,distname))
+            suffixes.append('%s.%s.%s' % (os, distname, arch))
+            suffixes.append('%s.%s' % (os, distname))
             suffixes.append('%s' % os)
         else:
             # insure no '.' in distver (ubuntu does this, for one)
-            distver = platform_dist()[1].lower().replace('.','_')
-            suffixes.append('%s.%s.v%s.%s' % (os,distname,distver,arch))
-            suffixes.append('%s.%s.v%s' % (os,distname,distver))
-            suffixes.append('%s.%s' % (os,distname))
+            distver = platform_dist()[1].lower().replace('.', '_')
+            suffixes.append('%s.%s.v%s.%s' % (os, distname, distver, arch))
+            suffixes.append('%s.%s.v%s' % (os, distname, distver))
+            suffixes.append('%s.%s' % (os, distname))
             suffixes.append('%s' % os)
 
     elif os == 'windows':
-        osversion = platform.release().lower()        
-        suffixes.append('%s.%s.%s' % (os,osversion,arch))
-        suffixes.append('%s.%s' % (os,osversion))
+        osversion = platform.release().lower()
+        suffixes.append('%s.%s.%s' % (os, osversion, arch))
+        suffixes.append('%s.%s' % (os, osversion))
         suffixes.append('%s' % os)
 
     return suffixes
@@ -94,7 +94,7 @@ def linux_distribution():
 
 def platform_architecture():
     # standardize the arch string across os's - use linux naming convention
-    buswidth = platform.architecture()[0].lower()        
+    buswidth = platform.architecture()[0].lower()
     arch = 'i686'
     if buswidth == '64bit':
         arch = 'x86_64'
@@ -103,7 +103,7 @@ def platform_architecture():
 
 class Platform:
     def __init__(self):
-        module = etce.loader.load_etce_module('platformimpl')
+        module = etce.loader.load_etce_module('platformimpl', platform_suffix_list())
         self._impl = etce.loader.load_class_instance_from_module(module)
 
     def getnetworkdevicenames(self):
@@ -153,7 +153,7 @@ class Platform:
 
     def get_date_now(self):
         return self._impl.get_date_now()
-        
+
     def getallpids(self):
         return self._impl.getallpids()
 
@@ -172,10 +172,10 @@ class Platform:
     def readpid(self, pidfile):
         return self._impl.readpid(pidfile)
 
-    def kill(self, pidfile, signal=signal.SIGQUIT, sudo=True):
+    def kill(self, pidfile, signal=SIGQUIT, sudo=True):
         return self._impl.kill(pidfile, signal, sudo)
 
-    def killall(self, applicationname, signal=signal.SIGQUIT, sudo=True):
+    def killall(self, applicationname, signal=SIGQUIT, sudo=True):
         self._impl.killall(applicationname, signal, sudo)
 
     def rmdir(self, subdir):

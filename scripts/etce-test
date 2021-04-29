@@ -68,39 +68,39 @@ def tstamp():
 
 
 def buildtestname(testprefix, testname):
-    return '%s-%s-%s' % (testprefix, testname, tstamp()) 
+    return '%s-%s-%s' % (testprefix, testname, tstamp())
 
 
 def add_run_arguments(parser):
     default_work_directory = ConfigDictionary().get('etce', 'WORK_DIRECTORY')
-    
+
     default_data_directory = os.path.join(default_work_directory, 'data')
 
     parser.add_argument('--basedirectory',
                         default=None,
-                        help='''Specify a path to a test base 
+                        help='''Specify a path to a test base
                         directory, overridding the (optional) value
                         defined in the test test.xml file. The value
-                        may be an absolute path or a relative path 
-                        to the current working directory. 
+                        may be an absolute path or a relative path
+                        to the current working directory.
                         default: None''')
-    parser.add_argument('--configfile', 
-                        action='store', 
+    parser.add_argument('--configfile',
+                        action='store',
                         default=None,
                         help='''Optional config file containing runtime
                         wrapper arguments. default: None.''')
     parser.add_argument('--delaysecs',
                         type=int,
                         default=60,
-                        help='''Number of seconds to delay between end of one, 
+                        help='''Number of seconds to delay between end of one,
                         test and beginning of next. default: 60.''')
     parser.add_argument('--deletecompleted',
                         action='store_true',
                         default=False,
-                        help='''Delete completed test directories on test nodes 
-                        after they are completed and collected to the 
-                        control node. Helps for collecting large data 
-                        sets for test nodes that have limited disk 
+                        help='''Delete completed test directories on test nodes
+                        after they are completed and collected to the
+                        control node. Helps for collecting large data
+                        sets for test nodes that have limited disk
                         space. default: False.''')
     #parser.add_argument('--entryhookfile',
     #                    action='store',
@@ -112,7 +112,7 @@ def add_run_arguments(parser):
                         action='store',
                         default=None,
                         help='''Environment file to invoke on remove nodes
-                        before running the specified command. Must be 
+                        before running the specified command. Must be
                         specified as an absolute file.
                         default: None.''')
     #parser.add_argument('--exithookfile',
@@ -131,7 +131,7 @@ def add_run_arguments(parser):
     parser.add_argument('--hookscript',
                         action='store',
                         default=None,
-                        help='''Use the hookscript argument to specify a script 
+                        help='''Use the hookscript argument to specify a script
                         that will be called before an after each trial. The
                         value of this argument is: script[:userarg]*. The named
                         script is called before and after at each test iteration
@@ -141,19 +141,19 @@ def add_run_arguments(parser):
 
                         default: None.''')
     parser.add_argument('--nocollect',
-                        action='store_true', 
+                        action='store_true',
                         default=False,
                         help='''On test completion, skip the collection
                         step that retrieves test data from the field nodes
                         to the localhost. This may be appropriate when
-                        all field nodes share the local host file system. 
+                        all field nodes share the local host file system.
                         Default: collect.''')
-    parser.add_argument('--numtrials', 
-                        action='store', 
+    parser.add_argument('--numtrials',
+                        action='store',
                         default=1,
                         type=int,
                         help='number of trials to run for each test')
-    parser.add_argument('--kill', 
+    parser.add_argument('--kill',
                         action='store',
                         choices=['before','after','both','none'],
                         default='both',
@@ -164,26 +164,26 @@ def add_run_arguments(parser):
                         tests by killing any process where a lock file is
                         found. Use the kill command to specify when
                         etce-test should attempt clean-up, "before",
-                        "after", "both" (before and after) or "none". 
+                        "after", "both" (before and after) or "none".
                         Default: both.''')
     parser.add_argument('--outdir',
                         action='store',
                         default=default_data_directory,
-                        help='''Local output directory for test artifacts - 
+                        help='''Local output directory for test artifacts -
                         default: %s.''' % default_data_directory)
     parser.add_argument('--quitonerror',
-                        action='store_true', 
+                        action='store_true',
                         default=False,
                         help='''Quit when an error occurs. Default behavior
-                        is to continue to the next test, skipping any 
+                        is to continue to the next test, skipping any
                         remaining trials of the errant test''')
     parser.add_argument('--runtostep',
                         default=None,
-                        help='''Only run the steps file steps up to and 
-                        including the named step. When set, the numtrials 
+                        help='''Only run the steps file steps up to and
+                        including the named step. When set, the numtrials
                         argument is ignored (set to 1), the kill argument
                         "after" is ignored and TESTROOT must only contain
-                        one test. Useful for debugging. default: run all 
+                        one test. Useful for debugging. default: run all
                         steps.''')
     parser.add_argument('--policy',
                         action='store',
@@ -208,7 +208,7 @@ def add_run_arguments(parser):
                         test hosts. If KEYFILE is not an absolute filename
                         it is assumed to be a keyfile in ~/.ssh. When not
                         specified, ETCE tries to determine the appropriate
-                        key to use for each host by inspecting 
+                        key to use for each host by inspecting
                         ~/.ssh/config. If that fails, it will use the
                         default RSA key ~/.ssh/id_rsa if it exists.''')
     parser.add_argument('--user',
@@ -220,7 +220,7 @@ def add_run_arguments(parser):
                         in the ~/.ssh/config file. If not found, uses the
                         current user''')
     parser.add_argument('--quiet',
-                        action='store_true', 
+                        action='store_true',
                         default=False,
                         help='''Print slightly less error information.''')
     parser.add_argument('testprefix',
@@ -231,13 +231,13 @@ def add_run_arguments(parser):
     parser.add_argument('hostfile',
                         metavar='HOSTFILE',
                         action='store',
-                        help='''The ETCE Host file containing the 
+                        help='''The ETCE Host file containing the
                         node names that will perform the tests.''')
     parser.add_argument('testroot',
                         metavar='TESTROOT',
                         nargs='+',
                         action='store',
-                        help='''The root of a directory containing one 
+                        help='''The root of a directory containing one
                         or more ETCE test directories. The contained tests
                         are run.''')
 
@@ -275,7 +275,7 @@ def run_test(args):
               'Please create it before starting.' % workdir,
               file = sys.stderr)
         exit(1)
-            
+
     field = Field(args.hostfile)
 
     platform = Platform()
@@ -284,7 +284,7 @@ def run_test(args):
     # to the current working directory
     if args.basedirectory and not args.basedirectory[0] == os.path.sep:
         args.basedirectory = os.path.join(os.getcwd(), args.basedirectory)
-    
+
     # compose the test collection from test roots
     try:
         tests = TestCollection()
@@ -305,7 +305,7 @@ def run_test(args):
         exit(1)
     else:
         print(tests)
-        
+
     if args.runtostep:
         if args.numtrials > 1 or len(tests) > 1:
             print('Cannot mix --runtostep option with ' \
@@ -352,13 +352,13 @@ def run_test(args):
         testdivider = '='*15
 
         stepdivider = '-'*10
-        
+
         filtersteps = []
         if args.filtersteps:
             filtersteps = args.filtersteps.split(':')
 
         hookfiles = []
-        
+
         entryhookfile = None
         #entryhookfile = config.get('etcetest', 'ENTRYHOOKFILE', args.entryhookfile)
         entryhooksteps = []
@@ -370,8 +370,8 @@ def run_test(args):
                 exit(1)
             hookfiles.append(entryhookfile)
             entryhooksteps = \
-                StepsFileDoc(entryhookfile).getsteps(None, 
-                                                     args.runtostep, 
+                StepsFileDoc(entryhookfile).getsteps(None,
+                                                     args.runtostep,
                                                      filtersteps)
 
         exithookfile = None
@@ -385,8 +385,8 @@ def run_test(args):
                 exit(1)
             hookfiles.append(exithookfile)
             exithooksteps = \
-                StepsFileDoc(exithookfile).getsteps(None, 
-                                                    args.runtostep, 
+                StepsFileDoc(exithookfile).getsteps(None,
+                                                    args.runtostep,
                                                     filtersteps)
 
         hookscript_format = None
@@ -440,11 +440,11 @@ def run_test(args):
                                                        policy=args.policy,
                                                        sshkey=args.sshkey,
                                                        envfile=args.envfile)
-                    
+
 
                     # prepare test template directory - copy it to fixed
                     # location and add config file and hostsfile
-                    extrafiles = [(args.hostfile, 
+                    extrafiles = [(args.hostfile,
                                    TestDirectory.HOSTFILENAME)]
 
                     if args.configfile is not None:
@@ -462,14 +462,14 @@ def run_test(args):
                                                   test.stepsfile()))
 
                     steps = \
-                        stepsfiledoc.getsteps(None, 
-                                              args.runtostep, 
+                        stepsfiledoc.getsteps(None,
+                                              args.runtostep,
                                               filtersteps)
 
                     # put the template directory to the rootnodes
                     client.put(localtesttemplatedir,
                                remoteresultssubdir,
-                               filesystemnodes, 
+                               filesystemnodes,
                                doclobber=True)
 
                     # compute trialdir
@@ -481,11 +481,11 @@ def run_test(args):
                     timestamp = trialstart.isoformat()
 
                     # lop off microsecs
-                    timestamp = timestamp[0:timestamp.rfind('.')] 
+                    timestamp = timestamp[0:timestamp.rfind('.')]
 
                     # compute start time based on time synced field time
                     starttime = etce.timeutils.time_offset( \
-                        etce.timeutils.field_time_now(client, worknodes), 
+                        etce.timeutils.field_time_now(client, worknodes),
                         args.delaysecs,
                         quantizesecs=10)
 
@@ -498,7 +498,7 @@ def run_test(args):
                     if args.kill == 'before' or args.kill == 'both':
                         client.execute('kill kill %d True' % signal.SIGQUIT, allnodes)
 
-                    remotetemplatedir = os.path.join(remoteresultssubdir, 'template') 
+                    remotetemplatedir = os.path.join(remoteresultssubdir, 'template')
 
                     # call testprepper to publish test definition and
                     # create logdir on the root nodes
@@ -597,6 +597,8 @@ def run_test(args):
         print('Quitting on interrupt.')
     except FieldConnectionError as fce:
         print('\n' + str(fce) + '\n', file=sys.stderr)
+    except XMLDocError as xmle:
+        print('\n' + str(xmle) + '\n', file=sys.stderr)
     except Exception as e:
         print('\n' + str(e) + '\n', file=sys.stderr)
         if not args.quiet:
@@ -624,29 +626,29 @@ def main():
 
     # run
     parser_run = \
-        subparsers.add_parser('run', 
+        subparsers.add_parser('run',
                               help='Run tests.',
                               description='''Run the tests found under
                               the TESTROOT directory on the hosts named
                               in the HOSTFILE.''')
-    
+
     add_run_arguments(parser_run)
 
     parser_run.set_defaults(func=run_test)
 
     # publish
     parser_publish = \
-        subparsers.add_parser('publish', 
+        subparsers.add_parser('publish',
                               help='''Publish a test, filling in template
                               values.''',
-                              description='''Publish the specified 
+                              description='''Publish the specified
                               TESTDIRECTORY filling in overlay values.
                               Overlay values are specified:
                               1) in the [overlays] section of the etce.conf
                               file, 2) in the test test.xml file,
-                              3) in the optional OVERLAYFILE argument - with 
+                              3) in the optional OVERLAYFILE argument - with
                               later values taking precedence. Overlay names
-                              listed in the IGNOREFILE are left in the 
+                              listed in the IGNOREFILE are left in the
                               generated files. The resulting test is written
                               to OUTDIRECTORY.''')
 
@@ -656,11 +658,11 @@ def main():
 
     # list
     parser_list = \
-        subparsers.add_parser('list', 
+        subparsers.add_parser('list',
                               help='List test details.',
-                              description='''Print information about the ETCE 
-                              test directories found under TESTROOTDIR. The 
-                              optional pattern argument limits output to 
+                              description='''Print information about the ETCE
+                              test directories found under TESTROOTDIR. The
+                              optional pattern argument limits output to
                               tests with names matching the pattern.''')
 
     add_list_arguments(parser_list)

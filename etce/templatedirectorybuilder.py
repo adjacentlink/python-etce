@@ -32,17 +32,22 @@
 
 from __future__ import absolute_import, division, print_function
 
-import copy
 import os
 
-from etce.utils import nodestr_to_nodelist,configstrtoval
-from etce.templateutils import format_file,format_string
+from etce.utils import configstrtoval
+from etce.templateutils import format_file, format_string
 from etce.chainmap import ChainMap
 from etce.config import ConfigDictionary
 from etce.overlaylistchainfactory import OverlayListChainFactory
 
 
 class TemplateDirectoryBuilder(object):
+    """
+    Creates a realized configuration directory from a template directory
+    using the provided text overlays for each index in the provided
+    indices.
+    """
+
     def __init__(self,
                  templatedirelem,
                  indices,
@@ -53,13 +58,13 @@ class TemplateDirectoryBuilder(object):
         self._templates_global_overlaylists = templates_global_overlaylists
 
         template_suffix = ConfigDictionary().get('etce', 'TEMPLATE_DIRECTORY_SUFFIX')
-        
+
         self._name = templatedirelem.attrib['name']
 
         self._template_directory_name = '.'.join([self._name, template_suffix])
-        
+
         self._indices = indices
-        
+
         self._relative_path, \
         self._hostname_format = self._read_attributes(templatedirelem)
 
@@ -169,7 +174,7 @@ class TemplateDirectoryBuilder(object):
                                     self._template_local_overlays,
                                     self._templates_global_overlaylists[index],
                                     self._global_overlays)
-        
+
         reserved_overlays['etce_hostname'] = format_string(self._hostname_format, etce_hostname_cm)
 
         if logdir:
@@ -178,24 +183,24 @@ class TemplateDirectoryBuilder(object):
 
         node_publishdir = os.path.join(publishdir, reserved_overlays['etce_hostname'])
 
-        non_reserved_overlays = [ runtime_overlays,
-                                  env_overlays,
-                                  self._template_local_overlaylists[index],
-                                  self._template_local_overlays,
-                                  self._templates_global_overlaylists[index],
-                                  self._global_overlays,
-                                  etce_config_overlays ] 
-        
+        non_reserved_overlays = [runtime_overlays,
+                                 env_overlays,
+                                 self._template_local_overlaylists[index],
+                                 self._template_local_overlays,
+                                 self._templates_global_overlaylists[index],
+                                 self._global_overlays,
+                                 etce_config_overlays]
+
         other_keys = set([])
 
         for some_overlays in non_reserved_overlays:
             other_keys.update(some_overlays)
 
-        key_clashes =  other_keys.intersection(set(reserved_overlays))
+        key_clashes = other_keys.intersection(set(reserved_overlays))
 
         if key_clashes:
             raise ValueError('Overlay keys {%s} are reserved. Quitting.' % \
-                             ','.join(map(str,key_clashes)))
+                             ','.join(map(str, key_clashes)))
 
         overlays = ChainMap(reserved_overlays, *non_reserved_overlays)
 
@@ -209,7 +214,7 @@ class TemplateDirectoryBuilder(object):
 
         found = False
 
-        for relpath,entry in subdirectory_map.items():
+        for relpath, entry in subdirectory_map.items():
             # only process files for this template
             if not relpath.startswith(self._relative_path + '/'):
                 continue
@@ -220,7 +225,7 @@ class TemplateDirectoryBuilder(object):
             if not pathtoks[0] == self.template_directory_name:
                 continue
 
-            dstfile = os.path.join(node_publishdir,*pathtoks[1:])
+            dstfile = os.path.join(node_publishdir, *pathtoks[1:])
 
             dstdir = os.path.dirname(dstfile)
 
@@ -252,4 +257,3 @@ class TemplateDirectoryBuilder(object):
         retstr += self._name + '\n'
         retstr += ' '.join(map(str, self._indices))
         return retstr
-

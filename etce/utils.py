@@ -40,7 +40,6 @@ import shlex
 import shutil
 import subprocess
 import sys
-import syslog
 import tarfile
 import tempfile
 
@@ -57,20 +56,23 @@ def generate_tempfile_name(directory=None, prefix=None):
 
     if directory:
         if prefix:
-            fd,name = tempfile.mkstemp(dir=directory, prefix=prefix)
+            fd, name = tempfile.mkstemp(dir=directory, prefix=prefix)
         else:
-            fd,name = tempfile.mkstemp(dir=directory)
-            
+            fd, name = tempfile.mkstemp(dir=directory)
+
         os.close(fd)
+
         os.remove(name)
     else:
         if prefix:
-            fd,name = tempfile.mkstemp(prefix=prefix)
+            fd, name = tempfile.mkstemp(prefix=prefix)
         else:
-            fd,name = tempfile.mkstemp()
+            fd, name = tempfile.mkstemp()
 
         os.close(fd)
+
         os.remove(name)
+
         name = os.path.basename(name)
 
     return name
@@ -92,15 +94,15 @@ def tarzip(srclist, dstarchive=None):
         for src in srclist:
             t.add(src, os.path.basename(src))
     finally:
-        t.close()    
-    
+        t.close()
+
     return dstarchive
 
 
 def prepfiles(srcsubdir):
     # find the named subdir, tar it up and return it's absolute path
     # or None if path doesn't exist
-    etcedir = ConfigDictionary().get('etce','WORK_DIRECTORY')
+    etcedir = ConfigDictionary().get('etce', 'WORK_DIRECTORY')
     srcabsdir = os.path.join(etcedir, srcsubdir)
     parentdir = os.path.dirname(srcabsdir)
     child = os.path.basename(srcabsdir)
@@ -109,8 +111,8 @@ def prepfiles(srcsubdir):
         os.chdir(parentdir)
         if not os.path.exists(child):
             return None
-        tarfile = tarzip([child])
-        return os.path.join(parentdir, tarfile)
+
+        return os.path.join(parentdir, tarzip([child]))
     finally:
         os.chdir(cwd)
 
@@ -125,7 +127,7 @@ def untarzip(tarname, dstpath, clobber, minclobberdepth, deletetar):
 
     # get first level names in the tarfile
     t = tarfile.open(tarname, 'r:gz')
-    tarsubdirs = set([ name.split(os.sep)[0] for name in t.getnames()])
+    tarsubdirs = set([name.split(os.sep)[0] for name in t.getnames()])
 
     # calculate the absolute destination path, rooted at WORK_DIRECTORY
     etcedir = ConfigDictionary().get('etce', 'WORK_DIRECTORY')
@@ -143,14 +145,14 @@ def untarzip(tarname, dstpath, clobber, minclobberdepth, deletetar):
     if len(collisionentries) > 0:
         # ... there is a collision ...
         if not clobber:
-            firstcollision =  collisionentries.pop()
+            firstcollision = collisionentries.pop()
             error = 'Error: directory %s already exists. ' \
                     'Quitting.' % os.path.join(extractdir, firstcollision)
             raise RuntimeError(error)
         else:
             # ... or the target directory is less than minclobber depth
-            depth = sum([ 1 for tok in extractdir.split('/')
-                          if len(tok.strip()) > 0])
+            depth = sum([1 for tok in extractdir.split('/')
+                         if len(tok.strip()) > 0])
             if depth < minclobberdepth:
                 error = 'Error: target directory %s is less than ' \
                         'minclobberdepth(%d). Quitting.' % (extractdir, minclobberdepth)
@@ -186,7 +188,7 @@ def daemonize_command(commandstr,
     # 3. if daemonize - do it
     pid = daemonize()
     if  pid > 0:
-        return pid,None
+        return (pid, None)
 
     stdoutfd = None
     stderrfd = None
@@ -206,11 +208,11 @@ def daemonize_command(commandstr,
     # 5. create the Popen subprocess
     sp = subprocess.Popen(command, stdout=stdoutfd, stderr=stderrfd)
 
-    return 0,sp
+    return (0, sp)
 
 
 def daemonize():
-    softlimit,hardlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
+    softlimit, hardlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
 
     pid = os.fork()
     if pid > 0:
@@ -223,16 +225,16 @@ def daemonize():
 
     # double fork
     pid = os.fork()
-    if pid > 0:            
+    if pid > 0:
         sys.exit(0)
 
-    for fd in range(0,hardlimit):
+    for fd in range(0, hardlimit):
         try:
             os.close(fd)
         except:
             pass
 
-    fd0 = os.open("/dev/null",os.O_RDWR)
+    fd0 = os.open("/dev/null", os.O_RDWR)
     fd1 = os.dup(fd0)
     fd2 = os.dup(fd0)
 
@@ -245,12 +247,12 @@ def hostsfromarg(hostlist):
         # either it's a file
         if os.path.exists(entry) and os.path.isfile(entry):
             with open(entry, 'r') as f:
-                hosts = [ host.strip() for host in f if host.strip() ]
+                hosts = [host.strip() for host in f if host.strip()]
         # or the name of a node
         else:
             hosts.append(entry)
 
-    return hosts  
+    return hosts
 
 
 def timestamp():
@@ -259,7 +261,7 @@ def timestamp():
 
 
 def nodestr_to_nodelist(nodestr):
-    nodes=[]
+    nodes = []
 
     if not nodestr:
         return nodes
@@ -279,12 +281,14 @@ def nodestr_to_nodelist(nodestr):
         newnodes = []
 
         if startendpoint > stopendpoint:
-            newnodes = [ i for i in range(startendpoint,stopendpoint-1,-1) ]
+            newnodes = [i for i in range(startendpoint, stopendpoint-1, -1)]
         else:
-            newnodes = [ i for i in range(startendpoint,stopendpoint+1) ]
+            newnodes = [i for i in range(startendpoint, stopendpoint+1)]
+
         for i in newnodes:
             if not i in nodes:
                 nodes.append(i)
+
     return nodes
 
 
@@ -322,4 +326,3 @@ def configstrtoval(valstr, argtype=None):
         return False
     # string
     return valstr
-

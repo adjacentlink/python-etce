@@ -31,10 +31,7 @@
 #
 
 import datetime
-import os
 import time
-
-import etce.platform
 
 
 def getstrtimenow():
@@ -61,12 +58,14 @@ def datetimetostrtime(dtime, truncate=True):
 
 
 def strtimetodatetime(referencetime, truncatesecs=True):
-    date,time = referencetime.split('T')
-    yr,mn,dy = date.split('-')
-    hr,mt,sc = time.split(':')
+    dt, tm = referencetime.split('T')
+    yr, mn, dy = dt.split('-')
+    hr, mt, sc = tm.split(':')
     seconds = float(sc)
+
     if truncatesecs:
-        seconds=int(seconds)
+        seconds = int(seconds)
+
     return datetime.datetime(year=int(yr),
                              month=int(mn),
                              day=int(dy),
@@ -77,8 +76,8 @@ def strtimetodatetime(referencetime, truncatesecs=True):
 
 def field_time_now(client, hosts):
     reftimemap = client.execute('timeutils getstrtimenow', [hosts[0]])
-    return reftimemap[hosts[0]].retval['result'] 
-    
+    return reftimemap[hosts[0]].retval['result']
+
 
 def time_offset(referencetimestr, delayseconds, quantizesecs=None):
     referencetime = strtimetodatetime(referencetimestr)
@@ -115,10 +114,10 @@ def sleep_until(waketimestr, maxsleepsecs=180.0):
     '''
     Sleeps until waketimestr, but not more than maxsleepsecs.
 
-    waketimestr is a string in format YY-MM-DDTHH:MM:SS. If waketimestr is in 
+    waketimestr is a string in format YY-MM-DDTHH:MM:SS. If waketimestr is in
     the past an exception is thrown.
 
-    maxsleepsecs is ignored if set less than or equal to 0. If waketimestr 
+    maxsleepsecs is ignored if set less than or equal to 0. If waketimestr
     exceeds maxsleepsecs into the future, an exception is thrown.
     '''
     nowtime = datetime.datetime.now()

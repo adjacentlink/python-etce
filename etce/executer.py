@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2021 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,12 +30,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import copy
 import os
 import os.path
 
-import etce.loader
-import etce.timeutils
 from etce.testdirectory import TestDirectory
 from etce.stepsfiledoc import StepsFileDoc
 from etce.config import ConfigDictionary
@@ -63,7 +60,7 @@ class Executer(object):
             return
 
         logdirectory = os.path.join(
-            self._config.get('etce','WORK_DIRECTORY'),
+            self._config.get('etce', 'WORK_DIRECTORY'),
             logsubdirectory,
             hostname)
 
@@ -80,17 +77,17 @@ class Executer(object):
 
             wldr = WrapperLoader()
 
-            for wrapperentry,methodname,testargs in wrappers:
-                wrapperinstance = \
+            for wrapperentry, methodname, testargs in wrappers:
+                fullwrappername,wrapperinstance = \
                     wldr.loadwrapper(wrapperentry.name,
                                      self._stepsfiledoc.getpackageprefixes())
-                
+
                 # ensure each wrapper is called with the testdirectory as
                 # the current working directory, and with it's own
                 # instance of the wrapper context
                 os.chdir(hostdir)
 
-                ctx = WrapperContext(WrapperContextImpl(wrapperentry.name,
+                ctx = WrapperContext(WrapperContextImpl(fullwrappername,
                                                         wrapperinstance,
                                                         trialargs,
                                                         testargs,
@@ -105,5 +102,3 @@ class Executer(object):
                     wrapperinstance.postrun(ctx)
                 else:
                     wrapperinstance.stop(ctx)
-
-

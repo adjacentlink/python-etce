@@ -35,6 +35,14 @@ import os
 
 
 class WrapperStore(object):
+    """
+    Store object for Wrapppers to note and save test
+    conditions as name/value pairs. Values are stored in json format
+    to the etce.store file in each of the host data directories.
+    A store is automatically past to each wrapper as part of the
+    WrapperContext and can be accessed via the ctx.store method.
+    """
+
     def __init__(self, backingfilename):
         if len(backingfilename) == 0:
             raise ValueError('ETCEStore backingfilename cannot be length 0.')
@@ -59,7 +67,7 @@ class WrapperStore(object):
         store = {}
 
         if os.path.exists(self._backingfile):
-            with open(self._backingfile, 'r') as fd:    
+            with open(self._backingfile, 'r') as fd:
                 # read out
                 try:
                     store = json.load(fd)

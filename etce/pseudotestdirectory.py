@@ -43,7 +43,7 @@ class PseuedoTestDirectoryError(Exception):
 
 class PseudoTestDirectory(object):
     '''
-    PseudoTestDirectory is used 
+    PseudoTestDirectory is used
     '''
     def __init__(self, configfiledoc, nodename):
         self._configfile = configfiledoc
@@ -80,7 +80,7 @@ class PseudoTestDirectory(object):
                     return name
 
         print('File "%s" not found.' % name)
-        
+
         return None
 
 

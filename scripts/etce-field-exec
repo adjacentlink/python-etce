@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2021 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,14 +49,14 @@ import sys
 import etce.loader
 import etce.utils
 from etce.config import ConfigDictionary
-from etce.platform import Platform
+from etce.platform import Platform, platform_suffix_list
 from etce.sshclient import SSHClient
 
 #gc.garbage.append(sys.stdout)
 #sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 def sendreturnandexit(isexception,
-                      result):    
+                      result):
     tracebackmsg = ''
     if isexception:
         tracebackmsg = traceback.format_exc()
@@ -64,7 +64,7 @@ def sendreturnandexit(isexception,
     print(json.dumps({ 'isexception':isexception, 'result':result, 'traceback':tracebackmsg }))
     print(SSHClient.RETURNVALUE_CLOSE_DEMARCATOR)
     sys.stdout.flush()
-    
+
     if(isexception):
         sys.exit(1)
     else:
@@ -75,9 +75,9 @@ usagestr = '''
 description: Dynamically loads and runs the Python method:
 
              modulename.methodname(methodarg1, methodarg2, ...).
-             
+
              where modulename specifies a Python module found in the
-             "etce" package. 
+             "etce" package.
 
              etce-field-exec is not intended to be called directly. It
              is invoked by other etce applications over an SSH connection on
@@ -90,7 +90,7 @@ parser.add_argument('--cwd',
                     action='store',
                     default='',
                     help='''Specifies the subdirectory under the WORK_DIRECTORY configuration
-                    root directory where etce will switch to before executing 
+                    root directory where etce will switch to before executing
                     the named method. Default is just WORK_DIRECTORY itself''')
 parser.add_argument('modulename',
                     metavar='MODULENAME',
@@ -156,7 +156,9 @@ if verbose:
     print('etce: Running from %s' % workingdir)
 
 try:
-    method = etce.loader.load_etce_method(args.modulename, args.methodname)
+    method = etce.loader.load_etce_method(args.modulename,
+                                          args.methodname,
+                                          platform_suffix_list())
 
     if method:
         if len(args.methodargs) == 2:

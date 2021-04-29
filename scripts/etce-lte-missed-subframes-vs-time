@@ -1,0 +1,217 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2020-2021 - Adjacent Link LLC, Bridgewater, New Jersey
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+# * Neither the name of Adjacent Link LLC nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+from __future__ import absolute_import, division, print_function
+import argparse
+import matplotlib.pyplot as plt
+import os
+import sys
+import pandas as pd
+import seaborn as sns
+import sqlite3
+from etceanalytics.graphutils import scatterplot
+
+usagestr = 'Plot LTE ENB and UE missed subframes vs time. ' \
+           'This is one measure of LTE experiment fidelity, ' \
+           'similar to TDMA slot errors.'
+
+suffix = 'lte_missed_subframes_vs_time'
+
+parser = argparse.ArgumentParser(description=usagestr)
+
+parser.add_argument('--nolegend',
+                    action='store_true',
+                    default=False,
+                    help='Do not add a legend to the graph.')
+parser.add_argument('--nodeorder',
+                    default=None,
+                    help='Colon separated list of nodenames. The node axis (y-axis) ' \
+                    'will use the provided ordering instead of lexical ordering. ' \
+                    'Nodes are also limited only to the nodes specified.')
+parser.add_argument('--graphfile',
+                    metavar='GRAPHFILE',
+                    default=None,
+                    help='The output graph file. Default is to rename ' \
+                    'SQLITEFILE with a "-%s-trial_X.png" suffix.' % suffix)
+parser.add_argument('--ymax',
+                    type=int,
+                    default=None,
+                    help='Override graph ymax value.')
+parser.add_argument('--plotstyle',
+                    metavar='PLOTSTYLE',
+                    action='store',
+                    default='ggplot',
+                    help='Any valid matplotlib.pyplot plot style. ' \
+                    'Default: ggplot.')
+parser.add_argument('--height',
+                    type=float,
+                    action='store',
+                    default=None,
+                    help='Override graph height.')
+parser.add_argument('--width',
+                    type=float,
+                    action='store',
+                    default=None,
+                    help='Override graph width.')
+parser.add_argument('--margins',
+                    metavar='MARGINS',
+                    default='0.85:0.15:0.15:0.9',
+                    help='Colon separated value of top:left:bottom:right graph ' \
+                    'margins. Margins are expressed as a decimal from 0.0 to 1.0 ' \
+                    'where the horizontal margin runs from left to right and the ' \
+                    'vertical margin from bottom to top. So a bottom margin of 0.15 ' \
+                    'is 15%% from the bottom of the page and a top margin of 0.8 is ' \
+                    '20%% from the top of the page. Default: 0.85:0.15:0.15:0.9')
+parser.add_argument('sqlitefile',
+                    metavar='SQLITEFILE',
+                    action='store',
+                    help='An ETCE sqlite database.')
+
+args = parser.parse_args()
+
+plt.style.use(args.plotstyle)
+
+if not os.path.isfile(args.sqlitefile):
+    print('Could not find file "%s". Quitting.' % args.sqlitefile, file=sys.stderr)
+    exit(1)
+
+con = sqlite3.connect(args.sqlitefile)
+
+dfenb = pd.read_sql('select * from srslte_enb_tables_counts_subframereceivecounts', con)
+
+dfue = pd.read_sql('select * from srslte_ue_tables_counts_subframereceivecounts', con)
+
+all_nodes = sorted(list(dfenb.nodename.unique()) + list(dfue.nodename.unique()))
+
+graph_nodes = all_nodes
+
+if args.nodeorder:
+    graph_nodes = args.nodeorder.split(':')
+
+    drop_nodes = set(all_nodes).difference(graph_nodes)
+
+    if drop_nodes:
+        print('Dropping %s nodes, not included in --nodeorder arg' % ','.join(drop_nodes),
+              file=sys.stderr)
+
+num_nodes = len(graph_nodes)
+
+df_enb = dfenb.groupby(['nodename','trial','timestamp']).sum()
+
+df_enb = df_enb.unstack(['nodename','trial']).orphans
+
+df_ue = dfue.groupby(['nodename','trial','timestamp']).sum()
+
+df_ue = df_ue.unstack(['nodename','trial']).orphans
+
+df = pd.merge(df_enb, df_ue, left_index=True, right_index=True).diff()
+
+max_orphans = df.max().max()
+
+df = df.stack(['nodename', 'trial']).reset_index()
+
+df = df[df.nodename.isin(graph_nodes)]
+
+df.rename(columns={0:'missed_subframes',
+                        'nodename':'node'}, inplace=True)
+
+trials = sorted(df.trial.unique())
+
+num_trials = len(trials)
+
+facet_height = 1.0
+
+facet_width = 1.5
+
+margin = 6.0
+
+aspect = facet_width / facet_height
+
+height = (num_trials * 2.0 + margin) * facet_height
+
+num_cols = 1
+
+width = (num_cols * 2.0 + margin) * facet_width
+
+top_margin, left_margin, bottom_margin, right_margin = \
+    map(float, args.margins.split(':'))
+
+show_legend = not args.nolegend
+
+xmax = df.timestamp.max()
+
+ymax = (max_orphans // 10) * 10 + 10
+
+for trial in trials:
+    trial_orphans = df[df.trial == trial]
+
+    print(trial_orphans)
+
+    g = sns.FacetGrid(trial_orphans,
+                      row='node',
+                      row_order=graph_nodes,
+                      sharex=True,
+                      aspect=aspect,
+                      xlim=(0, xmax),
+                      ylim=(0, ymax))
+
+    g.map_dataframe(scatterplot,
+                    x='timestamp',
+                    y='missed_subframes',
+                    marker='.',
+                    linestyle=(0, (0,3)))
+
+    g.set_axis_labels('time (sec)', 'subframes')
+
+    if args.height:
+        g.fig.set_figheight(float(args.height))
+
+    if args.width:
+        g.fig.set_figwidth(float(args.width))
+
+    g.fig.suptitle('Missed Subframes vs. Time')
+
+    graphfile = \
+        '.'.join(os.path.basename(args.sqlitefile).split('.')[:-1]) + '-' + \
+        suffix + \
+        ('-trial_%02d.png' % trial)
+
+    if args.graphfile:
+        graphfile = args.graphfile % trial
+
+    g.fig.subplots_adjust(top=top_margin,
+                          left=left_margin,
+                          bottom=bottom_margin,
+                          right=right_margin)
+
+    g.fig.savefig(graphfile)

@@ -1,0 +1,78 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:simpleType name="integerRange">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\d+(-\d+)?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="nodeSet">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="(\d+(-\d+)?)(,(\d+(-\d+)?))*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:attributeGroup name="pathlossranges-required">
+    <xs:attribute name="intragrouppathlossrange" type="integerRange" use="required"/>
+    <xs:attribute name="intergrouppathlossrange" type="integerRange" use="required"/>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="pathlossranges">
+    <xs:attribute name="intragrouppathlossrange" type="integerRange" use="optional"/>
+    <xs:attribute name="intergrouppathlossrange" type="integerRange" use="optional"/>
+  </xs:attributeGroup>
+
+  <xs:element name="phase">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="transition" minOccurs="0" maxOccurs="1">
+            <xs:complexType>
+                <xs:attribute name="durationsecs" type="xs:nonNegativeInteger" use="required"/>
+                <xs:attribute name="stepsizesecs" type="xs:positiveInteger" use="required"/>
+            </xs:complexType>
+        </xs:element>
+
+        <xs:element name="waypoint">
+        	  <xs:complexType>
+                <xs:sequence>
+	                  <xs:element name="group" minOccurs="0" maxOccurs="unbounded">
+	                      <xs:complexType>
+		                        <xs:attribute name="membership" type="nodeSet" use="required"/>
+   	                        <xs:attribute name="id" type="xs:string" use="optional"/>
+                        </xs:complexType>
+                    </xs:element>
+                </xs:sequence>
+                <xs:attribute name="durationsecs" type="xs:nonNegativeInteger" use="required"/>
+                <xs:attributeGroup ref="pathlossranges"/>
+            </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="phasegroup">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element ref="phase" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="repeatcount" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="pathlossscenario">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="phases">
+            <xs:complexType>
+                <xs:choice  minOccurs="1" maxOccurs="unbounded">
+                    <xs:element ref="phase"/>
+                    <xs:element ref="phasegroup"/>
+                </xs:choice>
+                <xs:attribute name="starttime" type="xs:nonNegativeInteger"/>
+                <xs:attributeGroup ref="pathlossranges-required"/>
+            </xs:complexType>
+        </xs:element>
+     </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

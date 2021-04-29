@@ -41,9 +41,9 @@ from etce.eelsequencer import EELSequencer
 from etce.wrapper import Wrapper
 
 try:
-    from emane.events import EventService,LocationEvent,PathlossEvent,AntennaProfileEvent
+    from emane.events import EventService, LocationEvent, PathlossEvent, AntennaProfileEvent
 except:
-    from emanesh.events import EventService,LocationEvent,PathlossEvent,AntennaProfileEvent
+    from emanesh.events import EventService, LocationEvent, PathlossEvent, AntennaProfileEvent
 
 
 class EmanePhyInit(Wrapper):
@@ -57,7 +57,7 @@ class EmanePhyInit(Wrapper):
           TIME nem:ID pathloss [nem:ID,PATHLOSS]+
 
           example:
-           Set bidirectional pathloss between nem 1 and nems 2-7 to 90 and 
+           Set bidirectional pathloss between nem 1 and nems 2-7 to 90 and
            nem 1 and nem 8 to 200:
 
            -Inf  nem:1 pathloss nem:2,90 nem:3,90 nem:4,90 nem:5,90 nem:6,90 nem:7,90 nem:8,200
@@ -91,8 +91,8 @@ class EmanePhyInit(Wrapper):
           example:
            Set forward and reverse pathloss between all pairs of nems 1,2 3 and 7 to 90:
 
-           -Inf  nem:1-3,7 allinformedpathloss 90    
-                                                    
+           -Inf  nem:1-3,7 allinformedpathloss 90
+
        5. EMANE antennaprofile event of format:
 
           TIME nem:ID antennaprofile profileid,azimuth,elevation
@@ -139,26 +139,26 @@ class EmanePhyInit(Wrapper):
             message = 'Wrapper emane.emanephyinit mandatory argument "eventservicedevice" ' \
                       'not specified. Quitting.'
             raise RuntimeError(message)
-        
+
         sequencer = EELSequencer(ctx.args.infile,
                                  ctx.args.starttime,
                                  list(handlers.keys()))
 
-        mcgroup,port = ctx.args.eventservicegroup.split(':')
-        
+        mcgroup, port = ctx.args.eventservicegroup.split(':')
+
         service = EventService((mcgroup, int(port), ctx.args.eventservicedevice))
 
-        with open(ctx.args.outfile,'a') as lfd:
+        with open(ctx.args.outfile, 'a') as lfd:
             for moduleid, eventtype, eventargline in sequencer:
                 eventargs = eventargline.split()
 
                 events = handlers[eventtype](moduleid, eventtype, eventargs)
 
-                for nem,event in list(events.items()):
+                for nem, event in list(events.items()):
                     service.publish(nem, event)
 
                 logline = 'process eventtype "%s" to nems {%s}' % \
-                          (eventtype,','.join(map(str, sorted(events.keys()))))
+                          (eventtype, ','.join(map(str, sorted(events.keys()))))
 
                 print(logline)
 
@@ -173,8 +173,8 @@ class EmanePhyInit(Wrapper):
 
         events = defaultdict(lambda: PathlossEvent())
 
-        for x,y in itertools.product(nems, nems):
-            if x==y:
+        for x, y in itertools.product(nems, nems):
+            if x == y:
                 # ignore self node pathloss
                 continue
 
@@ -190,8 +190,8 @@ class EmanePhyInit(Wrapper):
         location_nem = int(moduleid.split(':')[1])
 
         toks = eventargs[1].split(',')
-        
-        lat,lon,alt = list(map(float, toks[0:3]))
+
+        lat, lon, alt = list(map(float, toks[0:3]))
 
         events = defaultdict(lambda: LocationEvent())
 
@@ -208,7 +208,7 @@ class EmanePhyInit(Wrapper):
         nem = int(moduleid.split(':')[1])
 
         events = defaultdict(lambda: FadingSelectionEvent())
-        
+
         for eventarg in eventargs:
             m = re.match('nem:(?P<nem>\d+),(?P<model>\w+)', eventarg)
 
@@ -225,34 +225,32 @@ class EmanePhyInit(Wrapper):
         receiving_nems = {}
 
         for eventarg in eventargs:
-            receiving_nem,pathloss = eventarg[eventarg.find(':')+1:].split(',')
+            receiving_nem, pathloss = eventarg[eventarg.find(':')+1:].split(',')
 
             receiving_nems[int(receiving_nem)] = float(pathloss)
 
         events = defaultdict(lambda: PathlossEvent())
-    
-        for x,y in itertools.product([sending_nem], receiving_nems):
-            if x==y:
+
+        for x, y in itertools.product([sending_nem], receiving_nems):
+            if x == y:
                 # ignore self node pathloss
                 continue
 
             events[x].append(y, forward=receiving_nems[y])
-            
+
             events[y].append(x, forward=receiving_nems[y])
 
         return events
-        
+
 
     def antennaprofile(self, moduleid, eventtype, eventargs):
-        from emane.events import FadingSelectionEvent
-
         # TIME nem:ID antennaprofile profileid,azimuth,elevation
         nem = int(moduleid.split(':')[1])
 
         events = defaultdict(lambda: AntennaProfileEvent())
-        
+
         for eventarg in eventargs:
-            profileid,azimuth,elevation = eventarg.split(',')
+            profileid, azimuth, elevation = eventarg.split(',')
 
             events[0].append(nemId=nem, profile=int(profileid), azimuth=float(azimuth), elevation=float(elevation))
 
@@ -263,6 +261,6 @@ class EmanePhyInit(Wrapper):
     def log(self, lfd, log):
         lfd.write('%s: %s\n' % (etce.timeutils.getstrtimenow(), log))
 
-        
+
     def stop(self, ctx):
         pass

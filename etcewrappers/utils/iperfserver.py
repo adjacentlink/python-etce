@@ -31,8 +31,6 @@
 #
 
 from __future__ import absolute_import, division, print_function
-import shlex
-import subprocess
 import time
 
 from etce.wrapper import Wrapper
@@ -53,14 +51,16 @@ class IPerfServer(Wrapper):
 
         registrar.register_outfile_name('iperfserver.log')
 
-        registrar.register_argument('interval',
-                           None,
-                           'iperf measurement interval (iperf -i switch ' \
-                           'argument)')
+        registrar.register_argument(
+            'interval',
+            None,
+            'iperf measurement interval (iperf -i switch ' \
+            'argument)')
 
-        registrar.register_argument('bufferlen',
-                           None,
-                           'iperf buffer length (iperf -l switch argument)')
+        registrar.register_argument(
+            'bufferlen',
+            None,
+            'iperf buffer length (iperf -l switch argument)')
 
 
     def run(self, ctx):
@@ -78,10 +78,10 @@ class IPerfServer(Wrapper):
 
         fileargstr = ''
 
-        serverarglines = [ line.strip() for line
-                           in open(ctx.args.infile).readlines()
-                           if len(line.strip()) > 0
-                           and line[0] != '#']
+        serverarglines = [line.strip() for line
+                          in open(ctx.args.infile).readlines()
+                          if len(line.strip()) > 0
+                          and line[0] != '#']
 
         # take the last non-comment line as the iperf input
         if len(serverarglines) > 0:

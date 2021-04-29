@@ -103,7 +103,7 @@ class TestDirectoryEntry(object):
     def root_sub_entry_absolute(self):
         return self._root_sub_entry_absolute
 
-                          
+
     @property
     def tail(self):
         return self._tail

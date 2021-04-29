@@ -60,8 +60,8 @@ class Field(object):
         try:
             self._parse(nodefile)
 
-            self._tree = tuple([ (root,
-                                  tuple(self._tree[root])) for root in self._roots ])
+            self._tree = tuple([(root,
+                                 tuple(self._tree[root])) for root in self._roots])
             allnodes = []
             for tree in self.tree():
                 allnodes.append(tree[0])
@@ -78,7 +78,7 @@ class Field(object):
     def nodefile(self):
         return self._nodefile
 
-        
+
     def roots(self):
         return tuple(self._roots)
 
@@ -125,37 +125,37 @@ class Field(object):
 
         # exit if end of file
         if len(nextchar) == 0:
-            return newlines,nexttok
+            return (newlines, nexttok)
 
         # is the found char valid
-        if not nextchar in self._validnamechars + ('{','}'): 
+        if not nextchar in self._validnamechars + ('{', '}'):
             raise FieldParseException('Impermissable node character %s' %
                                       nextchar)
 
         nexttok += nextchar
         if nexttok in '{}':
-            return newlines,nexttok
+            return (newlines, nexttok)
 
         # we have something else
         nextchar = filedescriptor.read(1)
         while len(nextchar) > 0:
             if nextchar in '{}':
                 # put the brace back for nexttime
-                filedescriptor.seek(-1,1)
-                return newlines,nexttok
+                filedescriptor.seek(-1, 1)
+                return (newlines, nexttok)
             elif nextchar in string.whitespace:
                 if nextchar == '\n':
                     newlines += 1
-                return newlines,nexttok
+                return (newlines, nexttok)
             elif nextchar in self._validnamechars:
                 nexttok += nextchar
-            else: 
+            else:
                 raise FieldParseException('Impermissable node character %s' %
                                           nextchar)
             nextchar = filedescriptor.read(1)
-            
-        return newlines,nexttok
-        
+
+        return (newlines, nexttok)
+
 
     def _parse(self, nodefile):
         with open(nodefile, 'r') as nf:
@@ -164,7 +164,7 @@ class Field(object):
             allnodes = []
             line = 0
             while True:
-                newlines,tok = self._nexttoken(nf)
+                newlines, tok = self._nexttoken(nf)
                 line += newlines
                 if atroot:
                     if len(tok) == 0:
@@ -187,7 +187,7 @@ class Field(object):
                     if len(tok) == 0:
                         raise FieldParseException(
                             'Unexpected end of file without matching "}"')
-                        
+
                     elif tok == '{':
                         raise FieldParseException(
                             'Unexpected "{" at line %s, %d. Field depth cannot exceed one level' % (nodefile, line))
@@ -209,7 +209,7 @@ class Field(object):
 
             # to get the list of leaf nodes, include root nodes
             # with no subtree
-            for root,leaves in self._tree.items():
+            for root, leaves in self._tree.items():
                 if len(leaves) == 0:
                     self._leaves.append(root)
                 self._leaves.extend(leaves)

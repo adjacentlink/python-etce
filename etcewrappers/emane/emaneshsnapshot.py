@@ -51,9 +51,9 @@ class EmaneshSnapshot(Wrapper):
         registrar.register_infile_name('emaneshsnapshot.flag')
 
         registrar.register_argument('controlportendpoint',
-                                   '127.0.0.1:47000',
-                                   'The control port endpoint of the target ' \
-                                   'EMANE instance.')
+                                    '127.0.0.1:47000',
+                                    'The control port endpoint of the target ' \
+                                    'EMANE instance.')
 
 
     def run(self, ctx):
@@ -66,7 +66,7 @@ class EmaneshSnapshot(Wrapper):
         try:
             layermapping = {}
 
-            ipaddr,port = ctx.args.controlportendpoint.split(':')
+            ipaddr, port = ctx.args.controlportendpoint.split(':')
 
             cp = ControlPortClient(ipaddr, int(port))
 
@@ -79,7 +79,7 @@ class EmaneshSnapshot(Wrapper):
                 for nemid, layertuples in list(cp.getManifest().items()):
                     layermapping[nemid] = []
                     line = 'nem %d ' % nemid
-                    for buildid,layertype,layername in layertuples:
+                    for buildid, layertype, layername in layertuples:
                         layerlabel = '%d-%s' % (buildid, layertype.lower())
                         layermapping[nemid].append((buildid, layertype.lower(), layerlabel))
                         line += ' %s(%s)' % (layertype.lower(), layername)
@@ -91,12 +91,12 @@ class EmaneshSnapshot(Wrapper):
 
             with open(statsfile, 'w') as sf:
                 # nems
-                for nemid,layertuples in sorted(layermapping.items()):
-                    for buildid,_,layerlabel in layertuples:
-                        for statname,statval in sorted(cp.getStatistic(buildid).items()):
+                for nemid, layertuples in sorted(layermapping.items()):
+                    for buildid, _, layerlabel in layertuples:
+                        for statname, statval in sorted(cp.getStatistic(buildid).items()):
                             sf.write('nem %d %s %s = %s\n' % (nemid, layerlabel, statname, str(statval[0])))
                 # emulator
-                for statname,statval in sorted(cp.getStatistic(0).items()):
+                for statname, statval in sorted(cp.getStatistic(0).items()):
                     sf.write('emulator %s = %s\n' % (statname, str(statval[0])))
 
             # configuration
@@ -104,16 +104,16 @@ class EmaneshSnapshot(Wrapper):
 
             with open(configfile, 'w') as sf:
                 # nems
-                for nemid,layertuples in sorted(layermapping.items()):
-                    for buildid,_,layerlabel in layertuples:
-                        for configname,configvaltuples in sorted(cp.getConfiguration(buildid).items()):
+                for nemid, layertuples in sorted(layermapping.items()):
+                    for buildid, _, layerlabel in layertuples:
+                        for configname, configvaltuples in sorted(cp.getConfiguration(buildid).items()):
                             configvalstr = ''
                             if configvaltuples:
                                 configvalstr = ','.join(map(str, list(zip(*configvaltuples))[0]))
                             sf.write('nem %d %s %s = %s\n' % (nemid, layerlabel, configname, configvalstr))
 
                 # emulator
-                for configname,configvaltuples in sorted(cp.getConfiguration(0).items()):
+                for configname, configvaltuples in sorted(cp.getConfiguration(0).items()):
                     configvalstr = ''
                     if configvaltuples:
                         configvalstr = ','.join(map(str, list(zip(*configvaltuples))[0]))
@@ -125,14 +125,14 @@ class EmaneshSnapshot(Wrapper):
 
             with open(tablefile, 'w') as tf:
                 # nems
-                for nemid,layertuples in sorted(layermapping.items()):
-                    for buildid,layertype,_ in layertuples:
-                        for tablename,data in sorted(cp.getStatisticTable(buildid).items()):
+                for nemid, layertuples in sorted(layermapping.items()):
+                    for buildid, layertype, _ in layertuples:
+                        for tablename, data in sorted(cp.getStatisticTable(buildid).items()):
                             tf.write('nem %d   %s %s\n' % (nemid, layertype, tablename))
                             self.write_table_cells(tf, data)
-                        
+
                 # emulator
-                for tablename,data in sorted(cp.getStatisticTable(0).items()):
+                for tablename, data in sorted(cp.getStatisticTable(0).items()):
                     tf.write('emulator %s\n' % tablename)
                     self.write_table_cells(tf, data)
 
@@ -142,7 +142,7 @@ class EmaneshSnapshot(Wrapper):
 
 
     def write_table_cells(self, tf, data):
-        labels,rowtuples = data
+        labels, rowtuples = data
 
         widths = [];
 
@@ -152,20 +152,20 @@ class EmaneshSnapshot(Wrapper):
         rows = []
         for rowtuple in rowtuples:
             rows.append(list(map(str, list(zip(*rowtuple))[0])))
-            
+
         for row in rows:
-            for i,value in enumerate(row):
-                widths[i] = max(widths[i],len(value))
+            for i, value in enumerate(row):
+                widths[i] = max(widths[i], len(value))
 
         line = ''
-        for i,label in enumerate(labels):
+        for i, label in enumerate(labels):
             line += '|' + label.ljust(widths[i])
         line += "|\n"
         tf.write(line)
-        
+
         for row in rows:
             line = ''
-            for i,value in enumerate(row):
+            for i, value in enumerate(row):
                 line += '|' + value.rjust(widths[i])
             line += "|\n"
             tf.write(line)

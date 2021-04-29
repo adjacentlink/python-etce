@@ -39,8 +39,8 @@ from etce.field import Field
 
 def main():
     usagestr = '''
-List the nodes in the ETCE field specified by HOSTFILE. 
-An ETCE field consists of a tree of IP resolvable hostnames 
+List the nodes in the ETCE field specified by HOSTFILE.
+An ETCE field consists of a tree of IP resolvable hostnames
 up to 2 levels deep.
 
 Roots are interpreted to be nodes with an independent file
@@ -63,8 +63,8 @@ Example:
     node-004
   }
 
-In this case there are 4 roots 
-{ server1, server2 and node-003, server3 } and 6 leafs 
+In this case there are 4 roots
+{ server1, server2 and node-003, server3 } and 6 leafs
 { node-001, node-002, server2, node-003, server3, node-004 }.
 '''
 
@@ -75,15 +75,15 @@ In this case there are 4 roots
                 description=usagestr,
                 formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('--position', 
+    parser.add_argument('--position',
                         default='all',
                         help='''List the nodes at the specified tree,
                         position, one of { leaves, roots, all }.
                         Default: leaves.''')
     parser.add_argument('hostfile',
                         metavar='HOSTFILE',
-                        help='''The ETCE Host file containing the 
-                        node names from which the remote source 
+                        help='''The ETCE Host file containing the
+                        node names from which the remote source
                         directories are collected.''')
 
     args = parser.parse_args()

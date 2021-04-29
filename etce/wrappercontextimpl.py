@@ -34,7 +34,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import shlex
-import signal
+from signal import SIGQUIT
 import subprocess
 import sys
 
@@ -45,7 +45,6 @@ from etce.argregistrar import ArgRegistrar
 from etce.platform import Platform
 from etce.wrappererror import WrapperError
 from etce.wrapperstore import WrapperStore
-from etce.config import ConfigDictionary
 
 
 class WrapperContextImpl(ArgRegistrar):
@@ -64,10 +63,11 @@ class WrapperContextImpl(ArgRegistrar):
         self._platform = Platform()
         self._wrappername = wrappername
         self._sudo = False
-        self._default_pidfilename = '%s/etce.%s.%s.pid' \
-                                    % (os.path.join(self._config.get('etce', 'WORK_DIRECTORY'), 'lock'),
-                                       self.platform.hostname(),
-                                       self._wrappername)
+        self._default_pidfilename = \
+            '%s/etce.%s.%s.pid' \
+            % (os.path.join(self._config.get('etce', 'WORK_DIRECTORY'), 'lock'),
+               self.platform.hostname(),
+               self._wrappername)
 
         self._description = wrapperinstance.__doc__
 
@@ -91,7 +91,7 @@ class WrapperContextImpl(ArgRegistrar):
 
         # fill in the arguments registered by the wrapper
         wrapperinstance.register(self)
-        
+
         storefile = os.path.join(self._trialargs['logdirectory'],
                                  'etce.store')
 
@@ -100,7 +100,7 @@ class WrapperContextImpl(ArgRegistrar):
         self._wrapperstore.update({'etce':{'starttime': self._trialargs['starttime']}},
                                   self._args['nodename'])
 
-        
+
     def register_argument(self, argname, defaultval, description):
         if argname in self._reserved_args:
             raise ValueError('Wrapper "%s" attempting to register a ' \
@@ -160,20 +160,21 @@ class WrapperContextImpl(ArgRegistrar):
 
         commandstr = self._build_commandstr(command, argstr, extra_paths)
 
-        # print the commandstr and return on a dryrun         
+        # print the commandstr and return on a dryrun
+
         if self._trialargs['dryrun']:
             print(commandstr)
             sys.stdout.flush()
             return
-        
+
         # 1. call self.stop(pidfilename)
         self.stop(pidfilename)
 
         # run the command
-        pid,subprocess = etce.utils.daemonize_command(commandstr,
-                                                      stdout,
-                                                      stderr,
-                                                      starttime)
+        pid, subproc = etce.utils.daemonize_command(commandstr,
+                                                    stdout,
+                                                    stderr,
+                                                    starttime)
 
         # return on parent
         if pid > 0:
@@ -187,10 +188,10 @@ class WrapperContextImpl(ArgRegistrar):
         # 3. write the pid to pidfilename
         if genpidfile:
             with open(pidfilename, 'w') as pidfile:
-                pidfile.write(str(subprocess.pid+pidincrement))
+                pidfile.write(str(subproc.pid+pidincrement))
 
         # 4. wait on subprocess
-        subprocess.wait()
+        subproc.wait()
 
         # 5. exit, do not return, because returning
         #    will cause any subsequent wrappers in this
@@ -209,13 +210,13 @@ class WrapperContextImpl(ArgRegistrar):
             extra_paths=[]):
 
         commandstr = self._build_commandstr(command, argstr, extra_paths)
-        
-        # print the commandstr and return on a dryrun         
+
+        # print the commandstr and return on a dryrun
         if self._trialargs['dryrun']:
             print(commandstr)
             sys.stdout.flush()
             return
-        
+
         self.stop(pidfilename)
 
         print(commandstr)
@@ -248,7 +249,7 @@ class WrapperContextImpl(ArgRegistrar):
         sp.wait()
 
 
-    def stop(self, pidfilename=None, signal=signal.SIGQUIT, sudo=True):
+    def stop(self, pidfilename=None, signal=SIGQUIT, sudo=True):
         # use default pidfilename if None specified
         if pidfilename is None:
             pidfilename = self._default_pidfilename
@@ -262,7 +263,8 @@ class WrapperContextImpl(ArgRegistrar):
 
         existing_paths = filter(os.path.isdir, all_paths)
 
-        found_paths=[]
+        found_paths = []
+
         for existing_path in existing_paths:
             if command in os.listdir(existing_path):
                 found_paths.append(existing_path)
@@ -270,7 +272,7 @@ class WrapperContextImpl(ArgRegistrar):
         if not found_paths:
             raise WrapperError('Cannot find command "%s" in system paths {%s}. Quitting.' \
                                % (command, ','.join(all_paths)))
-            
+
         commandstr = ' '.join([os.path.join(found_paths[0], command), argstr])
 
         # run with sudo if wrapper requested it

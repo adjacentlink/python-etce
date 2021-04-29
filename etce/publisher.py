@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2021 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 from __future__ import absolute_import, division, print_function
 from collections import defaultdict
 import os
-import re
 import shutil
 import sys
 import traceback
@@ -46,7 +45,6 @@ from etce.templateutils import format_file
 from etce.testdirectory import TestDirectory
 from etce.config import ConfigDictionary
 
-from lxml.etree import DocumentInvalid
 
 class Publisher(object):
     def __init__(self, test_directory):
@@ -103,27 +101,28 @@ class Publisher(object):
                          (self._test_directory, base_directory)
                 raise ValueError(errstr)
 
-        # move the files in basedirectory, then test directory
+        subdirectory_map = {}
+
         for srcdir in srcdirs:
-            if srcdir[-1] == '/':
-                srcdir = srcdir[:-1]
+            subdirectory_map.update(self._build_subdirectory_map(srcdir))
 
-            subfiles = self._get_subfiles(srcdir)
+        subdirectory_map = self._prune_unused_template_directories(subdirectory_map)
 
-            for subfile in subfiles:
-                srcfile = os.path.join(srcdir, subfile)
+        # move files to merge directory
+        for _,entry in subdirectory_map.items():
+            srcfile = entry.full_name
 
-                dstfile = os.path.join(mergedir, subfile)
+            dstfile = os.path.join(mergedir, entry.sub_path)
 
-                dirname = os.path.dirname(dstfile)
+            dirname = os.path.dirname(dstfile)
 
-                if not os.path.exists(dirname):
-                    os.makedirs(dirname)
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
 
-                if subfile == TestDirectory.TESTFILENAME:
-                    self._testdoc.rewrite_without_base_directory(dstfile)
-                else:
-                    shutil.copyfile(srcfile, dstfile)
+            if entry.sub_path == TestDirectory.TESTFILENAME:
+                self._testdoc.rewrite_without_base_directory(dstfile)
+            else:
+                shutil.copyfile(srcfile, dstfile)
 
         self._move_extra_files(extrafiles, mergedir)
 
@@ -134,7 +133,7 @@ class Publisher(object):
 
 
     def _move_extra_files(self, extrafiles, dstdir):
-        for srcfile,dstfile in extrafiles:
+        for srcfile, dstfile in extrafiles:
             dstfile = os.path.join(dstdir, dstfile)
 
             dirname = os.path.dirname(dstfile)
@@ -203,7 +202,7 @@ class Publisher(object):
             publish combines the files from the test directory and the (optional)
             base directory to the destination.
         '''
-        srcdirs = [ self._test_directory ]
+        srcdirs = [self._test_directory]
 
         if absbasedir_override:
             srcdirs.insert(0, absbasedir_override)
@@ -213,7 +212,7 @@ class Publisher(object):
                 srcdirs.insert(0, self._testdoc.base_directory)
             else:
                 srcdirs.insert(0, os.path.join(self._test_directory, self._testdoc.base_directory))
-            
+
         templates = self._testdoc.templates
 
         subdirectory_map = {}
@@ -265,8 +264,8 @@ class Publisher(object):
         # Assemble overlays from
         # 1. etce.conf
         etce_config_overlays = {}
-        
-        for k,v in self._config.items('overlays'):
+
+        for k, v in self._config.items('overlays'):
             etce_config_overlays[k] = etce.utils.configstrtoval(v)
 
         # 3. overlay set by environment variables, identified by
@@ -281,19 +280,19 @@ class Publisher(object):
                     env_overlays[overlay] = etce.utils.configstrtoval(os.environ[overlay])
 
         return (etce_config_overlays, env_overlays)
-    
+
 
     def _prune_unused_template_directories(self, subdirectory_map):
         directory_templates_used_by_test = self._testdoc.template_directory_names
 
-        all_template_directory_keys = set([ entry.root_sub_entry for entry in subdirectory_map.values()
-                                            if entry.template_directory_member ])
+        all_template_directory_keys = set([entry.root_sub_entry for entry in subdirectory_map.values()
+                                           if entry.template_directory_member])
 
         directory_templates_not_used_by_test = \
             all_template_directory_keys.difference(directory_templates_used_by_test)
 
         rmpaths = []
-        
+
         for unused in directory_templates_not_used_by_test:
             for subpath in subdirectory_map:
                 if subpath.startswith(unused + '/'):
@@ -317,7 +316,7 @@ class Publisher(object):
 
         omitdirs = (TestDirectory.DOCSUBDIRNAME,)
 
-        for relname,entry in subdirectory_map.items():
+        for relname, entry in subdirectory_map.items():
             if entry.root_sub_entry in omitdirs:
                 continue
 
@@ -328,7 +327,7 @@ class Publisher(object):
 
             # first_level_entry is a nodename if it is a directory
             if entry.root_sub_entry_is_dir:
-                reserved_overlays = { 'etce_hostname':entry.root_sub_entry }
+                reserved_overlays = {'etce_hostname':entry.root_sub_entry}
 
                 if logdir:
                     reserved_overlays['etce_log_path'] = os.path.join(logdir, entry.root_sub_entry)
@@ -346,7 +345,7 @@ class Publisher(object):
                                 runtime_overlays,
                                 env_overlays,
                                 testfile_global_overlays,
-                                etce_config_overlays)   
+                                etce_config_overlays)
 
             fulldstfile = os.path.join(publishdir, relname)
 
@@ -394,7 +393,7 @@ class Publisher(object):
     def _get_subfiles(self, directory):
         files = []
 
-        for dirname,dirnames,filenames in os.walk(directory):
+        for dirname, dirnames, filenames in os.walk(directory):
             for filename in filenames:
                 fullpath = os.path.join(dirname, filename)
 
@@ -408,7 +407,7 @@ class Publisher(object):
     def _build_subdirectory_map(self, directory):
         subfiles = {}
 
-        for dirname,dirnames,filenames in os.walk(directory):
+        for dirname, dirnames, filenames in os.walk(directory):
             for filename in filenames:
                 fullpath = os.path.join(dirname, filename)
 
@@ -418,31 +417,31 @@ class Publisher(object):
 
         return subfiles
 
-    
+
 def add_publish_arguments(parser):
     parser.add_argument('--basedirectory',
                         default=None,
-                        help='''Specify a path to a test base 
+                        help='''Specify a path to a test base
                         directory, overridding the (optional) value
                         defined in the test test.xml file. The value
-                        may be an absolute path or a relative path 
-                        to the current working directory. 
+                        may be an absolute path or a relative path
+                        to the current working directory.
                         default: None''')
     parser.add_argument('--logdirectory',
-                        default=None,
+                        default='/tmp',
                         help='''The ETCE reserved overlay 'etce_log_path'
-                        names a location for wrappers to write output files. 
+                        names a location for wrappers to write output files.
                         When running a test, etce_log_path is automatically
                         derived using the etce.conf WORK_DIRECTORY value.
                         Use the logdirectory argument to pass a location
                         for output files when publishing a test outside
-                        of running it. Default: None.''')
+                        of running it. Default: "/tmp".''')
     parser.add_argument('--overlayfile',
                         default=None,
                         help='''File name containing NAME=VALUE pairs,
                         one per line, to use as overlays
-                        for publishing. These overlay values 
-                        override those specified in the local etce.conf file. 
+                        for publishing. These overlay values
+                        override those specified in the local etce.conf file.
                         default: None''')
     parser.add_argument('--verbose',
                         default=False,
@@ -459,8 +458,6 @@ def add_publish_arguments(parser):
 
 
 def publish_test(args):
-    import sys
-
     if not os.path.exists(args.testdirectory):
         print()
         print('testdirectory "%s" does not exist. Quitting.' % args.testdirectory)
@@ -477,22 +474,22 @@ def publish_test(args):
     # to the current working directory
     if args.basedirectory and not args.basedirectory[0] == os.path.sep:
         args.basedirectory = os.path.join(os.getcwd(), args.basedirectory)
-        
+
     runtime_overlays = {}
     if args.overlayfile is not None:
         if not os.path.isfile(args.overlayfile):
             print('overlayfile "%s" doesn\'t exist. Quitting' % args.overlayfile,
                   file=sys.stderr)
             exit(1)
-        for line in open(args.overlayfile,'r'):
+        for line in open(args.overlayfile, 'r'):
             line = line.strip()
             if len(line) > 0:
-                n,v = line.split('=')
+                n, v = line.split('=')
                 runtime_overlays[n] = v
 
     try:
         publisher = Publisher(args.testdirectory)
-        
+
         publisher.publish(publishdir=args.outdirectory,
                           logdir=args.logdirectory,
                           runtime_overlays=runtime_overlays,

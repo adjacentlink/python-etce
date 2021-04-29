@@ -37,12 +37,12 @@ from etce.wrapper import Wrapper
 class ARPCache(Wrapper):
     """
     The utils.arpcache wrapper populates the arp
-    table based on the entries in the input file. 
+    table based on the entries in the input file.
     The input file takes 1 entry/line in format:
 
     <interface> <ipaddress> <ethaddress>
 
-    For example: 
+    For example:
 
     emane0 172.30.1.2 02:02:00:00:00:02
     """
@@ -65,8 +65,8 @@ class ARPCache(Wrapper):
 
             if line[0] == '#':
                 continue
-            
-            interface,ipaddress,ethaddress = line.split()
+
+            interface, ipaddress, ethaddress = line.split()
             # arp -i emane0 -s 172.30.1.2 02:02:00:00:00:02
             # ip neigh add ipaddr lladdr dev
 
@@ -74,6 +74,6 @@ class ARPCache(Wrapper):
 
             ctx.run('ip', argstr, genpidfile=False)
 
-            
+
     def stop(self, ctx):
         pass

@@ -46,7 +46,7 @@ class Ethtool(Wrapper):
     def register(self, registrar):
         registrar.register_infile_name('ethtool.script')
 
-        
+
     def run(self, ctx):
         if not ctx.args.infile:
             return

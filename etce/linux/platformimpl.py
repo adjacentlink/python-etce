@@ -36,7 +36,6 @@ import datetime
 import os
 import re
 import shlex
-import signal
 import socket
 import subprocess
 import sys
@@ -65,7 +64,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
             except:
                 pass # keep trying
         return False
-            
+
 
     def getnetworkdevicenames(self):
         runner = AppRunner('ip link show')
@@ -104,7 +103,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         e = AppRunner(command)
 
         for line in e.stdout():
-            match =  devicematcher.match(line.decode())
+            match = devicematcher.match(line.decode())
             if match:
                 attributes = match.group(1).split(',')
                 return 'UP' in attributes
@@ -127,10 +126,10 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
 
     def bridgeup(self, bridgename, addifs, enablemulticastsnooping):
         self.runcommand('ip link add %s type bridge' % bridgename)
-       
+
         self.networkinterfaceup(bridgename)
 
-        self.runcommand('iptables -I INPUT -i %s -j ACCEPT' % bridgename )
+        self.runcommand('iptables -I INPUT -i %s -j ACCEPT' % bridgename)
 
         self.runcommand('iptables -I FORWARD -i %s -j ACCEPT' % bridgename)
 
@@ -138,13 +137,13 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
             self.runcommand('ip link set dev %s master %s' % (interface, bridgename))
 
             self.runcommand('ip link set %s up' % interface)
-            
+
         if enablemulticastsnooping:
 
             if os.path.exists('/sys/devices/virtual/net/%s/bridge/multicast_snooping' % bridgename):
 
                 with open('/sys/devices/virtual/net/%s/bridge/multicast_snooping' % bridgename, 'w') as sf:
-    
+
                     sf.write('0')
             else:
                 warning = 'Warning: /sys/devices/virtual/net/%s/bridge/multicast_snooping does not exist, ' \
@@ -188,7 +187,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         for line in runner.stdout():
             toks = line.decode().strip().split()
 
-            pids.append( (int(toks[0]), toks[1]) )
+            pids.append((int(toks[0]), toks[1]))
 
         return pids
 
@@ -205,7 +204,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
                 pids.append(pidtpl[0])
 
         return pids
-                            
+
 
     def ps(self, psregex):
         psmatcher = re.compile(psregex)
@@ -227,10 +226,10 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
         # find all files matching regex
         matcher = re.compile(fileregex)
 
-        allmatches = [ f for f in os.listdir(abspath) if matcher.match(f) ]
+        allmatches = [f for f in os.listdir(abspath) if matcher.match(f)]
 
         # if regex was just a simple file name, only return it
-        exactmatches = [ f for f in allmatches if f == fileregex ]
+        exactmatches = [f for f in allmatches if f == fileregex]
 
         if len(exactmatches) > 0:
             return exactmatches
@@ -284,11 +283,11 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
             command = \
                 "kill -%d $(ps -eo pid,command | " \
                 "awk '/%s[%s] /{print $1}') > /dev/null 2>&1" \
-                % (signal, applicationname[:-1],applicationname[-1])
+                % (signal, applicationname[:-1], applicationname[-1])
 
             if sudo:
                 command = 'sudo ' + command
-            
+
             os.system(command)
 
         except:
@@ -302,7 +301,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
 
         runner = AppRunner('ip addr show')
 
-        lines = [ line.decode().strip() for line in runner.stdout() ]
+        lines = [line.decode().strip() for line in runner.stdout()]
 
         for line in lines:
             match = matcher.match(line)
@@ -311,5 +310,3 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
                 ipaddrs.append(match.group(1))
 
         return ipaddrs
-
-

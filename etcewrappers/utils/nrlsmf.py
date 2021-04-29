@@ -43,9 +43,9 @@ class NRLSMF(Wrapper):
     merge emane0,lan0 hash MD5
 
     Comment lines, beginning with '#' are permitted. The
-    line should not contain 'log', 'debug' or 'instance' arguments. 
+    line should not contain 'log', 'debug' or 'instance' arguments.
     Debug level is passed as a wrapper argument to allow manipulation
-    without altering configuration. Logs are written to the wrapper 
+    without altering configuration. Logs are written to the wrapper
     outfile. A control socket is created in the output directory. Use
     the 'socketdirectory' parameter to change location.
     """
@@ -53,12 +53,12 @@ class NRLSMF(Wrapper):
         registrar.register_argument('debuglevel', 0, 'log level')
 
         registrar.register_argument(
-                'socketdirectory',
-                None,
-                """Directory where the nrlsmf Unix control socket
-                is written for runtime control. Default is
-                the host output directory for the test trial.
-                The socket is named "HOSTNAME_nrlsmf_unix_socket.""")
+            'socketdirectory',
+            None,
+            """Directory where the nrlsmf Unix control socket
+            is written for runtime control. Default is
+            the host output directory for the test trial.
+            The socket is named "HOSTNAME_nrlsmf_unix_socket.""")
 
         registrar.register_infile_name('nrlsmf.conf')
 
@@ -71,10 +71,10 @@ class NRLSMF(Wrapper):
 
         argstr = ''
 
-        conflines = [ line.strip() for line
-                      in open(ctx.args.infile).readlines()
-                      if len(line.strip()) > 0
-                      and line[0] != '#']
+        conflines = [line.strip() for line
+                     in open(ctx.args.infile).readlines()
+                     if len(line.strip()) > 0
+                     and line[0] != '#']
 
         # take the last non-comment line as the argument string
         if len(conflines) > 0:
@@ -84,7 +84,7 @@ class NRLSMF(Wrapper):
 
         if ctx.args.socketdirectory:
             socketdirectory = ctx.args.socketdirectory
-            
+
         argstr += \
             ' instance %s' % \
             os.path.join(socketdirectory,

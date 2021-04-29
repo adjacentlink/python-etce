@@ -35,12 +35,12 @@ from collections import Mapping
 
 class ChainMap(Mapping):
     ''' ChainMap is a minimal version of the collections.ChainMap
-        class available in python 3.x which allows searching 
+        class available in python 3.x which allows searching
         a collection of maps in order, by key, and returning the
         first found. As in a regular dict, a KeyError is raised
         if the key is not found in any map.
     '''
-        
+
     def __init__(self, *maps):
         self._maps = maps
 

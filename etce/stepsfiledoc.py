@@ -31,7 +31,7 @@
 #
 
 import copy
-from collections import defaultdict,namedtuple
+from collections import defaultdict, namedtuple
 
 import etce.utils
 import etce.xmldoc
@@ -40,6 +40,11 @@ from lxml import etree
 
 
 class StepsFileDoc(etce.xmldoc.XMLDoc):
+    """
+    Parses an ETCE Steps file (steps.xml) and provides methods
+    to access step names and wrapper names in each step.
+    """
+
     WrapperEntry = namedtuple('WrapperEntry', ['name', 'decorator'])
 
     def __init__(self, stepsfile):
@@ -63,7 +68,7 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
                            'stepname in steps file. steps are\n%s' \
                            % (runfromstep,
                               '\n'.join(steplist))
-            
+
                 raise ValueError(errorstr)
 
             steplist = steplist[steplist.index(runfromstep):]
@@ -75,7 +80,7 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
                            'stepname in steps file. steps are\n%s' \
                            % (runtostep,
                               '\n'.join(steplist))
-                
+
                 raise ValueError(errorstr)
 
             steplist = steplist[:steplist.index(runtostep) + 1]
@@ -86,7 +91,7 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
             for stepname in steplist:
                 if stepname.startswith(step_prefix):
                     filtermatches.append(stepname)
-        
+
         return tuple([step for step in steplist if not step in filtermatches])
 
 
@@ -104,7 +109,7 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
     def _parsesteps(self, stepsfile):
         stepselem = self.parse(stepsfile)
 
-        packageprefixes = [ None ]
+        packageprefixes = [None]
         for usingelem in stepselem.findall('./using'):
             packageprefixes.append(usingelem.attrib['package'])
 
@@ -133,8 +138,8 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
                     continue
 
                 stepwrappers.append(
-                    (StepsFileDoc.WrapperEntry(name = child.attrib['wrapper'],
-                                               decorator = None),
+                    (StepsFileDoc.WrapperEntry(name=child.attrib['wrapper'],
+                                               decorator=None),
                      child.tag,
                      argdict))
 
@@ -143,7 +148,7 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
                     'Stepname "%s" appears more thane once in steps file "%s". Quitting.' % \
                     (stepname, stepsfile)
                 raise RuntimeError(errstr)
-            
+
             steplist.append(stepname)
 
             if filtername:
@@ -151,4 +156,4 @@ class StepsFileDoc(etce.xmldoc.XMLDoc):
 
             wrapperlist.append(tuple(stepwrappers))
 
-        return packageprefixes,steplist,filterdict,wrapperlist
+        return (packageprefixes, steplist, filterdict, wrapperlist)

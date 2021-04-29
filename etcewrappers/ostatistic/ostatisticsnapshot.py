@@ -36,7 +36,7 @@ import os
 
 class OStatisticSnapshot(Wrapper):
     """
-    Log the stats, tables and config of a running emane 
+    Log the stats, tables and config of a running emane
     instance to file.
     """
     def register(self, registrar):
@@ -57,6 +57,6 @@ class OStatisticSnapshot(Wrapper):
         tablefile = os.path.join(logdirectory, 'ostatistictables.log')
         ctx.run('ostatistic', 'localhost get table', stdout=tablefile)
 
-        
+
     def stop(self, ctx):
         pass

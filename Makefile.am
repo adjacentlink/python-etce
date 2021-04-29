@@ -4,6 +4,8 @@ EXTRA_DIST= \
  autogen.sh \
  etce \
  etcewrappers \
+ etceanalytics \
+ etceanalyzers \
  scripts \
  test \
  Copyright \

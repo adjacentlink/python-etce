@@ -45,7 +45,7 @@ class EmaneCommand(Wrapper):
 
         registrar.register_outfile_name('emanecommand.log')
 
-        
+
     def run(self, ctx):
         if not ctx.args.infile:
             return
@@ -63,8 +63,8 @@ class EmaneCommand(Wrapper):
 
         argstr = '--starttime %s ' \
                  '--logfile %s %s' % \
-                 (hourminsec, 
-                  ctx.args.outfile, 
+                 (hourminsec,
+                  ctx.args.outfile,
                   ctx.args.infile)
 
         ctx.daemonize('emanecommand-eel', argstr)

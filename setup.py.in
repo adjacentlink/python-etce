@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2021 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,12 +40,25 @@ setup(description='Extendable Test Control Environment',
       license='BSD',
       url='https://github.com/adjacentlink/python-etce',
       packages=find_packages(),
-      namespace_packages=['etcewrappers'],
-      package_data={'etce' : ['*.xsd', 'config/etce.conf.example']},
+      namespace_packages=['etcewrappers', 'etceanalyzers'],
+      package_data={'etce' : ['*.xsd', 'config/etce.conf.example'],
+                    'etceanalytics' : ['*.xsd']},
       scripts=[ 'scripts/etce-field-exec',
                 'scripts/etce-list-hosts',
                 'scripts/etce-lxc',
                 'scripts/etce-check-connection',
                 'scripts/etce-test',
-                'scripts/etce-wrapper'])
+                'scripts/etce-wrapper',
+                'scripts/etce-analyze-file',
+                'scripts/etce-analyze-session',
+                'scripts/etce-lte-missed-subframes-vs-time',
+                'scripts/etce-mgen-completions-by-flow',
+                'scripts/etce-mgen-latency-vs-time',
+                'scripts/etce-mgen-network-receptions-stripchart',
+                'scripts/etce-mgen-offered-load-vs-time',
+                'scripts/etce-mgen-receive-throughput-vs-time',
+                'scripts/etce-mgen-receptions-vs-time',
+                'scripts/etce-mgen-transmissions-vs-time',
+                'scripts/etce-system-cpu-vs-time'
+      ])
 

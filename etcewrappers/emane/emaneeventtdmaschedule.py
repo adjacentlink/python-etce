@@ -37,12 +37,12 @@ from etce.wrapper import Wrapper
 
 class EmaneEventTDMASchedule(Wrapper):
     """
-    Issue TDMA schedule events using emaneevent-tdmaschedule based on events 
+    Issue TDMA schedule events using emaneevent-tdmaschedule based on events
     listed in the input EEL file. EEL lines require this format:
 
        TIME NEMIDS tdmaschedule SCHEDULEXMLFILE
 
-    Example: Issue schedule events at time 3.0 and 47.0 to different NEM 
+    Example: Issue schedule events at time 3.0 and 47.0 to different NEM
              groups.
 
        3.0  nem:1-5,7 tdmaschedule schedule-003.xml
@@ -72,13 +72,13 @@ class EmaneEventTDMASchedule(Wrapper):
                       'argument "eventservicedevice" not specified. Quitting.'
             raise RuntimeError(message)
 
-        mcgroup,mcport = ctx.args.eventservicegroup.split(':')
+        mcgroup, mcport = ctx.args.eventservicegroup.split(':')
 
         sequencer = EELSequencer(ctx.args.infile,
                                  ctx.args.starttime,
                                  ('tdmaschedule',))
 
-        for _,_,eventargline in sequencer:
+        for _, _, eventargline in sequencer:
             # parse inputs
             # 0.0   nem:1-5 tdmaschedule tdmaschedules/t000.xml
 
@@ -94,9 +94,10 @@ class EmaneEventTDMASchedule(Wrapper):
             ctx.run('emaneevent-tdmaschedule', argstr, genpidfile=False)
 
             # and log it
-            with open(ctx.args.outfile,'a') as lf:
-                lf.write('%s: emaneevent-tdmaschedule %s\n' % (etce.timeutils.getstrtimenow(),
-                                                               argstr))
+            with open(ctx.args.outfile, 'a') as lf:
+                lf.write('%s: emaneevent-tdmaschedule %s\n' \
+                         % (etce.timeutils.getstrtimenow(),
+                            argstr))
 
 
     def stop(self, ctx):

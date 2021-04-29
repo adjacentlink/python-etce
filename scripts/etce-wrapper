@@ -146,7 +146,7 @@ def main():
 
     subparsers = parser.add_subparsers(dest='selected_subparser')
 
-    parser_list = subparsers.add_parser('list', 
+    parser_list = subparsers.add_parser('list',
                                         help='List the wrappers found in the configured wrapper path.')
 
     parser_list.add_argument('-v',
@@ -167,27 +167,27 @@ def main():
     parser_list.set_defaults(func=list_wrappers)
 
 
-    parser_run = subparsers.add_parser('run', 
+    parser_run = subparsers.add_parser('run',
                                        help='Load a wrapper and execute its prerun and start commands.')
 
     parser_run.add_argument('--configfile',
                             default='',
                             help='''An ETCE configuration file (conforming to configfile.xsd,
                             for setting wrapper arguments.''')
-                                 
+
     parser_run.add_argument('--delaysecs',
                             default=1,
                             type=int,
                             help='''The start time value passed to the wrapper (the
                             time that corresponds to test "time 0") is computed by adding
                             the specified delay to the current time. default: 1.''')
-    
+
     parser_run.add_argument('--dryrun',
                             default=False,
                             action='store_true',
                             help='''If the wrapper calls the context run or daemonize call
                             to start an application, print the passed command and exit only.''')
-                            
+
     parser_run.add_argument('--logpath',
                             metavar='LOGPATH',
                             default=os.getcwd(),
@@ -200,7 +200,7 @@ def main():
                             help='''ETCE test directory layout organizes configuration files
                             by subdirectories named for the host that will use them. This layout
                             may not be present running the wrapper directly. Use this argument
-                            to specify the nodename passed to the wrapper in the wrapper context. 
+                            to specify the nodename passed to the wrapper in the wrapper context.
                             If not specified, the CONFIGPATH directory name will be passed as the
                             nodename.''')
 

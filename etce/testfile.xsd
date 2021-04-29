@@ -82,15 +82,7 @@
         <xs:element name="overlays" minOccurs="0" maxOccurs="1">
           <xs:complexType>
             <xs:sequence>
-              <xs:choice minOccurs="0" maxOccurs="unbounded">
-                <xs:element ref="overlay" minOccurs="0" maxOccurs="unbounded"/>
-                <xs:element name="overlaycsv" minOccurs="0" maxOccurs="1">
-                  <xs:complexType>
-                    <xs:attribute name="file" type="xs:string" use="required"/>
-                    <xs:attribute name="column" type="xs:string" use="required"/>
-                  </xs:complexType>
-                </xs:element>
-              </xs:choice>
+              <xs:element ref="overlay" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
           </xs:complexType>
         </xs:element>

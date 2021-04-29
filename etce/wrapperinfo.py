@@ -31,7 +31,6 @@
 #
 
 
-from etce.wrapperloader import WrapperLoader
 from etce.argregistrar import ArgRegistrar
 
 
@@ -73,7 +72,7 @@ class WrapperInfoPrinter(ArgRegistrar):
             s += '\t%s\n' % str(self._sudo)
         if len(self._args) > 0:
             s += 'arguments:\n'
-            for argname,defaultval,description in sorted(self._args):
+            for argname, defaultval, description in sorted(self._args):
                 s += '\t%s\n' % argname
                 s += '\t\t%s\n' % description
                 s += '\t\tdefault: %s\n' % str(defaultval)

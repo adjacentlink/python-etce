@@ -43,17 +43,19 @@ class SleepWait(Wrapper):
     """
 
     def register(self, registrar):
-        registrar.register_argument('sleepseconds',
-                           10.0,
-                           'The number of seconds to sleep/wait')
+        registrar.register_argument(
+            'sleepseconds',
+            10.0,
+            'The number of seconds to sleep/wait')
 
-        registrar.register_argument('range',
-                                    0.0,
-                                    'A range, centered at "sleepseconds" from which ' \
-                                    'a sleep time is selected. For example for ' \
-                                    'sleepseconds=10.0 and range=10.0, a sleep time ' \
-                                    'time is uniformly selected from the range ' \
-                                    '[5.0,15.0]')
+        registrar.register_argument(
+            'range',
+            0.0,
+            'A range, centered at "sleepseconds" from which ' \
+            'a sleep time is selected. For example for ' \
+            'sleepseconds=10.0 and range=10.0, a sleep time ' \
+            'time is uniformly selected from the range ' \
+            '[5.0,15.0]')
 
 
     def run(self, ctx):

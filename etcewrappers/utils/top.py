@@ -41,9 +41,9 @@ class Top(Wrapper):
     """
     def register(self, registrar):
         registrar.register_argument('periodsecs',
-                           5,
-                           'the number of seconds to sleep/wait ' \
-                           'between readings.')
+                                    5,
+                                    'the number of seconds to sleep/wait ' \
+                                    'between readings.')
 
         registrar.register_infile_name('top.flag')
 
@@ -55,7 +55,7 @@ class Top(Wrapper):
             return
 
         periodsecs = ctx.args.periodsecs
-        
+
         argstr = '-b -d%s' % periodsecs
 
         ctx.daemonize('top',
@@ -66,4 +66,3 @@ class Top(Wrapper):
 
     def stop(self, ctx):
         ctx.stop()
-

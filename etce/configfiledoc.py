@@ -36,6 +36,13 @@ import etce.xmldoc
 
 
 class ConfigFileDoc(etce.xmldoc.XMLDoc):
+    """
+    A class for parsing, validating and presenting the information in
+    an ETCE configuration file. The ETCE configuration file is defined
+    by it's schema (configfile.xsd) and provides a way for users to
+    alter Wrapper argument values when running tests.
+    """
+
     def __init__(self, configfile):
         etce.xmldoc.XMLDoc.__init__(self,
                                     'configfile.xsd')
@@ -51,11 +58,11 @@ class ConfigFileDoc(etce.xmldoc.XMLDoc):
 
         configelem = self.parse(configfile)
         for argelem in configelem.findall('./arg'):
-            config[('default',argelem.attrib['name'])] = \
+            config[('default', argelem.attrib['name'])] = \
                 etce.utils.configstrtoval(argelem.attrib['value'])
 
         for wrapperelem in configelem.findall('./wrapper'):
-            wrappername = wrapperelem.attrib['name'] 
+            wrappername = wrapperelem.attrib['name']
             for argelem in wrapperelem.findall('./arg'):
                 config[(wrappername, argelem.attrib['name'])] = \
                     etce.utils.configstrtoval(argelem.attrib['value'])
@@ -66,14 +73,14 @@ class ConfigFileDoc(etce.xmldoc.XMLDoc):
     def hasconfig(self, wrappername, argname):
         if (wrappername, argname) in self._config:
             return True
-        if ('default',argname) in self._config:
+        if ('default', argname) in self._config:
             return True
         return False
 
 
     def getconfig(self, wrappername, argname, default):
         if (wrappername, argname) in self._config:
-            return self._config[(wrappername,argname)]
-        if ('default',argname) in self._config:
-            return self._config[('default',argname)]
+            return self._config[(wrappername, argname)]
+        if ('default', argname) in self._config:
+            return self._config[('default', argname)]
         return default

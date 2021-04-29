@@ -55,7 +55,7 @@ class Gpsd(Wrapper):
 
         ctx.run('gpsd',
                 argstr,
-                stdout=ctx.args.outfile, 
+                stdout=ctx.args.outfile,
                 stderr=ctx.args.outfile,
                 pidincrement=1)
 

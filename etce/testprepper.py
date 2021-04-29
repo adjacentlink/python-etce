@@ -32,8 +32,6 @@
 
 import os
 
-from etce.testdirectory import TestDirectory
-from etce.platform import Platform
 from etce.config import ConfigDictionary
 from etce.publisher import Publisher
 
@@ -51,7 +49,7 @@ class TestPrepper(object):
         trialdir = os.path.join(etcedir, trialsubdir)
 
         # instantiate the template files and write overlays
-        runtime_overlays = { 'etce_install_path':testdefdir }
+        runtime_overlays = {'etce_install_path':testdefdir}
 
         publisher = Publisher(templatedir)
 
