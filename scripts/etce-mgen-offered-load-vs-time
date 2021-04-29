@@ -37,6 +37,7 @@ import matplotlib.pyplot as plt
 import os
 import sys
 import seaborn as sns
+from etceanalyzers.mgen import to_dataframes
 from etceanalytics.graphutils import scatterplot
 
 usagestr = 'Plot offered load vs. time.'

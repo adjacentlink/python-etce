@@ -36,7 +36,6 @@ import argparse
 import matplotlib.pyplot as plt
 import os
 import sys
-import seaborn as sns
 from etceanalyzers.mgen import to_dataframes
 
 
