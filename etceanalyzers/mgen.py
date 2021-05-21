@@ -336,7 +336,8 @@ class Mgen(Analyzer):
         rxflowsdf = concatdfs['rxflows']
         # ignore any flows that a node registers to listen for, but
         # are not actually transmitted by any node in the scenario
-        rxflowsdf = rxflowsdf[rxflowsdf.txid.isin(txid_to_name.keys())
+        rxflowsdf.drop(rxflowsdf.index[~rxflowsdf.txid.isin(txid_to_name.keys())], inplace=True)
+
         rxflowsdf['txnode'] = rxflowsdf.txid.apply(lambda txid: txid_to_name[txid])
         rxflowsdf.drop(['txid'], axis=1, inplace=True)
 

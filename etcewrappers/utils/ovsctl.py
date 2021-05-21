@@ -98,26 +98,24 @@ class OvsCtl(Wrapper):
             raise PreconditionError(message)
 
 
-    def _build_ovs_vsctl_argstr(self, ctx, eventargline):
-        return '--db=tcp:127.0.0.1:%d %s' % (ctx.args.db_server_port, eventargline)
+    def _build_ovs_vsctl_argstr(self, ctx, eventargs):
+        return '--db=tcp:127.0.0.1:%d %s' % (ctx.args.db_server_port, ' '.join(eventargs))
 
 
-    def _build_ovs_ofctl_argstr(self, ctx, eventargline):
-        toks = eventargline.split()
-
-        if len(toks) < 2:
+    def _build_ovs_ofctl_argstr(self, ctx, eventargs):
+        if len(eventargs) < 2:
             message = 'wrapper ovsctl.py: all ovs-ofctl sentences must specify the switch name ' \
                       'after the command'
             raise RuntimeError(message)
 
         ovs_rundir = os.environ.get('OVS_RUNDIR', None)
 
-        ofcommand, switch = toks[0:2]
+        ofcommand, switch = eventargs[0:2]
 
         argstr = '%s %s/%s.mgmt' % (ofcommand, ovs_rundir, switch)
 
-        if len(toks) > 2:
-            argstr = argstr + ' ' + ' '.join(toks[2:])
+        if len(eventargs) > 2:
+            argstr = argstr + ' ' + ' '.join(eventargs[2:])
 
         return argstr
 
@@ -140,19 +138,20 @@ class OvsCtl(Wrapper):
                     'ovs-ofctl': self._build_ovs_ofctl_argstr}
 
         with open(ctx.args.outfile, 'w') as logf:
-            for moduleid, eventtype, eventargline in sequencer:
-                if not moduleid == 'openvswitch':
-                    continue
+            for eventlist in sequencer:
+                for _, moduleid, eventtype, eventargs in eventlist:
+                    if not moduleid == 'openvswitch':
+                        continue
 
-                if not eventtype in builders:
-                    print('wrapper ovsctl.py: Warning, skipping unsupported event type "%s"')
-                    continue
+                    if not eventtype in builders:
+                        print('wrapper ovsctl.py: Warning, skipping unsupported event type "%s"')
+                        continue
 
-                argstr = builders[eventtype](ctx, eventargline)
+                    argstr = builders[eventtype](ctx, eventargs)
 
-                logf.write('%0.6f %s\n' % (time.time(), command))
+                    logf.write('%0.6f %s\n' % (time.time(), command))
 
-                ctx.run(eventtype, argstr, genpidfile=False)
+                    ctx.run(eventtype, argstr, genpidfile=False)
 
 
     def stop(self, ctx):
