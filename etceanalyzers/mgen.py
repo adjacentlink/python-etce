@@ -66,7 +66,7 @@ class Mgen(Analyzer):
     def __init__(self, ctx):
         self._config = ctx.config
 
-        flow_allocations_str = self._config.args.get('flowformat', '1:2:2')
+        flow_allocations_str = self._config.args.get('flowformat', '0:3:2')
 
         flow_allocations = list(map(int, flow_allocations_str.split(':')))
 
@@ -334,6 +334,9 @@ class Mgen(Analyzer):
         rxdf.drop(['txid'], axis=1, inplace=True)
 
         rxflowsdf = concatdfs['rxflows']
+        # ignore any flows that a node registers to listen for, but
+        # are not actually transmitted by any node in the scenario
+        rxflowsdf = rxflowsdf[rxflowsdf.txid.isin(txid_to_name.keys())
         rxflowsdf['txnode'] = rxflowsdf.txid.apply(lambda txid: txid_to_name[txid])
         rxflowsdf.drop(['txid'], axis=1, inplace=True)
 
