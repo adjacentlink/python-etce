@@ -65,6 +65,10 @@ if __name__=='__main__':
                         for regular analysis as the individual node outputs are combined into
                         session results placed in sessionroot/results.
                         """)
+    parser.add_argument('--keepgoing',
+                        action='store_true',
+                        default=False,
+                        help='Keep going when an error is detected. Default: quit.')
 
     parser.add_argument('sessionroot',
                         help='the session directory to analyze')
@@ -85,6 +89,6 @@ if __name__=='__main__':
 
     logging.basicConfig(format='[%(module)s]: %(message)s', level=loglevel)
 
-    SessionAnalyzer(config).analyze(args.sessionroot,
-                                    args.noreanalyze,
-                                    args.keepfiles)
+    SessionAnalyzer(config, args).analyze(args.sessionroot,
+                                          args.noreanalyze,
+                                          args.keepfiles)

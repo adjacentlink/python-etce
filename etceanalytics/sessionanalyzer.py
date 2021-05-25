@@ -35,6 +35,7 @@ from collections import defaultdict
 import logging
 import os
 import shutil
+import traceback
 from etceanalytics.analyzermanager import AnalyzerManager
 from etceanalytics.diranalyzer import DirAnalyzer
 from etceanalytics.sessiondirectory import SessionDirectory
@@ -45,10 +46,12 @@ class SessionAnalyzer(object):
     Analyze an ETCE session directory and place the results in
     SESSION_DIRECTORY/results.
     '''
-    def __init__(self, analyzerconfig):
+    def __init__(self, analyzerconfig, args):
         self._cache = {}
 
         self._analyzerconfig = analyzerconfig
+
+        self._args = args
 
 
     def analyze(self, sessiondir, noreanalyze=True, keepfiles=False):
@@ -72,20 +75,43 @@ class SessionAnalyzer(object):
                 if not os.path.exists(trialdir.resultsdir):
                     os.makedirs(trialdir.resultsdir)
 
-                dirfiles = directory_analyzer.analyze(trialdir.datadir,
-                                                      trialdir.resultsdir,
-                                                      noreanalyze)
+                try:
+                    dirfiles = directory_analyzer.analyze(trialdir.datadir,
+                                                          trialdir.resultsdir,
+                                                          noreanalyze)
 
-                for analyzer, combinedfile in sorted(dirfiles.items()):
-                    testfiles[(testname, analyzer)].append(combinedfile)
+                    for analyzer, combinedfile in sorted(dirfiles.items()):
+                        testfiles[(testname, analyzer)].append(combinedfile)
+
+                except:
+                    logging.error('Error while processing trial directory "%s"'
+                                  % trialdir.datadir)
+
+                    logging.error(traceback.format_exc())
+
+                    if not self._args.keepgoing:
+                        logging.error('Quitting.')
+
+                        exit(1)
 
         mgr = AnalyzerManager(self._analyzerconfig)
 
         for testname, analyzer in sorted(testfiles):
-            mgr.combinesessionresults(testfiles[(testname, analyzer)],
-                                      sd.resultsdir,
-                                      testname,
-                                      analyzer)
+            try:
+                mgr.combinesessionresults(testfiles[(testname, analyzer)],
+                                          sd.resultsdir,
+                                          testname,
+                                          analyzer)
+            except:
+                logging.error('Error while combining results for "%s"'
+                              % testname)
+
+                logging.error(traceback.format_exc())
+
+                if not self._args.keepgoing:
+                    logging.error('Quitting.')
+
+                    exit(1)
 
         # remove intermediate results
         if not keepfiles:
