@@ -48,8 +48,8 @@ class Mgen(Wrapper):
         registrar.register_outfile_name('mgen.log')
 
         registrar.register_argument('epochtimestamp',
-                                    False,
-                                    'run with mgen epochtimestamp option')
+                                    True,
+                                    'Run with mgen epochtimestamp option.')
 
     def run(self, ctx):
         if not ctx.args.infile:
