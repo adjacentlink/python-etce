@@ -51,6 +51,7 @@ class TemplateDirectoryBuilder(object):
     def __init__(self,
                  templatedirelem,
                  indices,
+                 reserved_overlays,
                  testfile_global_overlays,
                  templates_global_overlaylists):
         self._global_overlays = testfile_global_overlays
@@ -64,6 +65,8 @@ class TemplateDirectoryBuilder(object):
         self._template_directory_name = '.'.join([self._name, template_suffix])
 
         self._indices = indices
+
+        self._reserved_overlays = reserved_overlays
 
         self._relative_path, \
         self._hostname_format = self._read_attributes(templatedirelem)
@@ -161,27 +164,23 @@ class TemplateDirectoryBuilder(object):
                    runtime_overlays,
                    env_overlays,
                    etce_config_overlays):
-        # assemble the format dictionary from the various overlays
-        # most local value takes precedent
-        reserved_overlays = {}
-
-        reserved_overlays['etce_index'] = index
+        self._reserved_overlays['etce_index'] = index
 
         # etce_hostname formats are limited to the index and the
         # overlays specified in the test.xml file.
-        etce_hostname_cm = ChainMap({'etce_index': reserved_overlays['etce_index']},
+        etce_hostname_cm = ChainMap({'etce_index': self._reserved_overlays['etce_index']},
                                     self._template_local_overlaylists[index],
                                     self._template_local_overlays,
                                     self._templates_global_overlaylists[index],
                                     self._global_overlays)
 
-        reserved_overlays['etce_hostname'] = format_string(self._hostname_format, etce_hostname_cm)
+        self._reserved_overlays['etce_hostname'] = format_string(self._hostname_format, etce_hostname_cm)
 
         if logdir:
-            reserved_overlays['etce_log_path'] = \
-                os.path.join(logdir, reserved_overlays['etce_hostname'])
+            self._reserved_overlays['etce_log_path'] = \
+                os.path.join(logdir, self._reserved_overlays['etce_hostname'])
 
-        node_publishdir = os.path.join(publishdir, reserved_overlays['etce_hostname'])
+        node_publishdir = os.path.join(publishdir, self._reserved_overlays['etce_hostname'])
 
         non_reserved_overlays = [runtime_overlays,
                                  env_overlays,
@@ -196,13 +195,13 @@ class TemplateDirectoryBuilder(object):
         for some_overlays in non_reserved_overlays:
             other_keys.update(some_overlays)
 
-        key_clashes = other_keys.intersection(set(reserved_overlays))
+        key_clashes = other_keys.intersection(set(self._reserved_overlays))
 
         if key_clashes:
             raise ValueError('Overlay keys {%s} are reserved. Quitting.' % \
                              ','.join(map(str, key_clashes)))
 
-        overlays = ChainMap(reserved_overlays, *non_reserved_overlays)
+        overlays = ChainMap(self._reserved_overlays, *non_reserved_overlays)
 
         print('Processing template directory "%s" for etce_index=%d ' \
               'and destination=%s' % \

@@ -32,6 +32,7 @@
 
 from __future__ import absolute_import, division, print_function
 from collections import defaultdict
+import copy
 import os
 import shutil
 import sys
@@ -250,6 +251,7 @@ class Publisher(object):
 
         # and then the remaining files
         self._move(subdirectory_map,
+                   self._testdoc.reserved_overlays,
                    runtime_overlays,
                    env_overlays,
                    testfile_global_overlays,
@@ -305,6 +307,7 @@ class Publisher(object):
 
     def _move(self,
               subdirectory_map,
+              reserved_overlays_common,
               runtime_overlays,
               env_overlays,
               testfile_global_overlays,
@@ -323,11 +326,11 @@ class Publisher(object):
             # full path to the first level entry
             first_level_entry_abs = entry.root_sub_entry_absolute
 
-            reserved_overlays = {}
+            reserved_overlays = copy.copy(reserved_overlays_common)
 
             # first_level_entry is a nodename if it is a directory
             if entry.root_sub_entry_is_dir:
-                reserved_overlays = {'etce_hostname':entry.root_sub_entry}
+                reserved_overlays['etce_hostname'] = entry.root_sub_entry
 
                 if logdir:
                     reserved_overlays['etce_log_path'] = os.path.join(logdir, entry.root_sub_entry)

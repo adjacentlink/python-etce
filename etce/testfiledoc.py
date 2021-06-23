@@ -71,6 +71,11 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
 
 
     @property
+    def reserved_overlays(self):
+        return copy.copy(self._reserved_overlays)
+
+
+    @property
     def indices(self):
         ''' Return the numeric test indices defined by the (optional) test.xml
             templates indices attribute.'''
@@ -187,6 +192,7 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
             self._global_overlay_csvfile.append((oelem.attrib['file'], oelem.attrib['column']))
 
         self._indices,                  \
+        self._reserved_overlays,        \
         self._templates,                \
         self._template_directory_names, \
         self._formatted_directory_names = self._parse_templates(rootelem)
@@ -195,7 +201,9 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
 
 
     def _parse_templates(self, rootelem):
-        indices = []
+        all_indices = []
+
+        reserved_overlays = {}
 
         templates = []
 
@@ -204,40 +212,76 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
         formatted_dir_names = set([])
 
         for templateselem in rootelem.findall('./templates'):
-            indices = etce.utils.nodestr_to_nodelist(templateselem.get('indices'))
+            all_indices = etce.utils.nodestr_to_nodelist(templateselem.get('indices'))
 
-            indices_set = set(indices)
+            all_indices_set = set(all_indices)
 
             templates_global_overlaylists = \
                 OverlayListChainFactory().make(templateselem.findall("./overlaylist"),
-                                               indices)
+                                               all_indices)
 
+            reserved_overlays['etce_indices'] = ','.join(map(str, sorted(all_indices_set)))
+
+            # On first pass:
+            #  1. Check individual file or directory indices are a proper subset of the
+            #     templates indices (all_indices).
+            #  2. Build up reserved_overlays with reserved indices sets. etce_indices
+            #     contains all_indices. For each file or directory, etce_NAME_indices
+            #     contains the indices just allocated to that template, where NAME
+            #     is the template name with any '.' chars converted to '_'.
+            #     The values for each of these overlays is a string that is the comma
+            #     separated list of indices. The idea is to make these value accessible
+            #     for loop variable in template files.
+            #
             for elem in list(templateselem):
                 # ignore comments
                 if isinstance(elem, lxml.etree._Comment):
                     continue
 
-                template_indices = indices
+                template_indices = all_indices
+
+                template_name = elem.attrib.get('name')
 
                 template_indices_str = elem.attrib.get('indices')
 
                 if template_indices_str:
                     template_indices = etce.utils.nodestr_to_nodelist(template_indices_str)
 
-                if not set(template_indices).issubset(indices_set):
+                if not set(template_indices).issubset(all_indices_set):
                     message = 'indices for template element "%s" are not ' \
                               'a subset of parent templatefiles indices. ' \
                               'Quitting.' % elem.attrib['name']
                     raise RuntimeError(message)
 
+                reserved_overlay_name = 'etce_%s_indices' % template_name.replace('.', '_')
+
+                reserved_overlays[reserved_overlay_name] = ','.join(map(str, sorted(template_indices)))
+
+            # for second pass, make templates
+            for elem in list(templateselem):
+                # ignore comments
+                if isinstance(elem, lxml.etree._Comment):
+                    continue
+
+                template_indices = all_indices
+
+                template_name = elem.attrib.get('name')
+
+                template_indices_str = elem.attrib.get('indices')
+
+                if template_indices_str:
+                    template_indices = etce.utils.nodestr_to_nodelist(template_indices_str)
+
                 if elem.tag == 'directory':
                     templates.append(TemplateDirectoryBuilder(elem,
                                                               template_indices,
+                                                              copy.copy(reserved_overlays),
                                                               self._global_overlays,
                                                               templates_global_overlaylists))
                 elif elem.tag == 'file':
                     templates.append(TemplateFileBuilder(elem,
                                                          template_indices,
+                                                         copy.copy(reserved_overlays),
                                                          self._global_overlays,
                                                          templates_global_overlaylists))
 
@@ -247,7 +291,8 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
             if isinstance(t, TemplateDirectoryBuilder):
                 template_directory_names.update([t.template_directory_name])
 
-        return (indices,
+        return (all_indices,
+                reserved_overlays,
                 templates,
                 frozenset(template_directory_names),
                 frozenset(formatted_dir_names))
