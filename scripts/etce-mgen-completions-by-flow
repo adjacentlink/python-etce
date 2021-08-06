@@ -182,7 +182,13 @@ top_margin, left_margin, bottom_margin, right_margin = \
 trials = sorted(tx.trial.unique())
 
 for trial in trials:
-    trialcpl = txcpl.loc[(slice(None),slice(None),trial),:]
+    trialcpl = None
+
+    try:
+        trialcpl = txcpl.loc[(slice(None),slice(None),trial),:]
+    except KeyError as ke:
+        print(ke)
+        continue
 
     rows,cols = trialcpl.shape
 
