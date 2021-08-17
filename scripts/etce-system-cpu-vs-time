@@ -121,7 +121,14 @@ if not os.path.isfile(args.sqlitefile):
 
 con = sqlite3.connect(args.sqlitefile)
 
-dfproc = pd.read_sql('select * from system_processes_processes', con)
+dfproc = None
+
+try:
+    dfproc = pd.read_sql('select * from system_processes_processes', con)
+except:
+    print('Warning, no system_processes_processes table found in %s. Ignoring.\n' % args.sqlitefile,
+          file=sys.stderr)
+    exit(1)
 
 dfproc = dfproc[dfproc.pid != 1]
 

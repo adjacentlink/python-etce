@@ -111,6 +111,10 @@ def concat_sqlite_session_tables(sessiondbs, tablenames=[]):
                     logging.error('"%s" table not found in "%s". Skipping.',
                                   tablename,
                                   db)
+                except pd.io.sql.DatabaseError:
+                    logging.error('"%s" table not found in "%s". Skipping.',
+                                  tablename,
+                                  db)
 
     # prune 0 length data frames - preserves types
     sessiondfs2 = defaultdict(lambda: [])

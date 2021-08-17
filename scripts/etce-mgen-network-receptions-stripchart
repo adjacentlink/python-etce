@@ -144,7 +144,15 @@ for trial in trials:
 
     ax = fig.add_subplot(111)
 
-    rx.plot(kind='scatter', x='rxtimefrac', y='rxtimesec', ax=ax, marker='.', s=0.5, color='black')
+    rx_trial = None
+
+    try:
+        rx_trial = rx[rx.trial == trial]
+    except KeyError as ke:
+        print(ke)
+        continue
+
+    rx_trial.plot(kind='scatter', x='rxtimefrac', y='rxtimesec', ax=ax, marker='.', s=0.5, color='black')
 
     ax.set_xlabel('rx time (fractional second)')
 
