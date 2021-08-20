@@ -417,7 +417,7 @@ class Mgen(Analyzer):
                                 'PRIMARY KEY (trial, txnode, rxnode, flow));')
 
             self._write_tx(con,
-                           sessiondfs['tx'],
+                           sessiondfs.get('tx', DataFrame()),
                            'CREATE TABLE tx (' \
                            'trial INT, '       \
                            'txnode TEXT, '      \
