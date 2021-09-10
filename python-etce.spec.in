@@ -125,6 +125,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/etce-wrapper
 %{_bindir}/etce-analyze-file
 %{_bindir}/etce-analyze-session
+%{_bindir}/etce-lte-connected-rnti-vs-time
 %{_bindir}/etce-lte-missed-subframes-vs-time
 %{_bindir}/etce-mgen-completions-by-flow
 %{_bindir}/etce-mgen-latency-vs-time
@@ -151,6 +152,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/etce-wrapper
 %{_bindir}/etce-analyze-file
 %{_bindir}/etce-analyze-session
+%{_bindir}/etce-lte-connected-rnti-vs-time
 %{_bindir}/etce-lte-missed-subframes-vs-time
 %{_bindir}/etce-mgen-completions-by-flow
 %{_bindir}/etce-mgen-latency-vs-time
