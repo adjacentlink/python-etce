@@ -46,6 +46,51 @@ except:
     from emanesh.events import EventService, LocationEvent, PathlossEvent, AntennaProfileEvent
 
 
+
+class POV(object):
+    def __init__(self):
+        self._position = None
+        self._orientation = None
+        self._velocity = None
+        self._dirty = False
+
+    @property
+    def position(self):
+        return self._position
+
+    @property
+    def position(self, lat, lon, alt):
+        self._position = (lat, lon, alt)
+        self._dirty = True
+
+    @property
+    def orientation(self):
+        return self._orientation
+
+    @property
+    def orientation(self, pitch, roll, yaw):
+        self._orientation = (pitch, roll, yaw)
+        self._dirty = True
+
+    @property
+    def velocity(self):
+        return self._velocity
+
+    @property
+    def velocity(self, azimuth, elevation, speed):
+        self._velocity = (azimuth, elevation, speed)
+        self._dirty = True
+
+    @property
+    def dirty(self):
+        return self._dirty
+
+    def read_reset(self):
+        self._dirty = False
+        return (self._location, self._orientation, self._velocity)
+
+    
+    
 class EmanePhyInit(Wrapper):
     """
     Send EMANE PHY Layer Events to set initial network conditions.
@@ -67,13 +112,41 @@ class EmanePhyInit(Wrapper):
 
           TIME nem:ID location gps LATITUDE,LONGITUDE,ALTITUDE
 
+          LATITUDE and LONGITUDE units are degrees. ALTITUDE unit is meters.
+
           example:
            Set nem 3 location to 40.025495,-74.315441,3.0:
 
            -Inf  nem:3 location gps 40.025495,-74.315441,3.0
 
 
-       3. EMANE fadingselection event (emane >= 1.2.1) of format:
+       3. EMANE orientation event sentences with pitch, roll and yaw.
+          Note orientation sentences must be specified with (and after)
+          an associated location sentence.
+
+          TIME nem:ID orientation PITCH,ROLL,YAW
+
+          PITCH,ROLL,YAW units are degrees.
+
+          example:
+           Set nem 3 pitch roll and yaw to 3.0,4.0,5.0
+
+           -Inf  nem:3 orientation 3.0,4.0,5.0
+
+
+       4. EMANE velocity event sentences with azimuth, elevation and magnitude.
+          Note velocity sentences must be specified with (and after)
+          an associated location sentence.
+
+          TIME nem:ID velocity AZIMUTH,ELEVATION,MAGNITUDE
+
+          AZIMUTH and ELEVATION units are degrees. Magnitude units is meters/second.
+
+          example:
+           -Inf  nem:3 velocity 30.0,20.0,200.0
+
+
+       5. EMANE fadingselection event (emane >= 1.2.1) of format:
 
           TIME nem:ID fadingselection nem:ID,none|nakagami [nem:ID,none|nakagami]*
 
@@ -84,9 +157,11 @@ class EmanePhyInit(Wrapper):
            -Inf nem:4 fadingselection nem:1,none nem:2,nakagami nem:3,nakagami
 
 
-       4. An allinformedpathloss sentence of format:
+       6. An allinformedpathloss sentence of format:
 
           TIME nem:ID[(,|-)ID]* allinformedpathloss PATHLOSS
+
+          PATHLOSS units is dB.
 
           example:
            Set forward and reverse pathloss between all pairs of nems 1,2 3 and 7 to 90:
@@ -95,7 +170,9 @@ class EmanePhyInit(Wrapper):
 
        5. EMANE antennaprofile event of format:
 
-          TIME nem:ID antennaprofile profileid,azimuth,elevation
+          TIME nem:ID antennaprofile PROFILEID,AZIMUTH,ELEVATION
+
+          AZIMUTH and ELEVATION units are degrees.
 
           example:
            Set nem 4 antenna profile to 3 with azimuth 195 and elevation 45:
@@ -127,9 +204,19 @@ class EmanePhyInit(Wrapper):
         if not ctx.args.infile:
             return
 
+        # position, orientation and velocities are specified as separate
+        # EEL sentences - however orientation and velocity events must
+        # be specified with their associated location triplets.
+        # Store the most recently specified location for each nem and
+        # reuse it as optional orientation and velocity sentences are
+        # parsed.
+        self._location_cache = {}
+
         handlers = {
             'allinformedpathloss':self.allinformed_pathloss,
             'location':self.location_gps,
+            'orientation':self.orientation,
+            'velocity':self.velocity,
             'pathloss':self.pathloss,
             'fadingselection':self.fadingselection,
             'antennaprofile':self.antennaprofile
@@ -149,18 +236,17 @@ class EmanePhyInit(Wrapper):
         service = EventService((mcgroup, int(port), ctx.args.eventservicedevice))
 
         with open(ctx.args.outfile, 'a') as lfd:
-            for moduleid, eventtype, eventargline in sequencer:
-                eventargs = eventargline.split()
+            for eventlist in sequencer:
+                for eventtime, moduleid, eventtype, eventargs in eventlist:
+                    events = handlers[eventtype](moduleid, eventtype, eventargs)
 
-                events = handlers[eventtype](moduleid, eventtype, eventargs)
+                    for nem, event in list(events.items()):
+                        service.publish(nem, event)
 
-                for nem, event in list(events.items()):
-                    service.publish(nem, event)
+                    logline = 'process eventtype "%s" to nems {%s}' % \
+                              (eventtype, ','.join(map(str, sorted(events.keys()))))
 
-                logline = 'process eventtype "%s" to nems {%s}' % \
-                          (eventtype, ','.join(map(str, sorted(events.keys()))))
-
-                print(logline)
+                    print(logline)
 
                 self.log(lfd, logline)
 
@@ -193,10 +279,70 @@ class EmanePhyInit(Wrapper):
 
         lat, lon, alt = list(map(float, toks[0:3]))
 
+        self._location_cache[location_nem] = (lat,lon,alt)
+
         events = defaultdict(lambda: LocationEvent())
 
         # all events are sent to nemid 0 - ie, received by every nem
         events[0].append(location_nem, latitude=lat, longitude=lon, altitude=alt)
+
+        return events
+
+
+    def orientation(self, moduleid, eventtype, eventargs):
+        # -Inf   nem:45 orientation 3.0,4.0,5.0
+        nem = int(moduleid.split(':')[1])
+
+        if not nem in self._location_cache:
+            raise ValueError('An orientation EEL sentence for nem "%d" '
+                             'has been specified without an associated '
+                             'location sentence. Quitting.'
+                             % nem)
+
+        toks = eventargs[0].split(',')
+
+        lat, lon, alt = self._location_cache[nem]
+
+        pitch, roll, yaw = list(map(float, toks[0:3]))
+
+        events = defaultdict(lambda: LocationEvent())
+
+        events[0].append(nem,
+                         latitude=lat,
+                         longitude=lon,
+                         altitude=alt,
+                         pitch=pitch,
+                         roll=roll,
+                         yaw=yaw)
+
+        return events
+
+
+    def velocity(self, moduleid, eventtype, eventargs):
+        # -Inf   nem:45 velocity 30.0,20.0,200.0
+        nem = int(moduleid.split(':')[1])
+
+        if not nem in self._location_cache:
+            raise ValueError('A velocity EEL sentence for nem "%d" '
+                             'has been specified without an associated '
+                             'location sentence. Quitting.'
+                             % nem)
+
+        toks = eventargs[0].split(',')
+
+        lat, lon, alt = self._location_cache[nem]
+
+        azimuth, elevation, magnitude = list(map(float, toks[0:3]))
+
+        events = defaultdict(lambda: LocationEvent())
+
+        events[0].append(nem,
+                         latitude=lat,
+                         longitude=lon,
+                         altitude=alt,
+                         azimuth=azimuth,
+                         elevation=elevation,
+                         magnitude=magnitude)
 
         return events
 

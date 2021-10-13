@@ -32,6 +32,7 @@
 
 from __future__ import absolute_import, division, print_function
 import logging
+import math
 import re
 import sys
 import sqlite3
@@ -66,7 +67,7 @@ class Mgen(Analyzer):
     def __init__(self, ctx):
         self._config = ctx.config
 
-        flow_allocations_str = self._config.args.get('flowformat', '1:2:2')
+        flow_allocations_str = self._config.args.get('flowformat', '0:3:2')
 
         flow_allocations = list(map(int, flow_allocations_str.split(':')))
 
@@ -193,6 +194,19 @@ class Mgen(Analyzer):
 
         # write each table to sqlite file as a data frame
         con = sqlite3.connect(resultfile)
+        num_start = len(metacols['start'])
+
+        num_stop = len(metacols['stop'])
+
+        if not num_start == num_stop:
+            logging.error('Warning: found mismatch in the number of flow start and stop times')
+
+            if num_start > num_stop:
+                for _ in range(num_start - num_stop):
+                    metacols['stop'].append(math.nan)
+            else:
+                for _ in range(num_stop - num_start):
+                    metacols['start'].append(math.nan)
 
         metadf = DataFrame(metacols)
 
@@ -334,6 +348,10 @@ class Mgen(Analyzer):
         rxdf.drop(['txid'], axis=1, inplace=True)
 
         rxflowsdf = concatdfs['rxflows']
+        # ignore any flows that a node registers to listen for, but
+        # are not actually transmitted by any node in the scenario
+        rxflowsdf.drop(rxflowsdf.index[~rxflowsdf.txid.isin(txid_to_name.keys())], inplace=True)
+
         rxflowsdf['txnode'] = rxflowsdf.txid.apply(lambda txid: txid_to_name[txid])
         rxflowsdf.drop(['txid'], axis=1, inplace=True)
 
@@ -388,7 +406,7 @@ class Mgen(Analyzer):
         # concat node tx, rx and rxflows dataframes into a single table
         with sqlite3.connect(sessionresultfile) as con:
             self._write_rxflows(con,
-                                sessiondfs['rxflows'],
+                                sessiondfs.get('rxflows', DataFrame()),
                                 'CREATE TABLE rxflows (' \
                                 'trial INT, '            \
                                 'txnode TEXT, '          \
@@ -399,7 +417,7 @@ class Mgen(Analyzer):
                                 'PRIMARY KEY (trial, txnode, rxnode, flow));')
 
             self._write_tx(con,
-                           sessiondfs['tx'],
+                           sessiondfs.get('tx', DataFrame()),
                            'CREATE TABLE tx (' \
                            'trial INT, '       \
                            'txnode TEXT, '      \
@@ -410,7 +428,7 @@ class Mgen(Analyzer):
                            'PRIMARY KEY (trial,txnode,flow,sequence));')
 
             self._write_rx(con,
-                           sessiondfs['rx'],
+                           sessiondfs.get('rx', DataFrame()),
                            'CREATE TABLE rx (' \
                            'trial INT, '       \
                            'txnode TEXT, '     \

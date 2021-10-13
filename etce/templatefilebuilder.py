@@ -32,7 +32,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-import copy
 import os.path
 
 from etce.chainmap import ChainMap
@@ -51,6 +50,7 @@ class TemplateFileBuilder(object):
     def __init__(self,
                  templatefileelem,
                  indices,
+                 reserved_overlays,
                  testfile_global_overlays,
                  templates_global_overlaylists):
 
@@ -60,7 +60,9 @@ class TemplateFileBuilder(object):
 
         self._name = templatefileelem.attrib['name']
 
-        self._indices = copy.copy(indices)
+        self._indices = indices
+
+        self._reserved_overlays = reserved_overlays
 
         self._hostname_format, \
         self._output_file_name = self._read_attributes(templatefileelem)
@@ -153,26 +155,24 @@ class TemplateFileBuilder(object):
                     runtime_overlays,
                     env_overlays,
                     etce_config_overlays):
-        reserved_overlays = {}
-
-        reserved_overlays['etce_index'] = index
+        self._reserved_overlays['etce_index'] = index
 
         # etce_hostname formats are limited to the index and the
         # overlays specified in the test.xml file.
-        etce_hostname_cm = ChainMap({'etce_index': reserved_overlays['etce_index']},
+        etce_hostname_cm = ChainMap({'etce_index': self._reserved_overlays['etce_index']},
                                     self._template_local_overlaylists[index],
                                     self._template_local_overlays,
                                     self._templates_global_overlaylists[index],
                                     self._global_overlays)
 
-        reserved_overlays['etce_hostname'] = format_string(self._hostname_format, etce_hostname_cm)
+        self._reserved_overlays['etce_hostname'] = format_string(self._hostname_format, etce_hostname_cm)
 
         if logdir:
-            reserved_overlays['etce_log_path'] = \
-                os.path.join(logdir, reserved_overlays['etce_hostname'])
+            self._reserved_overlays['etce_log_path'] = \
+                os.path.join(logdir, self._reserved_overlays['etce_hostname'])
 
         publishfile = os.path.join(publishdir,
-                                   reserved_overlays['etce_hostname'],
+                                   self._reserved_overlays['etce_hostname'],
                                    self._output_file_name)
 
         other_keys = set([])
@@ -188,13 +188,13 @@ class TemplateFileBuilder(object):
         for some_overlays in non_reserved_overlays:
             other_keys.update(some_overlays)
 
-        key_clashes = other_keys.intersection(set(reserved_overlays.keys()))
+        key_clashes = other_keys.intersection(set(self._reserved_overlays.keys()))
 
         if key_clashes:
             raise ValueError('Overlay keys {%s} are reserved. Quitting.' % \
                              ','.join(map(str, key_clashes)))
 
-        overlays = ChainMap(reserved_overlays, *non_reserved_overlays)
+        overlays = ChainMap(self._reserved_overlays, *non_reserved_overlays)
 
         # format str can add subdirectories, so make those if necessary
         if not os.path.exists(os.path.dirname(publishfile)):

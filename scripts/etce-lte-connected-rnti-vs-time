@@ -33,15 +33,17 @@
 
 from __future__ import absolute_import, division, print_function
 import argparse
-import matplotlib.pyplot as plt
 import os
-import sys
-from etceanalyzers.mgen import to_dataframes
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import sqlite3
 
 
-usagestr = 'Generate a strip chart of receptions vs time.'
+usagestr = 'Generate a line plot of the UE rnti values when' \
+           'a UE is in the RRC connected state to an ENB.'
 
-suffix = 'network_receptions_stripchart'
+suffix = 'connected_rnti_vs_time'
 
 parser = argparse.ArgumentParser(description=usagestr)
 
@@ -51,19 +53,12 @@ parser.add_argument('--graphfile',
                     default=None,
                     help='The output graph file. Default is to rename ' \
                     'SQLITEFILE with a "%s.png" suffix.' % suffix)
-parser.add_argument('--csvfile',
-                    action='store_true',
-                    default=False,
-                    help='If specified, store the aggregated DataFrame ' \
-                         'to csvfile.')
-parser.add_argument('--keepselfrxs',
-                    action='store_true',
-                    default=False,
-                    help='Do not remove self receptions from the analysis.')
-parser.add_argument('--nodefilter',
-                    default=None,
-                    help='Colon separated list of receiver nodenames to plot. '
-                    'Plots are limited to nodes specified.')
+parser.add_argument('--plotstyle',
+                    metavar='PLOTSTYLE',
+                    action='store',
+                    default='ggplot',
+                    help='Any valid matplotlib.pyplot plot style. ' \
+                    'Default: ggplot.')
 parser.add_argument('--height',
                     type=float,
                     action='store',
@@ -90,45 +85,26 @@ parser.add_argument('sqlitefile',
 
 args = parser.parse_args()
 
+plt.style.use(args.plotstyle)
+
 if not os.path.isfile(args.sqlitefile):
     print('Could not find file "%s". Quitting.' % args.sqlitefile, file=sys.stderr)
     exit(1)
 
-rx,_ = to_dataframes(args.sqlitefile, args.keepselfrxs)
+con = sqlite3.connect(args.sqlitefile)
 
-rx['rxtimesec'] = rx.rxtime.apply(int)
+df = pd.read_sql('select * from srslte_ue_tables_upper_nodeinfotable', con)
 
-rx['rxtimefrac'] = rx.rxtime - rx.rxtimesec
+# connected_rnti contains the current rnti value only during
+# reports where thee rrcstate is not idle
+df['connected_rnti'] = df.rnti
+df.loc[df.rrcstate=='IDLE', ['connected_rnti']] = 0
 
-all_rxers = set(rx.rxnode.unique())
+ymax = (df.connected_rnti.max() // 5 + 1) * 5
 
-rxers = all_rxers
+trials = sorted(df.trial.unique())
 
-if args.nodefilter:
-    # keep named nodes
-    rxers = [nodename.strip() for nodename in args.nodefilter.split(':')]
-
-    # filter out
-    drop_rxers = all_rxers.difference(rxers)
-
-    if drop_rxers:
-        print('Dropping %s nodes, not included in nodefilter arg' % ','.join(sorted(drop_rxers)),
-              file=sys.stderr)
-
-    rx = rx.loc[rx.rxnode.isin(rxers)]
-
-if args.csvfile:
-    csvfile = \
-        '.'.join(os.path.basename(args.sqlitefile).split('.')[:-1]) + \
-        '-%s.csv' % suffix
-
-    rx.to_csv(csvfile)
-
-trials = sorted(rx.trial.unique())
-
-ymax = rx.rxtimesec.max()
-
-height = max(rx.rxtimesec.max() // 72, 6)
+height = max(ymax // 72, 6)
 if args.height:
     height = args.height
 
@@ -144,23 +120,24 @@ for trial in trials:
 
     ax = fig.add_subplot(111)
 
-    rx_trial = None
+    trial_rntis = df.loc[df.trial == trial]
 
-    try:
-        rx_trial = rx[rx.trial == trial]
-    except KeyError as ke:
-        print(ke)
-        continue
+    print(trial_rntis)
 
-    rx_trial.plot(kind='scatter', x='rxtimefrac', y='rxtimesec', ax=ax, marker='.', s=0.5, color='black')
+    dfrnti = trial_rntis.pivot_table(values='connected_rnti',
+                                     index='timestamp',
+                                     columns='nodename')
 
-    ax.set_xlabel('rx time (fractional second)')
+    dfrnti.plot(ax=ax,
+                marker='.')
 
-    ax.set_ylabel('rx time (second)')
+    ax.set_xlabel('time (sec)')
+
+    ax.set_ylabel('rnti')
 
     ax.set_ylim(0, ymax)
 
-    ax.set_title('Receptions vs. Time')
+    ax.set_title('RNTI vs. Time')
 
     fig.subplots_adjust(top=top_margin,
                         left=left_margin,

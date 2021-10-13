@@ -69,10 +69,10 @@ then
        ltmain.sh \
        Makefile \
        Makefile.in \
-       missing 
+       missing
     find m4 -type f -delete
     find . -name 'Makefile.in' -delete
-    
+
 else
     libtoolize --force --copy
 

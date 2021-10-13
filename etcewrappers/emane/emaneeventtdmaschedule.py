@@ -78,26 +78,25 @@ class EmaneEventTDMASchedule(Wrapper):
                                  ctx.args.starttime,
                                  ('tdmaschedule',))
 
-        for _, _, eventargline in sequencer:
-            # parse inputs
-            # 0.0   nem:1-5 tdmaschedule tdmaschedules/t000.xml
+        for eventlist in sequencer:
+            for _, _, _, eventargs in eventlist:
+                # parse inputs
+                # 0.0   nem:1-5 tdmaschedule tdmaschedules/t000.xml
 
-            eventargs = eventargline.split()
+                schedulexml = eventargs[0]
 
-            schedulexml = eventargs[0]
+                # build argstr
+                argstr =  \
+                          '--device %s --group %s --port %s %s' \
+                          % (ctx.args.eventservicedevice, mcgroup, mcport, schedulexml)
 
-            # build argstr
-            argstr =  \
-                      '--device %s --group %s --port %s %s' \
-                      % (ctx.args.eventservicedevice, mcgroup, mcport, schedulexml)
+                ctx.run('emaneevent-tdmaschedule', argstr, genpidfile=False)
 
-            ctx.run('emaneevent-tdmaschedule', argstr, genpidfile=False)
-
-            # and log it
-            with open(ctx.args.outfile, 'a') as lf:
-                lf.write('%s: emaneevent-tdmaschedule %s\n' \
-                         % (etce.timeutils.getstrtimenow(),
-                            argstr))
+                # and log it
+                with open(ctx.args.outfile, 'a') as lf:
+                    lf.write('%s: emaneevent-tdmaschedule %s\n' \
+                             % (etce.timeutils.getstrtimenow(),
+                                argstr))
 
 
     def stop(self, ctx):

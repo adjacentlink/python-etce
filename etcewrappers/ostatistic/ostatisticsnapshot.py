@@ -44,6 +44,10 @@ class OStatisticSnapshot(Wrapper):
 
         registrar.register_outfile_name('ostatistic.log')
 
+        registrar.register_argument('endpoint',
+                                    '127.0.0.1:47001',
+                                    'The ostatistic endpoint of the target ' \
+                                    'application instance.')
 
     def run(self, ctx):
         if not ctx.args.infile:
@@ -51,11 +55,13 @@ class OStatisticSnapshot(Wrapper):
 
         logdirectory = ctx.args.logdirectory
 
+        ipaddr, port = ctx.args.endpoint.split(':')
+
         statfile = os.path.join(logdirectory, 'ostatisticstats.log')
-        ctx.run('ostatistic', 'localhost get stat', stdout=statfile)
+        ctx.run('ostatistic', '-p %s %s get stat' % (port, ipaddr), stdout=statfile)
 
         tablefile = os.path.join(logdirectory, 'ostatistictables.log')
-        ctx.run('ostatistic', 'localhost get table', stdout=tablefile)
+        ctx.run('ostatistic', '-p %s %s get table' % (port, ipaddr), stdout=tablefile)
 
 
     def stop(self, ctx):

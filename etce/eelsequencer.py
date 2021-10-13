@@ -31,6 +31,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
+from collections import defaultdict
 import datetime
 import math
 import os.path
@@ -41,7 +42,7 @@ import etce.timeutils
 
 class EELSequencerIterator(object):
     def __init__(self, events, starttime):
-        self._events = events
+        self._events = sorted(events.items())
         self._starttime = starttime
         self._index = 0
 
@@ -52,10 +53,10 @@ class EELSequencerIterator(object):
         if self._index >= len(self._events):
             raise StopIteration
         else:
-            item = self._events[self._index]
+            eventtime, eventlist = self._events[self._index]
             self._index += 1
-            self._wait(item[0], self._starttime)
-            return item[1]
+            self._wait(eventtime, self._starttime)
+            return eventlist
 
     def _wait(self, eventtime, starttime):
         if math.isinf(eventtime) and eventtime < 0:
@@ -103,7 +104,7 @@ class EELSequencer(object):
 
 
     def _parsefile(self, eelfile, eventlist):
-        events = []
+        events = defaultdict(lambda:[])
 
         # eelfile must be present
         if not os.path.exists(eelfile):
@@ -132,12 +133,12 @@ class EELSequencer(object):
             eventtime = float(toks[0])
             moduleid = toks[1]
             eventtype = toks[2]
-            eventargs = ' '.join(toks[3:])
+            eventargs = tuple(toks[3:])
 
             # ignore other events
             if not eventtype in eventlist:
                 continue
 
-            events.append((eventtime, (moduleid, eventtype, eventargs)))
+            events[eventtime].append((eventtime, moduleid, eventtype, eventargs))
 
         return events

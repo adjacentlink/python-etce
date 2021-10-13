@@ -82,7 +82,8 @@ def concat_sqlite_trial_tables(resultdbs, tablenames=None):
 
     concatdfs = defaultdict(pd.DataFrame)
     for tablename, dflist in trialdfs2.items():
-        concatdfs[tablename] = pd.concat(dflist, axis=0, ignore_index=True)
+        concatdfs[tablename] = \
+            pd.concat(dflist, axis=0, ignore_index=True, sort=True)
 
     return concatdfs
 
@@ -110,6 +111,10 @@ def concat_sqlite_session_tables(sessiondbs, tablenames=[]):
                     logging.error('"%s" table not found in "%s". Skipping.',
                                   tablename,
                                   db)
+                except pd.io.sql.DatabaseError:
+                    logging.error('"%s" table not found in "%s". Skipping.',
+                                  tablename,
+                                  db)
 
     # prune 0 length data frames - preserves types
     sessiondfs2 = defaultdict(lambda: [])
@@ -126,7 +131,8 @@ def concat_sqlite_session_tables(sessiondbs, tablenames=[]):
     # concat the iterations
     concatdfs = {}
     for tablename, dflist in sessiondfs2.items():
-        concatdfs[tablename] = pd.concat(dflist, axis=0, ignore_index=True)
+        concatdfs[tablename] = \
+            pd.concat(dflist, axis=0, ignore_index=True, sort=True)
 
     return concatdfs
 

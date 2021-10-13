@@ -48,7 +48,7 @@ class SRSUEEmane(Wrapper):
         if not ctx.args.infile:
             return
 
-        ctx.run('srsue-emane', ctx.args.infile, pidincrement=2)
+        ctx.run('srsue-emane', ctx.args.infile, pidincrement=1)
 
 
     def stop(self, ctx):
