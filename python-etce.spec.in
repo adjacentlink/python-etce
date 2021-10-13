@@ -73,7 +73,9 @@ Requires: python3-lxml
 Requires: python3-emane
 Requires: python3-pandas
 Requires: python3-matplotlib
+%if 0%{?fedora}
 Requires: python3-seaborn
+%endif
 Requires: lxc
 Conflicts: python-etce
 Conflicts: python2-etce
