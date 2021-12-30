@@ -56,7 +56,6 @@ Requires: python2-lxml
 Requires: python2-emane
 Requires: python2-pandas
 Requires: python2-matplotlib
-Requires: python2-matplotlib
 Requires: lxc
 Conflicts: python3-etce
 %define use_python2_sitelib %{python2_sitelib}
