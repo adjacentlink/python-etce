@@ -5,4 +5,4 @@ steps:
 images:
 - 'gcr.io/$PROJECT_ID/$_BUILD_DISTRO$_DISTRO_VERSION.python-etce'
 
-timeout: 15m
+timeout: 30m
