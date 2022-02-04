@@ -2,7 +2,7 @@
 # -*- makefile -*-
 export DH_OPTIONS
 
-PYTHON3_DEPENDS = -Vpython3:Depends="python3:any (>= 3.0), python3, python3-mako, python3-paramiko, python3-lxml, python3-emane, python3-pandas, python3-matplotlib, python3-seaborn, python3-distro, iproute2, lxc, openssh-server"
+PYTHON3_DEPENDS = -Vpython3:Depends="python3:any (>= 3.0), python3, python3-mako, python3-paramiko, python3-lxml, python3-emane, python3-pandas, python3-matplotlib, python3-seaborn, python3-distro, iproute2, lxc, openssh-server, sudo"
 
 override_dh_auto_install:
 	dh_auto_install -- PYTHON=python3
