@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2019,2022 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,8 @@
 #
 
 from etce.wrapper import Wrapper
+import os
+
 
 class SpectrumMonitor(Wrapper):
     """
@@ -43,6 +45,8 @@ class SpectrumMonitor(Wrapper):
         registrar.register_outfile_name('emane-spectrum-monitor.log')
 
         registrar.register_argument('loglevel', 2, 'log level - [0,4]')
+
+        registrar.register_argument('record', False, 'record spectrum data to file')
 
         registrar.run_with_sudo()
 
@@ -61,6 +65,10 @@ class SpectrumMonitor(Wrapper):
                     ctx.args.loglevel,
                     ctx.args.outfile,
                     ctx.args.default_pidfilename)
+
+        if ctx.args.record:
+            argstr += ' --spectrumquery.recorderfile %s' % \
+                      os.path.join(ctx.args.logdirectory, 'emane-spectrum-monitor.data')
 
         ctx.run('emane-spectrum-monitor', argstr, genpidfile=False)
 
