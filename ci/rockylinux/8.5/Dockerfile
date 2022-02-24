@@ -1,4 +1,4 @@
-FROM fedora:35
+FROM rockylinux:8.5
 
 RUN mkdir -p /opt/built
 
