@@ -18,9 +18,7 @@ RUN yum -y install git gcc-c++ make autoconf automake libtool rpm-build
 
 RUN git clone https://github.com/adjacentlink/python-etce -b develop
 WORKDIR python-etce
-RUN ./autogen.sh
-RUN ./configure --with-python2
-RUN make rpm
+RUN ./autogen.sh && ./configure --with-python2 && make rpm
 RUN cp $(find .rpmbuild/RPMS -name "*\.rpm") /opt/built
 RUN yum -y install /opt/built/*
 

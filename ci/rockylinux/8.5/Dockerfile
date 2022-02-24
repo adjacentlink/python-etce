@@ -3,13 +3,15 @@ FROM fedora:35
 RUN mkdir -p /opt/built
 
 RUN dnf -y update
+RUN dnf -y install epel-release dnf-plugins-core
+RUN dnf config-manager --set-enabled powertools
 
 # Copy and install packages from the latest upsteam dependencies
 WORKDIR /opt
 RUN mkdir -p dependencies
-COPY --from=gcr.io/automated-builds-303920/fedora35.emane /opt/built/* dependencies/
-COPY --from=gcr.io/automated-builds-303920/fedora35.opentestpoint /opt/built/* dependencies/
-COPY --from=gcr.io/automated-builds-303920/fedora35.opentestpoint-probe-emane /opt/built/* dependencies/
+COPY --from=gcr.io/automated-builds-303920/rockylinux8.5.emane /opt/built/* dependencies/
+COPY --from=gcr.io/automated-builds-303920/rockylinux8.5.opentestpoint /opt/built/* dependencies/
+COPY --from=gcr.io/automated-builds-303920/rockylinux8.5.opentestpoint-probe-emane /opt/built/* dependencies/
 RUN dnf -y install dependencies/*\.rpm
 
 # Build tools
