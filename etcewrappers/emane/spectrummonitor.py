@@ -55,11 +55,11 @@ class SpectrumMonitor(Wrapper):
         if not ctx.args.infile:
             return
 
-        argstr = '--config %s ' \
-                 '-r ' \
-                 '-d ' \
-                 '-l %d ' \
-                 '-f %s ' \
+        argstr = '--realtime ' \
+                 '--daemonize ' \
+                 '--config %s ' \
+                 '--loglevel %d ' \
+                 '--logfile %s ' \
                  '--pidfile %s' \
                  % (ctx.args.infile,
                     ctx.args.loglevel,
