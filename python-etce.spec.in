@@ -46,6 +46,7 @@ Requires: python-matplotlib
 Requires: python-distro
 Requires: lxc
 Requires: iproute
+Requires: iptables
 Requires: openssh-server
 Requires: sudo
 Conflicts: python3-etce
@@ -62,6 +63,7 @@ Requires: python2-pandas
 Requires: python2-matplotlib
 Requires: lxc
 Requires: iproute
+Requires: iptables
 Requires: openssh-server
 Requires: sudo
 Conflicts: python3-etce
@@ -85,6 +87,7 @@ Requires: python3-seaborn
 Requires: python3-distro
 Requires: lxc
 Requires: iproute
+Requires: iptables
 Requires: openssh-server
 Requires: sudo
 Conflicts: python-etce
