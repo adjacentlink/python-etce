@@ -32,6 +32,7 @@
 
 from __future__ import absolute_import, division, print_function
 import os
+import re
 import socket
 import shutil
 import stat
@@ -132,6 +133,13 @@ class LXCManagerImpl(object):
             for kernelparamname, kernelparamval in kernelparameters.items():
                 os.system('sysctl %s=%s' % (kernelparamname, kernelparamval))
 
+        self._check_reserved(containers)
+
+        # write hosts file
+        if not dryrun:
+            if writehosts:
+                self._writehosts(containers)
+
         # bring up bridge
         if not dryrun:
             for _, bridge in plandoc.bridges(hostname).items():
@@ -155,11 +163,6 @@ class LXCManagerImpl(object):
 
                 elif not self._platform.isdeviceup(bridge.devicename):
                     raise RuntimeError('Bridge %s marked persistent is not up. Quitting.')
-
-        # write hosts file
-        if not dryrun:
-            if writehosts:
-                self._writehosts(containers)
 
         # create container files
         for container in containers:
@@ -278,7 +281,7 @@ class LXCManagerImpl(object):
             else:
                 etcehostlines.append(line)
 
-        # strip off trailing white spaces
+        # strip off trailing white spaces lines at end of file
         etcehostlines.reverse()
 
         for i, line in enumerate(etcehostlines):
@@ -287,6 +290,16 @@ class LXCManagerImpl(object):
                 break
 
         etcehostlines.reverse()
+
+        entry_collisions = self._check_for_collisions(etcehostlines, containers)
+
+        if entry_collisions:
+            message = 'ERROR: Cannot write hosts file for hosts or ' \
+                'addresses "%s", already present in /etc/hosts. Quitting.' \
+                % ','.join(entry_collisions)
+
+            raise LXCError(message)
+
 
         with open('/etc/hosts', 'w') as ofd:
             for line in etcehostlines:
@@ -317,3 +330,98 @@ class LXCManagerImpl(object):
                 ofd.write('%s %s\n' % (hostaddr, hostentry))
 
             ofd.write(closetag)
+
+
+    def _check_for_collisions(self, etcehostlines, containers):
+        """
+        Make sure new addresses do not overwrite existing ones
+        """
+        ipv4re = re.compile(r'(?P<address>[\d\.]+)\s+(?P<aliases>[\w\s\-]+)(#?.*)')
+
+        ipv6re = re.compile(r'(?P<address>[\da-f\:]+)\s+(?P<aliases>[\w\s\-]+)(#?.*)')
+
+        current_ips = set([])
+
+        current_aliases = set([])
+
+        for line in etcehostlines:
+            m4 = ipv4re.match(line)
+
+            m6 = ipv6re.match(line)
+
+            if m4:
+                current_ips.add(m4.group('address'))
+
+                current_aliases.update(m4.group('aliases').split())
+
+            elif m6:
+                current_ips.add(m6.group('address'))
+
+                current_aliases.update(
+                    [alias.strip() for alias in m6.group('aliases').split()])
+
+        new_ips = []
+
+        new_aliases = []
+
+        for container in containers:
+            for alias,ip in container.hosts_entries_ipv4:
+                new_aliases.append(alias)
+                new_ips.append(ip)
+
+            for alias,ip in container.hosts_entries_ipv6:
+                new_aliases.append(alias)
+                new_ips.append(ip)
+
+        collided_ips = current_ips.intersection(new_ips)
+
+        collided_aliases = current_aliases.intersection(new_aliases)
+
+        return list(collided_ips) + list(collided_aliases)
+
+
+    def _check_reserved(self, containers):
+        reserved_aliases = set([
+            'localhost',
+            'ip6-localhost',
+            'ip6-loopback',
+            'ip6-localnet',
+            'ip6-mcastprefix',
+            'ip6-allnodes',
+            'ip6-allrouters'])
+
+        reserved_ips = set([
+            '127.0.0.1',
+            '127.0.1.1',
+            '::1',
+            'fe00::0',
+            'ff00::0',
+            'ff02::1',
+            'ff02::2'])
+
+        for container in containers:
+            new_ips = []
+
+            new_aliases = []
+
+            for alias,ip in container.hosts_entries_ipv4:
+                new_aliases.append(alias)
+                new_ips.append(ip)
+
+            for alias,ip in container.hosts_entries_ipv6:
+                new_aliases.append(alias)
+                new_ips.append(ip)
+
+            disallowed_ips = reserved_ips.intersection(new_ips)
+
+            disallowed_aliases = reserved_aliases.intersection(new_aliases)
+
+            if disallowed_ips:
+                raise LXCError(
+                    'ERROR: IPv4 address "%s" not permitted. Quitting.' \
+                    % ','.join(disallowed_ips))
+
+            if disallowed_aliases:
+                raise LXCError(
+                    'ERROR: hostname "%s" not permitted. Quitting.' \
+                    % ','.join(disallowed_aliases))
