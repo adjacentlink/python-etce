@@ -30,6 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+import os
 import shlex
 import subprocess
 from etce.wrapper import Wrapper
@@ -42,8 +43,8 @@ class Socat(Wrapper):
     of any valid arguments to the socat command listed one per line.
     Comment lines starting with '#" are permitted. For example:
 
-     -lf/tmp/otestpointdiscover TCP-LISTEN:5001,fork,reuseaddr helper:9001
-     -lf/tmp/otestpointdump TCP-LISTEN:5002,fork,reuseaddr helper:9002
+     TCP-LISTEN:5001,fork,reuseaddr helper:9001
+     TCP-LISTEN:5002,fork,reuseaddr helper:9002
 
     """
 
@@ -57,7 +58,7 @@ class Socat(Wrapper):
             return
 
         with open(ctx.args.outfile, 'a') as lfd:
-            for line in open(ctx.args.infile):
+            for linenum,line in enumerate(open(ctx.args.infile), start=1):
                 # skip comments
                 if line.startswith('#'):
                     continue
@@ -68,11 +69,17 @@ class Socat(Wrapper):
                 if len(argstr) == 0:
                     continue
 
-                subprocess.Popen(shlex.split('socat ' + argstr),
+                cmdline = 'socat -lf%s %s' % \
+                    (os.path.join(ctx.args.logdirectory,
+                                  'socat.%d.log' % linenum), argstr)
+
+                subprocess.Popen(shlex.split(cmdline),
                                  stdout=subprocess.DEVNULL,
                                  stderr=subprocess.STDOUT)
 
-                lfd.write('%s: socat %s\n' % (getstrtimenow(), argstr))
+                print(cmdline)
+
+                lfd.write('%s: %s\n' % (getstrtimenow(), cmdline))
 
 
     def stop(self, ctx):
