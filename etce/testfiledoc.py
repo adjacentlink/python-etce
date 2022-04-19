@@ -38,7 +38,9 @@ import lxml.etree
 import etce.xmldoc
 import etce.utils
 from etce.templatedirectorybuilder import TemplateDirectoryBuilder
+from etce.templatedirectorybuilderconfig import TemplateDirectoryBuilderConfig
 from etce.templatefilebuilder import TemplateFileBuilder
+from etce.templatefilebuilderconfig import TemplateFileBuilderConfig
 from etce.overlaycsvreader import OverlayCSVReader
 from etce.overlaylistchainfactory import OverlayListChainFactory
 
@@ -273,17 +275,29 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
                     template_indices = etce.utils.nodestr_to_nodelist(template_indices_str)
 
                 if elem.tag == 'directory':
-                    templates.append(TemplateDirectoryBuilder(elem,
-                                                              template_indices,
+                    tdbconfig = TemplateDirectoryBuilderConfig(elem, template_indices)
+
+                    templates.append(TemplateDirectoryBuilder(tdbconfig.name,
+                                                              tdbconfig.indices,
                                                               copy.copy(reserved_overlays),
                                                               self._global_overlays,
-                                                              templates_global_overlaylists))
+                                                              templates_global_overlaylists,
+                                                              tdbconfig.template_local_overlays,
+                                                              tdbconfig.template_local_overlaylists,
+                                                              tdbconfig.relative_path,
+                                                              tdbconfig.hostname_format))
                 elif elem.tag == 'file':
-                    templates.append(TemplateFileBuilder(elem,
-                                                         template_indices,
+                    tfbconfig = TemplateFileBuilderConfig(elem, template_indices)
+
+                    templates.append(TemplateFileBuilder(tfbconfig.name,
+                                                         tfbconfig.indices,
                                                          copy.copy(reserved_overlays),
                                                          self._global_overlays,
-                                                         templates_global_overlaylists))
+                                                         templates_global_overlaylists,
+                                                         tfbconfig.template_local_overlays,
+                                                         tfbconfig.template_local_overlaylists,
+                                                         tfbconfig.hostname_format,
+                                                         tfbconfig.output_file_name))
 
         for t in templates:
             formatted_dir_names.update(t.formatted_hostnames)

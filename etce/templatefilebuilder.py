@@ -35,9 +35,7 @@ from __future__ import absolute_import, division, print_function
 import os.path
 
 from etce.chainmap import ChainMap
-from etce.templateutils import format_file, format_string
-from etce.utils import configstrtoval
-from etce.overlaylistchainfactory import OverlayListChainFactory
+from etce.templateutils import format_file,format_string
 
 
 class TemplateFileBuilder(object):
@@ -48,40 +46,34 @@ class TemplateFileBuilder(object):
     """
 
     def __init__(self,
-                 templatefileelem,
+                 templatefilename,
                  indices,
                  reserved_overlays,
                  testfile_global_overlays,
-                 templates_global_overlaylists):
+                 templates_global_overlaylists,
+                 template_local_overlays,
+                 template_local_overlaylists,
+                 hostname_format,
+                 output_file_name):
 
-        self._global_overlays = testfile_global_overlays
-
-        self._templates_global_overlaylists = templates_global_overlaylists
-
-        self._name = templatefileelem.attrib['name']
+        self._name = templatefilename
 
         self._indices = indices
 
         self._reserved_overlays = reserved_overlays
 
-        self._hostname_format, \
-        self._output_file_name = self._read_attributes(templatefileelem)
+        self._global_overlays = testfile_global_overlays
 
-        # build local overlay chain
-        self._template_local_overlays = {}
+        self._templates_global_overlaylists = templates_global_overlaylists
 
-        for overlayelem in templatefileelem.findall('./overlay'):
-            oname = overlayelem.attrib['name']
+        self._template_local_overlays = template_local_overlays
 
-            oval = overlayelem.attrib['value']
+        self._template_local_overlaylists = template_local_overlaylists
 
-            otype = overlayelem.attrib.get('type', None)
+        self._hostname_format = hostname_format
 
-            self._template_local_overlays[oname] = configstrtoval(oval, argtype=otype)
+        self._output_file_name = output_file_name
 
-        self._template_local_overlaylists = \
-            OverlayListChainFactory().make(templatefileelem.findall('./overlaylist'),
-                                           self._indices)
 
 
     @property
@@ -165,7 +157,8 @@ class TemplateFileBuilder(object):
                                     self._templates_global_overlaylists[index],
                                     self._global_overlays)
 
-        self._reserved_overlays['etce_hostname'] = format_string(self._hostname_format, etce_hostname_cm)
+        self._reserved_overlays['etce_hostname'] = \
+            format_string(self._hostname_format, etce_hostname_cm)
 
         if logdir:
             self._reserved_overlays['etce_log_path'] = \
@@ -204,17 +197,6 @@ class TemplateFileBuilder(object):
             print('Warning: %s already exists. Overwriting!' % publishfile)
 
         format_file(self._absname, publishfile, overlays)
-
-
-    def _read_attributes(self, templatefileelem):
-        hostname_format = \
-            templatefileelem.attrib['hostname_format']
-
-        outputfilename = \
-            templatefileelem.attrib.get('output_file_name',
-                                        templatefileelem.attrib['name'])
-
-        return (hostname_format, outputfilename)
 
 
     def __str__(self):
