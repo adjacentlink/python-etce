@@ -47,22 +47,17 @@ class TemplateDirectoryBuilder(object):
     """
 
     def __init__(self,
-                 templatedirname,
-                 indices,
+                 tdbconfig,
                  reserved_overlays,
                  testfile_global_overlays,
-                 templates_global_overlaylists,
-                 template_local_overlays,
-                 template_local_overlaylists,
-                 relative_path,
-                 hostname_format):
+                 templates_global_overlaylists):
         template_suffix = ConfigDictionary().get('etce', 'TEMPLATE_DIRECTORY_SUFFIX')
 
-        self._name = templatedirname
+        self._name = tdbconfig.name
 
         self._template_directory_name = '.'.join([self._name, template_suffix])
 
-        self._indices = indices
+        self._indices = tdbconfig.indices
 
         self._reserved_overlays = reserved_overlays
 
@@ -70,13 +65,13 @@ class TemplateDirectoryBuilder(object):
 
         self._templates_global_overlaylists = templates_global_overlaylists
 
-        self._relative_path = relative_path
+        self._template_local_overlays = tdbconfig.template_local_overlays
 
-        self._hostname_format = hostname_format
+        self._template_local_overlaylists = tdbconfig.template_local_overlaylists
 
-        self._template_local_overlays = template_local_overlays
+        self._relative_path = tdbconfig.relative_path
 
-        self._template_local_overlaylists = template_local_overlaylists
+        self._hostname_format = tdbconfig.hostname_format
 
 
     @property

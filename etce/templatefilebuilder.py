@@ -46,19 +46,14 @@ class TemplateFileBuilder(object):
     """
 
     def __init__(self,
-                 templatefilename,
-                 indices,
+                 tfbconfig,
                  reserved_overlays,
                  testfile_global_overlays,
-                 templates_global_overlaylists,
-                 template_local_overlays,
-                 template_local_overlaylists,
-                 hostname_format,
-                 output_file_name):
+                 templates_global_overlaylists):
 
-        self._name = templatefilename
+        self._name = tfbconfig.name
 
-        self._indices = indices
+        self._indices = tfbconfig.indices
 
         self._reserved_overlays = reserved_overlays
 
@@ -66,13 +61,13 @@ class TemplateFileBuilder(object):
 
         self._templates_global_overlaylists = templates_global_overlaylists
 
-        self._template_local_overlays = template_local_overlays
+        self._template_local_overlays = tfbconfig.template_local_overlays
 
-        self._template_local_overlaylists = template_local_overlaylists
+        self._template_local_overlaylists = tfbconfig.template_local_overlaylists
 
-        self._hostname_format = hostname_format
+        self._hostname_format = tfbconfig.hostname_format
 
-        self._output_file_name = output_file_name
+        self._output_file_name = tfbconfig.output_file_name
 
 
 

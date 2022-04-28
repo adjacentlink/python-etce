@@ -31,7 +31,7 @@
 #
 from etce.config import ConfigDictionary
 from etce.overlaylistchainfactory import OverlayListChainFactory
-
+from etce.utils import configstrtoval
 
 class TemplateDirectoryBuilderConfig(object):
     """

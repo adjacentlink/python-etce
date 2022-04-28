@@ -277,27 +277,17 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
                 if elem.tag == 'directory':
                     tdbconfig = TemplateDirectoryBuilderConfig(elem, template_indices)
 
-                    templates.append(TemplateDirectoryBuilder(tdbconfig.name,
-                                                              tdbconfig.indices,
+                    templates.append(TemplateDirectoryBuilder(tdbconfig,
                                                               copy.copy(reserved_overlays),
                                                               self._global_overlays,
-                                                              templates_global_overlaylists,
-                                                              tdbconfig.template_local_overlays,
-                                                              tdbconfig.template_local_overlaylists,
-                                                              tdbconfig.relative_path,
-                                                              tdbconfig.hostname_format))
+                                                              templates_global_overlaylists))
                 elif elem.tag == 'file':
                     tfbconfig = TemplateFileBuilderConfig(elem, template_indices)
 
-                    templates.append(TemplateFileBuilder(tfbconfig.name,
-                                                         tfbconfig.indices,
+                    templates.append(TemplateFileBuilder(tfbconfig,
                                                          copy.copy(reserved_overlays),
                                                          self._global_overlays,
-                                                         templates_global_overlaylists,
-                                                         tfbconfig.template_local_overlays,
-                                                         tfbconfig.template_local_overlaylists,
-                                                         tfbconfig.hostname_format,
-                                                         tfbconfig.output_file_name))
+                                                         templates_global_overlaylists))
 
         for t in templates:
             formatted_dir_names.update(t.formatted_hostnames)
