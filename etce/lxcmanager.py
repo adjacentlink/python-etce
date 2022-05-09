@@ -171,7 +171,7 @@ class LXCManagerImpl(object):
             self._makedirs(lxc_directory)
 
             # make the config
-            with open(os.path.join(lxc_directory, 'config'), 'w') as configf:
+            with open(os.path.join(lxc_directory, 'lxc.container.conf'), 'w') as configf:
                 configf.write(str(container))
 
             # make init script
@@ -227,7 +227,7 @@ class LXCManagerImpl(object):
 
     def _startnodes(self, containers):
         for container in containers:
-            command = 'lxc-execute -f %s/config  ' \
+            command = 'lxc-execute -f %s/lxc.container.conf  ' \
                       '-n %s '                     \
                       '-o %s/log '                 \
                       '-- %s/init.sh '             \
