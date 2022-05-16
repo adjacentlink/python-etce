@@ -596,10 +596,10 @@ class Container(object):
             s += '%s=%s\n' % (lxc_network_type_param, lxc_network_type_value)
 
             for k, v in sorted(interfaceparams.items()):
-                if k == lxc_network_type_param:
+                if k==lxc_network_type_param or k=='lxc.network.type':
                     continue
 
-                if k == lxc_network_link_param:
+                if k==lxc_network_link_param or k=='lxc.network.link':
                     continue
 
                 s += '%s=%s\n' % self._pc.check_version3_network_param_change(k, inum, interfaceparams)
