@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2018,2022 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,13 @@
 
 from __future__ import absolute_import, division, print_function
 from collections import defaultdict
+import math
 import itertools
 import re
+import sys
 
 import etce.timeutils
-from etce.utils import nodestr_to_nodelist
+from etce.utils import nodestr_to_nodelist,daemonize
 from etce.eelsequencer import EELSequencer
 from etce.wrapper import Wrapper
 
@@ -89,8 +91,8 @@ class POV(object):
         self._dirty = False
         return (self._location, self._orientation, self._velocity)
 
-    
-    
+
+
 class EmanePhyInit(Wrapper):
     """
     Send EMANE PHY Layer Events to set initial network conditions.
@@ -227,28 +229,63 @@ class EmanePhyInit(Wrapper):
                       'not specified. Quitting.'
             raise RuntimeError(message)
 
+        mcgroup,port = ctx.args.eventservicegroup.split(':')
+
         sequencer = EELSequencer(ctx.args.infile,
                                  ctx.args.starttime,
                                  list(handlers.keys()))
 
-        mcgroup, port = ctx.args.eventservicegroup.split(':')
-
         service = EventService((mcgroup, int(port), ctx.args.eventservicedevice))
 
-        with open(ctx.args.outfile, 'a') as lfd:
-            for eventlist in sequencer:
-                for eventtime, moduleid, eventtype, eventargs in eventlist:
-                    events = handlers[eventtype](moduleid, eventtype, eventargs)
+        with open(ctx.args.outfile, 'w+') as lfd:
+            print('process infile "%s"' % ctx.args.infile)
 
-                    for nem, event in list(events.items()):
-                        service.publish(nem, event)
+            for eventtime,moduleid,eventtype,eventargs in sequencer.init_events:
+                events = handlers[eventtype](moduleid, eventtype, eventargs)
 
-                    logline = 'process eventtype "%s" to nems {%s}' % \
-                              (eventtype, ','.join(map(str, sorted(events.keys()))))
+                for nem,event in list(events.items()):
+                    service.publish(nem, event)
 
-                    print(logline)
+                logline = 'process eventtype "%s" to nems {%s}' % \
+                    (eventtype, ','.join(map(str, sorted(events.keys()))))
 
                 self.log(lfd, logline)
+
+        # return if there are no non-initialization events
+        if not sequencer.has_dynamic_events:
+            return
+
+        # otherwise daemonze and carry on
+        print('daemonize for dynamic events')
+        if daemonize() > 0:
+            return
+
+        # reopen after daemonize
+        service2 = EventService((mcgroup, int(port), ctx.args.eventservicedevice))
+
+        # and log
+        with open(ctx.args.outfile, 'a') as lfd:
+            try:
+                for eventlist in sequencer:
+                    for eventtime, moduleid, eventtype, eventargs in eventlist:
+                        if math.isinf(eventtime):
+                            continue
+
+                        events = handlers[eventtype](moduleid, eventtype, eventargs)
+
+                        for nem,event in list(events.items()):
+                            service2.publish(nem, event)
+
+                        logline = 'process eventtype "%s" to nems {%s}' % \
+                                  (eventtype, ','.join(map(str, sorted(events.keys()))))
+
+                        self.log(lfd, logline)
+
+            except Exception as e:
+                self.log(lfd, e)
+
+        # exit from daemonized path
+        sys.exit(0)
 
 
     def allinformed_pathloss(self, moduleid, eventtype, eventargs):
@@ -403,9 +440,10 @@ class EmanePhyInit(Wrapper):
         return events
 
 
-
     def log(self, lfd, log):
         lfd.write('%s: %s\n' % (etce.timeutils.getstrtimenow(), log))
+
+        lfd.flush()
 
 
     def stop(self, ctx):
