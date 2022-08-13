@@ -51,6 +51,7 @@ from etce.clientbuilder import ClientBuilder
 from etce.configfiledoc import ConfigFileDoc
 from etce.platform import Platform
 from etce.publisher import add_publish_arguments,publish_test,Publisher
+from etce.statuspublisher import StatusPublisher
 from etce.testcollection import add_list_arguments,list_tests,TestCollection,TestCollectionError
 from etce.testdirectory import TestDirectory
 from etce.stepsfiledoc import StepsFileDoc
@@ -211,6 +212,13 @@ def add_run_arguments(parser):
                         key to use for each host by inspecting
                         ~/.ssh/config. If that fails, it will use the
                         default RSA key ~/.ssh/id_rsa if it exists.''')
+    parser.add_argument('--statusmcastdevice',
+                        default='lo',
+                        help='Device to publish status events, default: lo')
+    parser.add_argument('--statusmcastgroup',
+                        default='224.1.2.8:48101',
+                        help='''Multicast group to which test status is published.
+                        default: 224.1.2.8:48101.''')
     parser.add_argument('--user',
                         action='store',
                         default=None,
@@ -248,6 +256,8 @@ def add_run_arguments(parser):
 
 def run_test(args):
     config = ConfigDictionary()
+
+    sp = StatusPublisher(args.statusmcastgroup, args.statusmcastdevice)
 
     for testroot in args.testroot:
         if not os.path.isdir(testroot):
@@ -406,6 +416,8 @@ def run_test(args):
             try:
                 # run test trials
                 for i in range(args.numtrials):
+                    sp.publish('%s %d begin' % (test.name(), i+1))
+
                     print(testdivider)
 
                     print('BEGIN "%s" trial %d' % (test.name(), i+1))
@@ -521,6 +533,8 @@ def run_test(args):
                         print('step: %s %s %s' % (stepname, starttime, trialdir))
 
                         try:
+                            sp.publish('%s %d %s' % (test.name(), i+1, stepname))
+
                             client.execute(command, worknodes, 'current_test')
                         except KeyboardInterrupt as kbint:
                             keyboard_interrupt = True
@@ -576,6 +590,8 @@ def run_test(args):
                         print()
                         print(stepdivider)
 
+                    sp.publish('%s %d end' % (test.name(), i+1))
+
                     print('END "%s" trial %d' % (test.name(),i+1))
 
                     # raise a cached KeyboardInterrupt on completion
@@ -584,6 +600,8 @@ def run_test(args):
                         raise KeyboardInterrupt()
 
             except ETCEExecuteException as e:
+                sp.publish('%s %d error' % (test.name(), i+1))
+
                 print(file=sys.stderr)
                 print('Failed test "%s" with exception:' % test.name(),
                       file=sys.stderr)
