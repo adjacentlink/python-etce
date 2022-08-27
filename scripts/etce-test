@@ -362,6 +362,10 @@ def run_test(args):
 
     resultsubdirs = []
 
+    test_name = 'pretest'
+
+    test_i = 0
+
     try:
         testdivider = '='*15
 
@@ -413,9 +417,13 @@ def run_test(args):
         keyboard_interrupt = False
 
         for test in tests:
+            test_name = test.name()
+
             try:
                 # run test trials
                 for i in range(args.numtrials):
+                    test_i = i
+
                     sp.publish('%s %d begin' % (test.name(), i+1))
 
                     print(testdivider)
@@ -600,7 +608,7 @@ def run_test(args):
                         raise KeyboardInterrupt()
 
             except ETCEExecuteException as e:
-                sp.publish('%s %d error' % (test.name(), i+1))
+                sp.publish('%s %d error' % (test.name(), i+1), e.message)
 
                 print(file=sys.stderr)
                 print('Failed test "%s" with exception:' % test.name(),
@@ -620,10 +628,13 @@ def run_test(args):
         print('Quitting on interrupt.')
     except FieldConnectionError as fce:
         print('\n' + str(fce) + '\n', file=sys.stderr)
+        sp.publish('%s %d error' % (test_name, test_i+1), str(fce))
     except XMLDocError as xmle:
         print('\n' + str(xmle) + '\n', file=sys.stderr)
+        sp.publish('%s %d error' % (test_name, test_i+1), str(xmle))
     except Exception as e:
         print('\n' + str(e) + '\n', file=sys.stderr)
+        sp.publish('%s %d error' % (test_name, test_i+1), str(e))
         if not args.quiet:
             print(traceback.format_exc())
 

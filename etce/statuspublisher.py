@@ -85,12 +85,13 @@ class StatusPublisher:
                               mreqn)
 
 
-    def publish(self, message):
-        toks = message.split()
+    def publish(self, status, message=''):
+        toks = status.split()
 
         json_msg = json.dumps({'name':toks[0],
                                'trial':toks[1],
-                               'step':toks[2]})
+                               'step':toks[2],
+                               'message':message})
 
         self._sock.sendto(json_msg.encode('utf-8'),
                           self._addr_info[0][4])
