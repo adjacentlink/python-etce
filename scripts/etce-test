@@ -608,7 +608,7 @@ def run_test(args):
                         raise KeyboardInterrupt()
 
             except ETCEExecuteException as e:
-                sp.publish('%s %d error' % (test.name(), i+1), e.message)
+                sp.publish('%s %d error' % (test.name(), i+1), str(e))
 
                 print(file=sys.stderr)
                 print('Failed test "%s" with exception:' % test.name(),
