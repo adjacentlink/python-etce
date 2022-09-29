@@ -29,6 +29,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+import os
+import time
 
 from etce.wrapper import Wrapper
 
@@ -48,7 +50,22 @@ class Gpsd(Wrapper):
         if ctx.args.infile is None:
             return
 
-        argstr = '-P %s/gpsd.pid -G -n -b /dev/pts/1' % ctx.args.logdirectory
+        device = "/dev/pts/1"
+        gps_pty = os.path.dirname(ctx.args.outfile) + "/gps.pty"
+
+        retries = 5
+        count = 0
+        while count < retries:
+            try:
+                infile = open(gps_pty, 'r')
+                device = infile.readline().rstrip()
+                infile.close()
+                break
+            except:
+                count += 1
+                time.sleep(1)
+
+        argstr = '-P %s/gpsd.pid -G -n -b %s' % (ctx.args.logdirectory, device)
 
         with open(ctx.args.outfile, 'w') as logf:
             logf.write('gpsd %s\n' % argstr)
