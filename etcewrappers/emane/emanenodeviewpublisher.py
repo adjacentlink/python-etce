@@ -49,11 +49,8 @@ class EmaneNodeViewPublisher(Wrapper):
     def register(self, registrar):
         registrar.register_infile_name('emane-node-view-publisher.xml')
         registrar.register_outfile_name('emane-node-view-publisher.log')
-        registrar.register_argument('pythonpath',
-                                    '/opt/emane-node-view/build/lib',
-                                    'PYTHONPATH to built emane-node-view package.')
         registrar.register_argument('path',
-                                    '/opt/emane-node-view/build/scripts-3.6',
+                                    '/opt/emane-node-view/bin',
                                     'PATH to built emane-node-view-publisher script.')
 
 
@@ -66,7 +63,6 @@ class EmaneNodeViewPublisher(Wrapper):
         logfile = '%s/emane-node-view-publisher.log' % ctx.args.logdirectory
 
         subprocess.Popen(shlex.split(cmdline),
-                         env={'PYTHONPATH': '/opt/emane-node-view/build/lib'},
                          stdout=open(logfile, 'w+'),
                          stderr=subprocess.STDOUT)
 
