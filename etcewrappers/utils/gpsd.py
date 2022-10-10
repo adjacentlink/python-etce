@@ -29,7 +29,6 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-import os
 import time
 
 from etce.wrapper import Wrapper
@@ -51,7 +50,7 @@ class Gpsd(Wrapper):
             return
 
         device = "/dev/pts/1"
-        gps_pty = os.path.dirname(ctx.args.outfile) + "/gps.pty"
+        gps_pty = ctx.args.logdirectory + "/gps.pty"
 
         retries = 5
         count = 0
