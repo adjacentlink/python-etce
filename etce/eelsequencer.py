@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2015-2019,2022 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -96,7 +96,18 @@ class EELSequencer(object):
     '''
     def __init__(self, eelfile, starttime, eventlist):
         self._starttime = etce.timeutils.strtimetodatetime(starttime)
+
         self._events = self._parsefile(eelfile, eventlist)
+
+
+    @property
+    def init_events(self):
+        return self._events.get(float('-inf'), [])
+
+
+    @property
+    def has_dynamic_events(self):
+        return any(filter(lambda x: math.isfinite(x), self._events.keys()))
 
 
     def __iter__(self):

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019,2022 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2022 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,22 +34,23 @@ from etce.wrapper import Wrapper
 import os
 
 
-class SpectrumMonitor(Wrapper):
+class SpectrumOtaRecorder(Wrapper):
     """
-    Run emane-spectrum-monitor with the provided configuration file.
+    Run emane-spectrum-ota-recorder.
     """
 
     def register(self, registrar):
-        registrar.register_infile_name('emane-spectrum-monitor.xml')
+        registrar.register_infile_name('emane-spectrum-ota-recorder.flag')
 
-        registrar.register_outfile_name('emane-spectrum-monitor.log')
+        registrar.register_outfile_name('emane-spectrum-ota-recorder.log')
 
         registrar.register_argument('loglevel', 2, 'log level - [0,4]')
 
-        registrar.register_argument('record', False, 'record spectrum data to file')
+        registrar.register_argument('eventservicedevice', 'backchan0', 'interface for the event service')
+        registrar.register_argument('eventservicegroup', '224.1.2.8:45703', 'event service multicast group')
 
-        registrar.run_with_sudo()
-
+        registrar.register_argument('otamanagerdevice', 'ota0', 'interface for the OTA manager')
+        registrar.register_argument('otamanagergroup', '224.1.2.8:45702', 'OTA manager multicast group')
 
     def run(self, ctx):
         if not ctx.args.infile:
@@ -57,20 +58,24 @@ class SpectrumMonitor(Wrapper):
 
         argstr = '--realtime ' \
                  '--daemonize ' \
-                 '--config %s ' \
                  '--loglevel %d ' \
                  '--logfile %s ' \
-                 '--pidfile %s' \
-                 % (ctx.args.infile,
-                    ctx.args.loglevel,
+                 '--pidfile %s ' \
+                 '--eventservicedevice %s ' \
+                 '--eventservicegroup %s ' \
+                 '--otamanagerdevice %s ' \
+                 '--otamanagergroup %s ' \
+                 '%s' \
+                 % (ctx.args.loglevel,
                     ctx.args.outfile,
-                    ctx.args.default_pidfilename)
+                    ctx.args.default_pidfilename,
+                    ctx.args.eventservicedevice,
+                    ctx.args.eventservicegroup,
+                    ctx.args.otamanagerdevice,
+                    ctx.args.otamanagergroup,
+                    os.path.join(ctx.args.logdirectory, 'emane-ota-recorder.data'))
 
-        if ctx.args.record:
-            argstr += ' --spectrumquery.recorderfile %s' % \
-                      os.path.join(ctx.args.logdirectory, 'emane-spectrum-monitor.data')
-
-        ctx.run('emane-spectrum-monitor', argstr, genpidfile=False)
+        ctx.run('emane-spectrum-ota-recorder', argstr, genpidfile=False)
 
 
     def stop(self, ctx):

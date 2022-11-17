@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2016-2018,2022 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,11 +34,9 @@ from __future__ import absolute_import, division, print_function
 
 import os
 
-from etce.utils import configstrtoval
-from etce.templateutils import format_file, format_string
+from etce.templateutils import format_file,format_string
 from etce.chainmap import ChainMap
 from etce.config import ConfigDictionary
-from etce.overlaylistchainfactory import OverlayListChainFactory
 
 
 class TemplateDirectoryBuilder(object):
@@ -49,43 +47,31 @@ class TemplateDirectoryBuilder(object):
     """
 
     def __init__(self,
-                 templatedirelem,
-                 indices,
+                 tdbconfig,
                  reserved_overlays,
                  testfile_global_overlays,
                  templates_global_overlaylists):
+        template_suffix = ConfigDictionary().get('etce', 'TEMPLATE_DIRECTORY_SUFFIX')
+
+        self._name = tdbconfig.name
+
+        self._template_directory_name = '.'.join([self._name, template_suffix])
+
+        self._indices = tdbconfig.indices
+
+        self._reserved_overlays = reserved_overlays
+
         self._global_overlays = testfile_global_overlays
 
         self._templates_global_overlaylists = templates_global_overlaylists
 
-        template_suffix = ConfigDictionary().get('etce', 'TEMPLATE_DIRECTORY_SUFFIX')
+        self._template_local_overlays = tdbconfig.template_local_overlays
 
-        self._name = templatedirelem.attrib['name']
+        self._template_local_overlaylists = tdbconfig.template_local_overlaylists
 
-        self._template_directory_name = '.'.join([self._name, template_suffix])
+        self._relative_path = tdbconfig.relative_path
 
-        self._indices = indices
-
-        self._reserved_overlays = reserved_overlays
-
-        self._relative_path, \
-        self._hostname_format = self._read_attributes(templatedirelem)
-
-        # build local overlay chain
-        self._template_local_overlays = {}
-
-        for overlayelem in templatedirelem.findall('./overlay'):
-            oname = overlayelem.attrib['name']
-
-            oval = overlayelem.attrib['value']
-
-            otype = overlayelem.attrib.get('type', None)
-
-            self._template_local_overlays[oname] = configstrtoval(oval, argtype=otype)
-
-        self._template_local_overlaylists = \
-            OverlayListChainFactory().make(templatedirelem.findall('./overlaylist'),
-                                           self._indices)
+        self._hostname_format = tdbconfig.hostname_format
 
 
     @property
@@ -174,7 +160,8 @@ class TemplateDirectoryBuilder(object):
                                     self._templates_global_overlaylists[index],
                                     self._global_overlays)
 
-        self._reserved_overlays['etce_hostname'] = format_string(self._hostname_format, etce_hostname_cm)
+        self._reserved_overlays['etce_hostname'] = \
+            format_string(self._hostname_format, etce_hostname_cm)
 
         if logdir:
             self._reserved_overlays['etce_log_path'] = \
@@ -210,7 +197,6 @@ class TemplateDirectoryBuilder(object):
         if not os.path.exists(node_publishdir):
             os.makedirs(node_publishdir)
 
-
         found = False
 
         for relpath, entry in subdirectory_map.items():
@@ -232,23 +218,6 @@ class TemplateDirectoryBuilder(object):
                 os.makedirs(dstdir)
 
             format_file(entry.full_name, dstfile, overlays)
-
-
-    def _read_attributes(self, templatedirelem):
-        template_subdir = '.'.join([self._name,
-                                    ConfigDictionary().get('etce', 'TEMPLATE_DIRECTORY_SUFFIX')])
-
-        # for template directory foo.tpl default template directory name format and
-        # TEMPLATE_HOSTNUMBER_DIGITS value N is
-        # foo-${'%0Nd' % etce_index}
-        default_hostname_format = templatedirelem.attrib.get('name') + \
-                                  "-${'%0" + \
-                                  str(ConfigDictionary().get('etce', 'TEMPLATE_HOSTNUMBER_DIGITS')) + \
-                                  "d' % etce_index}"
-
-        hostname_format = templatedirelem.attrib.get('hostname_format', default_hostname_format)
-
-        return (template_subdir, hostname_format)
 
 
     def __str__(self):

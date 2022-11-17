@@ -43,7 +43,12 @@ Requires: python-lxml
 Requires: python-emane
 Requires: python-pandas
 Requires: python-matplotlib
+Requires: python-distro
 Requires: lxc
+Requires: iproute
+Requires: iptables
+Requires: openssh-server
+Requires: sudo
 Conflicts: python3-etce
 Obsoletes: python-etce
 Provides: python-etce
@@ -57,6 +62,10 @@ Requires: python2-emane
 Requires: python2-pandas
 Requires: python2-matplotlib
 Requires: lxc
+Requires: iproute
+Requires: iptables
+Requires: openssh-server
+Requires: sudo
 Conflicts: python3-etce
 %define use_python2_sitelib %{python2_sitelib}
 %endif
@@ -75,7 +84,12 @@ Requires: python3-matplotlib
 %if 0%{?fedora}
 Requires: python3-seaborn
 %endif
+Requires: python3-distro
 Requires: lxc
+Requires: iproute
+Requires: iptables
+Requires: openssh-server
+Requires: sudo
 Conflicts: python-etce
 Conflicts: python2-etce
 %description -n python3-%{base_name} %{_description}

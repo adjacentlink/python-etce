@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019,2022 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2022 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,48 +30,57 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from etce.wrapper import Wrapper
 import os
+import shlex
+import subprocess
+from etce.wrapper import Wrapper
+from etce.timeutils import getstrtimenow
 
 
-class SpectrumMonitor(Wrapper):
+class Socat(Wrapper):
     """
-    Run emane-spectrum-monitor with the provided configuration file.
+    Issue socat commands. The input files should consist
+    of any valid arguments to the socat command listed one per line.
+    Comment lines starting with '#" are permitted. For example:
+
+     TCP-LISTEN:5001,fork,reuseaddr helper:9001
+     TCP-LISTEN:5002,fork,reuseaddr helper:9002
+
     """
 
     def register(self, registrar):
-        registrar.register_infile_name('emane-spectrum-monitor.xml')
-
-        registrar.register_outfile_name('emane-spectrum-monitor.log')
-
-        registrar.register_argument('loglevel', 2, 'log level - [0,4]')
-
-        registrar.register_argument('record', False, 'record spectrum data to file')
-
-        registrar.run_with_sudo()
+        registrar.register_infile_name('socat.script')
+        registrar.register_outfile_name('socat.log')
 
 
     def run(self, ctx):
         if not ctx.args.infile:
             return
 
-        argstr = '--realtime ' \
-                 '--daemonize ' \
-                 '--config %s ' \
-                 '--loglevel %d ' \
-                 '--logfile %s ' \
-                 '--pidfile %s' \
-                 % (ctx.args.infile,
-                    ctx.args.loglevel,
-                    ctx.args.outfile,
-                    ctx.args.default_pidfilename)
+        with open(ctx.args.outfile, 'a') as lfd:
+            for linenum,line in enumerate(open(ctx.args.infile), start=1):
+                # skip comments
+                if line.startswith('#'):
+                    continue
 
-        if ctx.args.record:
-            argstr += ' --spectrumquery.recorderfile %s' % \
-                      os.path.join(ctx.args.logdirectory, 'emane-spectrum-monitor.data')
+                # skip empty lines
+                argstr = line.strip()
 
-        ctx.run('emane-spectrum-monitor', argstr, genpidfile=False)
+                if len(argstr) == 0:
+                    continue
+
+                cmdline = 'socat -lf%s %s' % \
+                    (os.path.join(ctx.args.logdirectory,
+                                  'socat.%d.log' % linenum), argstr)
+
+                subprocess.Popen(shlex.split(cmdline),
+                                 stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.STDOUT)
+
+                print(cmdline)
+
+                lfd.write('%s: %s\n' % (getstrtimenow(), cmdline))
 
 
     def stop(self, ctx):
-        ctx.stop()
+        pass

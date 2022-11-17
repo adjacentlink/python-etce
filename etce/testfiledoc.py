@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2018,2022 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,9 @@ import lxml.etree
 import etce.xmldoc
 import etce.utils
 from etce.templatedirectorybuilder import TemplateDirectoryBuilder
+from etce.templatedirectorybuilderconfig import TemplateDirectoryBuilderConfig
 from etce.templatefilebuilder import TemplateFileBuilder
+from etce.templatefilebuilderconfig import TemplateFileBuilderConfig
 from etce.overlaycsvreader import OverlayCSVReader
 from etce.overlaylistchainfactory import OverlayListChainFactory
 
@@ -273,14 +275,16 @@ class TestFileDoc(etce.xmldoc.XMLDoc):
                     template_indices = etce.utils.nodestr_to_nodelist(template_indices_str)
 
                 if elem.tag == 'directory':
-                    templates.append(TemplateDirectoryBuilder(elem,
-                                                              template_indices,
+                    tdbconfig = TemplateDirectoryBuilderConfig(elem, template_indices)
+
+                    templates.append(TemplateDirectoryBuilder(tdbconfig,
                                                               copy.copy(reserved_overlays),
                                                               self._global_overlays,
                                                               templates_global_overlaylists))
                 elif elem.tag == 'file':
-                    templates.append(TemplateFileBuilder(elem,
-                                                         template_indices,
+                    tfbconfig = TemplateFileBuilderConfig(elem, template_indices)
+
+                    templates.append(TemplateFileBuilder(tfbconfig,
                                                          copy.copy(reserved_overlays),
                                                          self._global_overlays,
                                                          templates_global_overlaylists))

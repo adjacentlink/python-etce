@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2022 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2022 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,3 +29,45 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+
+import os
+import shlex
+import subprocess
+from etce.wrapper import Wrapper
+from etce.timeutils import getstrtimenow
+
+
+class EmaneNodeViewPublisher(Wrapper):
+    """
+    Run an instance of emane-node-view-publisher.
+
+    emane-node-view-publisher is usually run from a virtual
+    environment or from a built directory. Use pythonpath
+    and path arguments to points to the local installation.
+    """
+
+    def register(self, registrar):
+        registrar.register_infile_name('emane-node-view-publisher.xml')
+        registrar.register_outfile_name('emane-node-view-publisher.log')
+        registrar.register_argument('path',
+                                    '/opt/emane-node-view/bin',
+                                    'PATH to built emane-node-view-publisher script.')
+
+
+    def run(self, ctx):
+        if not ctx.args.infile:
+            return
+
+        cmdline = '%s/emane-node-view-publisher %s' % (ctx.args.path, ctx.args.infile)
+
+        logfile = '%s/emane-node-view-publisher.log' % ctx.args.logdirectory
+
+        subprocess.Popen(shlex.split(cmdline),
+                         stdout=open(logfile, 'w+'),
+                         stderr=subprocess.STDOUT)
+
+        print(cmdline)
+
+
+    def stop(self, ctx):
+        pass

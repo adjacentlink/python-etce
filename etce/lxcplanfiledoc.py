@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2018,2022 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 from __future__ import absolute_import, division, print_function
 import copy
 import os.path
+import re
 import socket
 import sys
 from collections import defaultdict
@@ -87,7 +88,7 @@ class ParamConverter(object):
         return updated_paramname
 
 
-    def check_version3_network_param_change(self, paramname, inum):
+    def check_version3_network_param_change(self, paramname, inum, interfaceparams):
         if self._lxc_major_version < 3:
             return paramname
 
@@ -105,7 +106,12 @@ class ParamConverter(object):
                   % (paramname, updated_paramname),
                   file=sys.stderr)
 
-        return updated_paramname
+        paramval = interfaceparams.get(paramname, None)
+
+        if not paramval:
+            paramval = interfaceparams.get(updated_paramname, None)
+
+        return updated_paramname,paramval
 
 
 
@@ -497,7 +503,9 @@ class Container(object):
         hosts_entries_ipv4 = []
 
         for bridgename, entry_name_ipv4 in bridge_entry_ipv4.items():
-            if not 'lxc.network.ipv4' in interfaces[bridgename]:
+            addr = self._get_ipv4_address(interfaces[bridgename])
+
+            if not addr:
                 error = 'Found hosts_entry_ipv4 attribute for ' \
                         'bridge "%s" for container "%s" but ' \
                         'no corresponding "lxc.network.ipv4" ' \
@@ -505,22 +513,20 @@ class Container(object):
                         % (bridgename, self.lxc_name)
                 raise LXCError(error)
 
-            addr = interfaces[bridgename]['lxc.network.ipv4']
-
             hosts_entries_ipv4.append((entry_name_ipv4, addr.split('/')[0]))
 
         hosts_entries_ipv6 = []
 
         for bridgename, entry_name_ipv6 in bridge_entry_ipv6.items():
-            if not 'lxc.network.ipv6' in interfaces[bridgename]:
+            addr = self._get_ipv6_address(interfaces[bridgename])
+
+            if not addr:
                 error = 'Found hosts_entry_ipv6 attribute for ' \
                         'bridge "%s" for container "%s" but ' \
                         'no corresponding "lxc.network.ipv6" ' \
                         'value for the interface. Quitting.' \
                         % (bridgename, self.lxc_name)
                 raise LXCError(error)
-
-            addr = interfaces[bridgename]['lxc.network.ipv6']
 
             hosts_entries_ipv6.append((entry_name_ipv6, addr))
 
@@ -551,6 +557,27 @@ class Container(object):
         return initscript
 
 
+    def _get_ipv4_address(self, interface_dict):
+        if 'lxc.network.ipv4' in interface_dict:
+            return interface_dict['lxc.network.ipv4']
+
+        for key in interface_dict:
+            if re.match('lxc.net.\d.ipv4.address', key):
+                return interface_dict[key]
+
+        return None
+
+
+    def _get_ipv6_address(self, interface_dict):
+        if 'lxc.network.ipv6' in interface_dict:
+            return interface_dict['lxc.network.ipv4']
+
+        for key in interface_dict:
+            if re.match('lxc.net.\d.ipv6.address', key):
+                return interface_dict[key]
+
+        return None
+
 
     def __str__(self):
         s = ''
@@ -560,19 +587,35 @@ class Container(object):
         for bridgename, interfaceparams in self._interfaces.items():
             s += '\n# %s interface\n' % bridgename
 
-            lxc_network_type_param = self._pc.check_version3_network_param_change('lxc.network.type', inum)
-            lxc_network_link_param = self._pc.check_version3_network_param_change('lxc.network.link', inum)
+            lxc_network_type_param,lxc_network_type_value = \
+                self._pc.check_version3_network_param_change('lxc.network.type', inum, interfaceparams)
 
-            s += '%s=%s\n' % (lxc_network_type_param, interfaceparams['lxc.network.type'])
+            lxc_network_link_param,_ = \
+                self._pc.check_version3_network_param_change('lxc.network.link', inum, interfaceparams)
+
+            s += '%s=%s\n' % (lxc_network_type_param, lxc_network_type_value)
+
             for k, v in sorted(interfaceparams.items()):
-                if k == 'lxc.network.type':
+                if k==lxc_network_type_param or k=='lxc.network.type':
                     continue
-                s += '%s=%s\n' % (self._pc.check_version3_network_param_change(k, inum), v)
+
+                if k==lxc_network_link_param or k=='lxc.network.link':
+                    continue
+
+                s += '%s=%s\n' % self._pc.check_version3_network_param_change(k, inum, interfaceparams)
+
             s += '%s=%s\n' % (lxc_network_link_param, self._bridges[bridgename].name)
+
             inum += 1
+
         s += '\n# loopback interface\n'
-        lxc_network_type_param = self._pc.check_version3_network_param_change('lxc.network.type', inum)
-        lxc_network_flags_param = self._pc.check_version3_network_param_change('lxc.network.flags', inum)
+
+        lxc_network_type_param,_ = \
+            self._pc.check_version3_network_param_change('lxc.network.type', inum, interfaceparams)
+
+        lxc_network_flags_param,_ = \
+            self._pc.check_version3_network_param_change('lxc.network.flags', inum, interfaceparams)
+
         s += '%s=empty\n' % lxc_network_type_param
         # lxc-execute version 4.02, on Ubuntu 20.04, fails to start with the up
         # flag in place for the loopback device.
@@ -724,7 +767,7 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
 
             for containerelem in hostelem.findall('./containers/container'):
                 containerlxcids = etce.utils.nodestr_to_nodelist(
-                    str(containerelem.attrib['lxc_indices']))
+                    str(containerelem.get('lxc_indices','')))
 
                 repeatedids = alllxcids.intersection(containerlxcids)
 
@@ -749,7 +792,7 @@ class LXCPlanFileDoc(etce.xmldoc.XMLDoc):
                     raise LXCError(error)
 
                 lxcids = etce.utils.nodestr_to_nodelist(
-                    str(containerelem.attrib['lxc_indices']))
+                    str(containerelem.get('lxc_indices', '')))
 
                 # fetch the overlays, use etce file values as default
                 overlays = ConfigDictionary().asdict()['overlays']
