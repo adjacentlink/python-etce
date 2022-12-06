@@ -62,8 +62,14 @@ class MgenRemote(Wrapper):
                                     'Run in ipv6 mode (True) or ipv4 (False - default)')
 
         registrar.register_argument('instance',
-                                    'mgen_etce',
-                                    'Mgen instance name.')
+                                    None,
+                                    'The default instance name is mgen-hostname, where hostname'
+                                    'is the container hostname. This results in mgen accepting'
+                                    'mgen commands on a unix socket at /tmp/mgen-hostname.')
+
+        registrar.register_argument('flush',
+                                    True,
+                                    'Run mgen in flush log mode')
 
 
     def run(self, ctx):
@@ -75,12 +81,18 @@ class MgenRemote(Wrapper):
         if ctx.args.epochtimestamp:
             argstr += 'epochtimestamp '
 
+        if ctx.args.flush:
+            argstr += 'flush '
+
         if ctx.args.ipv6:
             argstr += 'ipv6 '
 
         argstr += 'txlog output %s ' % ctx.args.outfile
 
-        argstr += 'instance %s' % ctx.args.instance
+        if ctx.args.instance:
+            argstr += 'instance %s' % ctx.args.instance
+        else:
+            argstr += 'instance mgen-%s' % ctx.args.nodename
 
         ctx.daemonize('mgen', argstr)
 
