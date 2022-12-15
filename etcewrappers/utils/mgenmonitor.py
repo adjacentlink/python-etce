@@ -64,7 +64,7 @@ class MgenMonitor(Wrapper):
 
         listen_address,listen_port = ctx.args.endpoint.split(':')
 
-        mgen_logfile = os.path.join(ctx.args.outfile, 'mgen.log')
+        mgen_logfile = os.path.join(ctx.args.logdirectory, 'mgen.log')
 
         # mgen-monitor [-h]
         #              [--log-file FILE]
