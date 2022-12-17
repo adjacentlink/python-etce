@@ -42,11 +42,9 @@ class MgenMonitor(Wrapper):
     """
 
     def register(self, registrar):
-        # wrapper execution is triggered by an mgen.script file
-        # which indicates an associated mgen instance will be present
-        registrar.register_infile_name('mgen.script')
+        registrar.register_infile_name('mgenmonitor.flag')
 
-        registrar.register_outfile_name('mgen-monitor.log')
+        registrar.register_outfile_name('mgenmonitor.log')
 
         registrar.register_argument('loglevel',
                                     'error',
