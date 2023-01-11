@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(description='Extendable Test Control Environment',
       name='python-etce',
@@ -39,7 +39,15 @@ setup(description='Extendable Test Control Environment',
       author_email='labs at adjacent link doc com',
       license='BSD',
       url='https://github.com/adjacentlink/python-etce',
-      packages=find_packages(),
+      packages=['etce',
+                'etceanalytics',
+                'etceanalyzers',
+                'etcewrappers',
+                'etcewrappers.emane',
+                'etcewrappers.lte',
+                'etcewrappers.ostatistic',
+                'etcewrappers.otestpoint',
+                'etcewrappers.utils'],
       package_data={'etce' : ['*.xsd', 'config/etce.conf.example'],
                     'etceanalytics' : ['*.xsd']},
       scripts=[ 'scripts/etce-field-exec',
