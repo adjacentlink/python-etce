@@ -57,12 +57,6 @@ if HAVE_RPMBUILD
 
 RPMARCH=`arch`
 
-if HAVE_PYTHON2
-RPMBUILD_ARGS=--with python2
-else
-RPMBUILD_ARGS=
-endif
-
 rpm: $(PACKAGE).spec dist-gzip
 	mkdir -p .rpmbuild/BUILD \
 	.rpmbuild/SPECS \
@@ -73,8 +67,7 @@ rpm: $(PACKAGE).spec dist-gzip
 	cp -f $(PACKAGE)-$(VERSION).tar.gz .rpmbuild/SOURCES
 	rpmbuild --clean -ba $(top_srcdir)/$(PACKAGE).spec --target $(RPMARCH) \
     --define "_topdir $$PWD/.rpmbuild" \
-    --define "_tmppath $$PWD/.rpmbuild/tmp" \
-    $(RPMBUILD_ARGS)
+    --define "_tmppath $$PWD/.rpmbuild/tmp"
 	@echo "============================================================"
 	@echo "RPMs located in .rpmbuild/RPMS and .rpmbuild/SRPMS"
 
