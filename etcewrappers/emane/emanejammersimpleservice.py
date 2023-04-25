@@ -62,7 +62,7 @@ class EmaneJammerSimpleService(Wrapper):
                  '--config-file %s ' \
                  '--log-level %s ' \
                  '--log-file %s ' \
-                 '--pidfile %s ' \
+                 '--pid-file %s ' \
                  'emane_jammer_simple.service.plugin.Plugin' \
                  % (ctx.args.infile,
                     ctx.args.loglevel,
