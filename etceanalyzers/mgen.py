@@ -133,42 +133,44 @@ class Mgen(Analyzer):
 
         metacols = {'node':[hostname], 'start':[], 'stop':[], 'mgenversion':[]}
 
+        timestamp = float('-inf')
+
         for line in open(absdatafile):
             match = recvre.match(line)
             if match:
-                rxtime, flowid, seq, txtime, size = match.groups()
+                timestamp, flowid, seq, txtime, size = match.groups()
                 rxcols['rxnode'].append(hostname)
                 rxcols['txtime'].append(self._timestrtofloat(txtime))
                 rxcols['flowid'].append(int(flowid))
                 rxcols['sequence'].append(int(seq))
                 rxcols['size'].append(int(size))
-                rxcols['rxtime'].append(self._timestrtofloat(rxtime))
+                rxcols['rxtime'].append(self._timestrtofloat(timestamp))
             else:
                 match = sendre.match(line)
                 if match:
-                    txtime, flowid, seq, size = match.groups()
+                    timestamp, flowid, seq, size = match.groups()
                     txcols['txnode'].append(hostname)
-                    txcols['txtime'].append(self._timestrtofloat(txtime))
+                    txcols['txtime'].append(self._timestrtofloat(timestamp))
                     txcols['flowid'].append(int(flowid))
                     txcols['sequence'].append(int(seq))
                     txcols['size'].append(int(size))
                 else:
                     match = listenre.match(line)
                     if match:
-                        time, port = match.groups()
-                        rxflowsdict[int(port)]['start'] = self._timestrtofloat(time)
+                        timestamp, port = match.groups()
+                        rxflowsdict[int(port)]['start'] = self._timestrtofloat(timestamp)
                     else:
                         match = ignorere.match(line)
                         if match:
-                            time, port = match.groups()
+                            timestamp, port = match.groups()
 
-                            rxflowsdict[int(port)]['stop'] = self._timestrtofloat(time)
+                            rxflowsdict[int(port)]['stop'] = self._timestrtofloat(timestamp)
                         else:
                             match = startre.match(line)
                             if match:
-                                startstr, mgenversion = match.groups()
+                                timestamp, mgenversion = match.groups()
 
-                                metacols['start'].append(self._timestrtofloat(startstr))
+                                metacols['start'].append(self._timestrtofloat(timestamp))
 
                                 metacols['mgenversion'].append(mgenversion)
                             else:
@@ -182,6 +184,8 @@ class Mgen(Analyzer):
                                                   absdatafile,
                                                   line.strip())
 
+        timestamp = self._timestrtofloat(timestamp)
+
         # flatten rxflowsdict
         for port, times in sorted(rxflowsdict.items()):
             rxflowscols['rxnode'].append(hostname)
@@ -190,13 +194,15 @@ class Mgen(Analyzer):
 
             rxflowscols['start'].append(times['start'])
 
-            rxflowscols['stop'].append(times['stop'])
+            # sometimes stop log does not appear in logs, use the
+            # last timestamp reported
+            rxflowscols['stop'].append(times.get('stop', timestamp))
 
         # write each table to sqlite file as a data frame
         con = sqlite3.connect(resultfile)
         num_start = len(metacols['start'])
 
-        num_stop = len(metacols['stop'])
+        num_stop = len(metacols.get('stop',[]))
 
         if not num_start == num_stop:
             logging.error('Warning: found mismatch in the number of flow start and stop times')

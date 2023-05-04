@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2021 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2021,2023 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -121,8 +121,6 @@ _,tx = to_dataframes(args.sqlitefile, False)
 tx['txtimesec'] = tx.txtime.apply(int)
 
 all_txers = tx.txnode.unique()
-
-num_txers = len(all_txers)
 
 tx.drop(['sequence', 'size', 'txtime'], axis=1, inplace=True)
 
