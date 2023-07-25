@@ -34,10 +34,10 @@ import os
 from etce.wrapper import Wrapper
 
 
-class EmexMonitor(Wrapper):
+class EmexJsonServer(Wrapper):
     """
-    Execute emex-monitor to collate and convert otestpoint-broker output
-    to various output formats.
+    Execute emex-jsonserver to serve Emex Testpoint Probe tables
+    and statistics as JSON strings.
     """
 
 
@@ -60,16 +60,26 @@ class EmexMonitor(Wrapper):
           </ip-address>
         </emex-monitor-tag-map>
         '''
-        registrar.register_infile_name('emexmonitor.xml')
+        registrar.register_infile_name('emexjsonserver.xml')
 
-        registrar.register_outfile_name('emexmonitor.log')
+        registrar.register_outfile_name('emexjsonserver.log')
 
         registrar.register_argument('loglevel',
                                     'error',
                                     'log level - one of {critical, error, warning, info, debug}')
 
-        registrar.register_argument('endpoint',
+        registrar.register_argument('orientation',
+                                    'records',
+                                    'json format orientation - one of ' \
+                                    '{dist, list, series, split, record, index}')
+
+        registrar.register_argument('otestpointendpoint',
                                     '127.0.0.1:9002',
+                                    'The opentestpoint-broker publish endpoint from ' \
+                                    'which the data is read.')
+
+        registrar.register_argument('clientendpoint',
+                                    '127.0.0.1:48001',
                                     'The opentestpoint-broker publish endpoint from ' \
                                     'which the data is read.')
 
@@ -77,27 +87,35 @@ class EmexMonitor(Wrapper):
     def run(self, ctx):
         if not ctx.args.infile:
             return
+        """
+        usage: emex-jsonserver [-h]
+                               [--tag-map TAG_MAP]
+                               [--verbose]
+                               [--pid-file PID_FILE]
+                               [--daemonize]
+                               [--log-file FILE]
+                               [--log-level LEVEL]
+                               [--orientation ORIENTATION]
+                               [--relative-timestamp]
+                               otestpointendpoint
+                               clientendpoint
 
-        emex_logfile = os.path.join(ctx.args.logdirectory, 'emex-monitor.log')
+        positional arguments:
+          otestpointendpoint    OpenTestPoint publish endpoint.
+          clientendpoint        Endpoint where JSON statistics are served.
 
-        sqlite_file = os.path.join(ctx.args.logdirectory, 'emex-monitor.sqlite')
-
-        # usage: emex-monitor [-h] [--tag-map TAG_MAP] [--verbose] [--pid-file PID_FILE]
-        #                          [--daemonize] [--log-file FILE] [--log-level LEVEL]
-        #                          endpoint output-file
-        #
-        # positional arguments:
-        #  endpoint             OpenTestPoint publish endpoint.
-        #  output-file          sqlite db output file.
-        #
-        # optional arguments:
-        #  -h, --help           show this help message and exit
-        #  --tag-map TAG_MAP    tag map XML file.
-        #  --verbose, -v        verbose output [default: False]
-        #  --pid-file PID_FILE  write pid file
-        #  --daemonize, -d      daemonize application [default: False]
-        #  --log-file FILE      log file.
-        #  --log-level LEVEL    log level [default: info].
+        optional arguments:
+          -h, --help            show this help message and exit
+          --tag-map TAG_MAP     tag map XML file.
+          --verbose, -v         verbose output [default: False]
+          --pid-file PID_FILE   write pid file
+          --daemonize, -d       daemonize application [default: False]
+          --log-file FILE       log file.
+          --log-level LEVEL     log level [default: info].
+          --orientation ORIENTATION
+                                orientation format of the json output. [default: records].
+          --relative-timestamp  Display timestamps relative to the first testpoint report time.
+        """
         argstr = '--daemonize ' \
                  '--tag-map %s ' \
                  '--log-level %s ' \
@@ -109,10 +127,10 @@ class EmexMonitor(Wrapper):
                     ctx.args.loglevel,
                     ctx.args.outfile,
                     ctx.args.default_pidfilename,
-                    ctx.args.endpoint,
-                    sqlite_file)
+                    ctx.args.otestpointendpoint,
+                    ctx.args.clientendpoint)
 
-        ctx.run('emex-monitor', argstr, genpidfile=False)
+        ctx.run('emex-jsonserver', argstr, genpidfile=False)
 
 
     def stop(self, ctx):
