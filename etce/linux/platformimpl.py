@@ -129,6 +129,10 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
 
         self.networkinterfaceup(bridgename)
 
+        self.runcommand('iptables -I INPUT -i %s -j ACCEPT' % bridgename)
+
+        self.runcommand('iptables -I FORWARD -i %s -j ACCEPT' % bridgename)
+
         for interface in addifs:
             self.runcommand('ip link set dev %s master %s' % (interface, bridgename))
 
@@ -149,6 +153,10 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
 
 
     def bridgedown(self, bridgename, addifs):
+        self.runcommand('iptables -D FORWARD -i %s -j ACCEPT' % bridgename)
+
+        self.runcommand('iptables -D INPUT -i %s -j ACCEPT' % bridgename)
+
         self.networkinterfacedown(bridgename)
 
         for addif in addifs:
