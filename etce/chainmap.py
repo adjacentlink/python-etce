@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2018,2023 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from collections import Mapping
+import collections.abc
 
 
-class ChainMap(Mapping):
+class ChainMap(collections.abc.Mapping):
     ''' ChainMap is a minimal version of the collections.ChainMap
         class available in python 3.x which allows searching
         a collection of maps in order, by key, and returning the
