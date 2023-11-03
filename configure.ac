@@ -1,6 +1,6 @@
 AC_COPYRIGHT([
  
-  Copyright (c) 2013-2022 - Adjacent Link LLC, Bridgewater, New Jersey
+  Copyright (c) 2013-2023 - Adjacent Link LLC, Bridgewater, New Jersey
   All rights reserved.
  
   Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ AC_COPYRIGHT([
  
 ])
 
-AC_INIT([python-etce],[1.2.11],[labs at adjacentlink dot com])
+AC_INIT([python-etce],[1.2.12],[labs at adjacentlink dot com])
 
 AM_INIT_AUTOMAKE([1.9.6])
 
