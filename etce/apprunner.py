@@ -49,6 +49,7 @@ class AppRunner(Thread):
 
     def run(self):
         self._process = subprocess.Popen(self._args,
+                                         stdin=subprocess.DEVNULL,
                                          stdout=self._stdout_arg,
                                          stderr=self._stderr_arg)
         self._stdout_arg = self._process.stdout

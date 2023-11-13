@@ -59,6 +59,7 @@ class PlatformImpl:
     def runcommand(self, commandstring):
         args = shlex.split(commandstring)
         p = subprocess.Popen(args,
+                             stdin=subprocess.DEVNULL,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
         stdout = [line for line in p.stdout]

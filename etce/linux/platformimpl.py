@@ -269,7 +269,7 @@ class PlatformImpl(etce.platformimpl.PlatformImpl):
                 if sudo:
                     commandstr = 'sudo ' + commandstr
 
-                sp = subprocess.Popen(shlex.split(commandstr))
+                sp = subprocess.Popen(shlex.split(commandstr), stdin=subprocess.DEVNULL)
                 sp.wait()
         finally:
             if os.path.exists(pidfile):

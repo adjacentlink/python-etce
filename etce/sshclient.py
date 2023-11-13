@@ -551,7 +551,7 @@ class SSHClient(etce.fieldclient.FieldClient):
         for t in self._execute_threads:
             # cycle on join to allow keyboard interrupts
             # to occur immediately
-            while t.isAlive():
+            while t.is_alive():
                 t.join(5.0)
 
             returnobjs[t.name] = t.returnobject()
