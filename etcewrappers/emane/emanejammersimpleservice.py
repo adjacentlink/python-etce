@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2023 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,4 +30,47 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-__import__("pkg_resources").declare_namespace(__name__)
+from etce.wrapper import Wrapper
+
+
+class EmaneJammerSimpleService(Wrapper):
+    """
+    Run emane-jammer-simple-service with the provided configuration file.
+    """
+
+    def register(self, registrar):
+        registrar.register_argument('loglevel', 'info', 'one of {critical, error, warning, info, debug, notset}')
+
+        registrar.register_infile_name('emane-jammer-simple-service.xml')
+
+        registrar.register_outfile_name('emane-jammer-simple-service.log')
+
+
+    def run(self, ctx):
+        if not ctx.args.infile:
+            return
+
+        """
+        -h, --help           show this help message and exit
+        --config-file FILE   plugin config file.
+        --log-file FILE      log file.
+        --log-level LEVEL    log level [default: info].
+        --pid-file PID_FILE  write pid file
+        --daemonize, -d      daemonize application [default: False]
+        """
+        argstr = '--daemonize ' \
+                 '--config-file %s ' \
+                 '--log-level %s ' \
+                 '--log-file %s ' \
+                 '--pid-file %s ' \
+                 'emane_jammer_simple.service.plugin.Plugin' \
+                 % (ctx.args.infile,
+                    ctx.args.loglevel,
+                    ctx.args.outfile,
+                    ctx.args.default_pidfilename)
+
+        ctx.run('waveform-resourced', argstr, genpidfile=False)
+
+
+    def stop(self, ctx):
+        ctx.stop()

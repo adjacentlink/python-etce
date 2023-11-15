@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2021 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2013-2022 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,10 @@ class Mgen(Wrapper):
                                     True,
                                     'Run with mgen epochtimestamp option.')
 
+        registrar.register_argument('flush',
+                                    True,
+                                    'Run mgen in flush log mode')
+
     def run(self, ctx):
         if not ctx.args.infile:
             return
@@ -61,6 +65,9 @@ class Mgen(Wrapper):
 
         if ctx.args.epochtimestamp:
             argstr = 'epochtimestamp '
+
+        if ctx.args.flush:
+            argstr += 'flush '
 
         if self._isipv6(ctx.args.infile):
             argstr += 'ipv6 input %s txlog output %s start %s' % \

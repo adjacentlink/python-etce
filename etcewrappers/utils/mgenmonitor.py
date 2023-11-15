@@ -29,46 +29,63 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
 import os
-import shlex
-import subprocess
+
 from etce.wrapper import Wrapper
-from etce.timeutils import getstrtimenow
 
 
-class EmaneNodeViewPublisher(Wrapper):
+
+class MgenMonitor(Wrapper):
     """
-    Run an instance of emane-node-view-publisher.
-
-    emane-node-view-publisher is usually run from a virtual
-    environment or from a built directory. Use pythonpath
-    and path arguments to points to the local installation.
+    Execute mgen-monitor to tail an mgen log and make statistics available
+    to the MGEN OpentestPoint probe
     """
 
     def register(self, registrar):
-        registrar.register_infile_name('emane-node-view-publisher.xml')
-        registrar.register_outfile_name('emane-node-view-publisher.log')
-        registrar.register_argument('path',
-                                    '/opt/emane-node-view/bin',
-                                    'PATH to built emane-node-view-publisher script.')
+        registrar.register_infile_name('mgenmonitor.flag')
+
+        registrar.register_outfile_name('mgenmonitor.log')
+
+        registrar.register_argument('loglevel',
+                                    'error',
+                                    'log level - one of {critical, error, warning, info, debug}')
+
+        registrar.register_argument('endpoint',
+                                    '127.0.0.1:8883',
+                                    'The mgen-monitor listen endpoint. ' \
+                                    'The MGEN probe connects here.')
 
 
     def run(self, ctx):
         if not ctx.args.infile:
             return
 
-        cmdline = '%s/emane-node-view-publisher %s' % (ctx.args.path, ctx.args.infile)
+        listen_address,listen_port = ctx.args.endpoint.split(':')
 
-        logfile = '%s/emane-node-view-publisher.log' % ctx.args.logdirectory
+        mgen_logfile = os.path.join(ctx.args.logdirectory, 'mgen.log')
 
-        subprocess.Popen(shlex.split(cmdline),
-                         stdin=subprocess.DEVNULL,
-                         stdout=open(logfile, 'w+'),
-                         stderr=subprocess.STDOUT)
+        # mgen-monitor [-h]
+        #              [--log-file FILE]
+        #              [--log-level LEVEL]
+        #              [--pid-file PID_FILE]
+        #              [--daemonize]
+        #              listen-address listen-port mgen-output-file
+        argstr = '--daemonize ' \
+                 '--log-level %s ' \
+                 '--log-file %s ' \
+                 '--pid-file %s ' \
+                 '%s ' \
+                 '%s ' \
+                 '%s ' \
+                 % (ctx.args.loglevel,
+                    ctx.args.outfile,
+                    ctx.args.default_pidfilename,
+                    listen_address,
+                    listen_port,
+                    mgen_logfile)
 
-        print(cmdline)
+        ctx.run('mgen-monitor', argstr, genpidfile=False)
 
 
     def stop(self, ctx):
-        pass
+        ctx.stop()

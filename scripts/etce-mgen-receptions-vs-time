@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2020-2021 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2020-2021,2023 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -124,11 +124,7 @@ rx['rxtimesec'] = rx.rxtime.apply(int)
 
 all_txers = rx.txnode.unique()
 
-num_txers = len(all_txers)
-
 all_rxers = rx.rxnode.unique()
-
-num_rxers = len(all_rxers)
 
 rx.drop(['sequence', 'size', 'rxtime', 'txtime', 'occurrence', 'latency'], axis=1, inplace=True)
 
@@ -137,13 +133,6 @@ rx['rxcount'] = 1
 rx = rx.groupby(['trial', 'txnode', 'rxnode', 'flow', 'rxtimesec']).sum()
 
 rx.reset_index(inplace=True)
-
-if args.csvfile:
-    csvfile =  \
-        '.'.join(os.path.basename(args.sqlitefile).split('.')[:-1]) + '-' + \
-        suffix + '.csv'
-
-    tx.to_csv(csvfile)
 
 trials = sorted(rx.trial.unique())
 
@@ -174,6 +163,13 @@ if args.txnodeorder:
     txers = [nodename.strip() for nodename in args.txnodeorder.split(':')]
 
     rx = rx[rx.txnode.isin(txers)]
+
+if args.csvfile:
+    csvfile =  \
+        '.'.join(os.path.basename(args.sqlitefile).split('.')[:-1]) + '-' + \
+        suffix + '.csv'
+
+    rx.to_csv(csvfile)
 
 rx.rename(columns={'txnode':'tx', 'rxnode':'rx'}, inplace=True)
 

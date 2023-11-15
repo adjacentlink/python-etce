@@ -112,6 +112,8 @@ if not os.path.isfile(args.sqlitefile):
     print('Could not find file "%s". Quitting.' % args.sqlitefile, file=sys.stderr)
     exit(1)
 
+plt.style.use('ggplot')
+
 rx,tx = to_dataframes(args.sqlitefile, args.keepselfrxs)
 
 # only count the first reception for purposes of completion percentage

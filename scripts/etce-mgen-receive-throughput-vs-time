@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2015-2021 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2015-2021,2023 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -89,7 +89,7 @@ parser.add_argument('--colormap',
                     'for the hue. The hue encodes the FLOWNUM for each transmitter. ' \
                     'Default: tab10.')
 parser.add_argument('--ymax',
-                    type=int,
+                    type=float,
                     action='store',
                     default=None,
                     help='Override graph ymax value.')
@@ -193,10 +193,6 @@ rx.rename(columns={'rxnode':'rx'}, inplace=True)
 trials = sorted(rx.trial.unique())
 
 num_trials = len(trials)
-
-num_txers = len(rx.tx.unique())
-
-num_rxers = len(rx.rx.unique())
 
 margin = 6.0
 
