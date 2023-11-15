@@ -94,14 +94,17 @@ class IpLink(Wrapper):
                     queuelencommand = 'ip link set %s txqueuelen %d' \
                                       % (interface, txqueuelen)
                     print(queuelencommand)
-                    subprocess.call(shlex.split(queuelencommand))
+                    subprocess.call(shlex.split(queuelencommand),
+                                    stdin=subprocess.DEVNULL)
 
             if len(mtu.strip()) > 0:
                 mtu = int(mtu)
                 if mtu > 0:
                     mtucommand = 'ip link set %s mtu %d' % (interface, mtu)
                     print(mtucommand)
-                    subprocess.call(shlex.split(mtucommand))
+                    subprocess.call(shlex.split(mtucommand),
+                                    stdin=subprocess.DEVNULL)
+
 
         testtimesecs = ctx.args.testtimesecs
 
@@ -128,7 +131,9 @@ class IpLink(Wrapper):
         while retval == 0 and testtime < testtimesecs:
             for interface in interfaces:
                 command = 'ip link show %s' % interface
-                retval = subprocess.call(shlex.split(command), stdout=stdoutfd)
+                retval = subprocess.call(shlex.split(command),
+                                         stdin=subprocess.DEVNULL,
+                                         stdout=stdoutfd)
             time.sleep(periodsecs)
             testtime += periodsecs
 

@@ -206,7 +206,10 @@ def daemonize_command(commandstr,
         etce.timeutils.sleep_until(starttime)
 
     # 5. create the Popen subprocess
-    sp = subprocess.Popen(command, stdout=stdoutfd, stderr=stderrfd)
+    sp = subprocess.Popen(command,
+                          stdin=subprocess.DEVNULL,
+                          stdout=stdoutfd,
+                          stderr=stderrfd)
 
     return (0, sp)
 

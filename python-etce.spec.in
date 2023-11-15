@@ -48,7 +48,7 @@ make
 
 %install
 make  DESTDIR=${RPM_BUILD_ROOT} PYTHON=%{__python3} install
-pathfix.py -pni "%{__python3} %{py3_shbang_opts}" %{buildroot}%{_bindir}/*
+%py3_shebang_fix %{buildroot}%{_bindir}/*
 
 find ${RPM_BUILD_ROOT} -name '*.a' -exec rm '{}'  \;
 find ${RPM_BUILD_ROOT} -name '*.la' -exec rm '{}' \;

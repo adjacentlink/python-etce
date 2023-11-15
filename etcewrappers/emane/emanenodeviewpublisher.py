@@ -63,6 +63,7 @@ class EmaneNodeViewPublisher(Wrapper):
         logfile = '%s/emane-node-view-publisher.log' % ctx.args.logdirectory
 
         subprocess.Popen(shlex.split(cmdline),
+                         stdin=subprocess.DEVNULL,
                          stdout=open(logfile, 'w+'),
                          stderr=subprocess.STDOUT)
 

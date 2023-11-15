@@ -74,6 +74,7 @@ class Socat(Wrapper):
                                   'socat.%d.log' % linenum), argstr)
 
                 subprocess.Popen(shlex.split(cmdline),
+                                 stdin=subprocess.DEVNULL,
                                  stdout=subprocess.DEVNULL,
                                  stderr=subprocess.STDOUT)
 

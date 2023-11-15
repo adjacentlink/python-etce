@@ -238,7 +238,10 @@ class WrapperContextImpl(ArgRegistrar):
             pidfilename = self._default_pidfilename
 
         # create the Popen subprocess
-        sp = subprocess.Popen(shlex.split(commandstr), stdout=stdoutfd, stderr=stderrfd)
+        sp = subprocess.Popen(shlex.split(commandstr),
+                              stdin=subprocess.DEVNULL,
+                              stdout=stdoutfd,
+                              stderr=stderrfd)
 
         # write the pid to pidfilename
         if genpidfile:
