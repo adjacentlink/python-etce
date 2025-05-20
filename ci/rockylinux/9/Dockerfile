@@ -3,7 +3,8 @@ FROM rockylinux:9
 RUN mkdir -p /opt/built
 
 RUN dnf -y update
-RUN dnf -y install epel-release dnf-plugins-core
+# centos-release-openstack-dalmatian has pandas
+RUN dnf -y install epel-release dnf-plugins-core centos-release-openstack-dalmatian
 RUN dnf config-manager --enable crb
 RUN dnf clean all
 
