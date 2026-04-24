@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2013-2021 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
@@ -31,10 +31,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from __future__ import absolute_import, division, print_function
 
 # Force sys.stdout to be unbuffered w/o using the python -u option, which
-# does not always work as #!/usr/bin/env python -u
+# does not always work as #!/usr/bin/env python3 -u
 # Solution from:
 # https://stackoverflow.com/questions/107705/disable-output-buffering
 
