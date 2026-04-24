@@ -30,7 +30,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from __future__ import absolute_import, division, print_function
 from collections import defaultdict
 import math
 import itertools
@@ -393,7 +392,7 @@ class EmanePhyInit(Wrapper):
         events = defaultdict(lambda: FadingSelectionEvent())
 
         for eventarg in eventargs:
-            m = re.match('nem:(?P<nem>\d+),(?P<model>\w+)', eventarg)
+            m = re.match(r'nem:(?P<nem>\d+),(?P<model>\w+)', eventarg)
 
             # all events are sent to nemid 0 - ie, received by every nem
             events[0].append(int(m.group('nem')), model=m.group('model'))

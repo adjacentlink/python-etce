@@ -30,7 +30,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from __future__ import absolute_import, division, print_function
 import copy
 import os.path
 import re
@@ -562,7 +561,7 @@ class Container(object):
             return interface_dict['lxc.network.ipv4']
 
         for key in interface_dict:
-            if re.match('lxc.net.\d.ipv4.address', key):
+            if re.match(r'lxc.net.\d.ipv4.address', key):
                 return interface_dict[key]
 
         return None
@@ -573,7 +572,7 @@ class Container(object):
             return interface_dict['lxc.network.ipv4']
 
         for key in interface_dict:
-            if re.match('lxc.net.\d.ipv6.address', key):
+            if re.match(r'lxc.net.\d.ipv6.address', key):
                 return interface_dict[key]
 
         return None
