@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2017,2026 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,13 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from __future__ import absolute_import, division, print_function
-
 import os
-try:
-    import configparser
-except:
-    import ConfigParser as configparser
+from configparser import ConfigParser
 
 from etce.wrapper import Wrapper
 
@@ -67,7 +62,7 @@ class SysCtlUtil(Wrapper):
         if not ctx.args.infile:
             return
 
-        parser = configparser.SafeConfigParser()
+        parser = ConfigParser()
         parser.read(ctx.args.infile)
 
         if 'run' in parser.sections():
@@ -79,7 +74,7 @@ class SysCtlUtil(Wrapper):
         if not ctx.args.infile:
             return
 
-        parser = configparser.SafeConfigParser()
+        parser = ConfigParser()
         parser.read(ctx.args.infile)
 
         if 'stop' in parser.sections():
