@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# Copyright (c) 2014-2017,2026 - Adjacent Link LLC, Bridgewater, New Jersey
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from pkg_resources import resource_filename
+import importlib
 from lxml import etree
 from lxml.etree import DocumentInvalid, XMLSyntaxError
 
@@ -43,7 +43,10 @@ class XMLDoc(object):
     """
 
     def __init__(self, schemafile, schemamodule='etce'):
-        self._schema = etree.XMLSchema(etree.parse(resource_filename(schemamodule, schemafile)))
+        ref = importlib.resources.files(schemamodule) / schemafile
+
+        with importlib.resources.as_file(ref) as path:
+            self._schema = etree.XMLSchema(etree.parse(path))
 
 
     def parse(self, xmlfile):
