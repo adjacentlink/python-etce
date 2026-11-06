@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import importlib
+import importlib.resources
 from lxml import etree
 from lxml.etree import DocumentInvalid, XMLSyntaxError
 
