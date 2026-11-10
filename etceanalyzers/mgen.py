@@ -308,7 +308,7 @@ class Mgen(Analyzer):
 
         rx['occurrence'] = 1
 
-        rx['occurrence'] = rx.groupby(['txid', 'flow', 'sequence']).cumsum().occurrence
+        rx['occurrence'] = rx.groupby(['txid', 'flow', 'sequence']).occurrence.cumsum()
 
         return (rxflows, rx, tx)
 
